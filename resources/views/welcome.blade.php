@@ -224,7 +224,9 @@
             .hero .container { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
             .hero-content h2 { font-size: 2rem; }
             .hero-actions { justify-content: center; }
-            .hero-cards { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+            .hero-cards { grid-template-columns: 1fr 1fr; gap: 0.75rem; justify-items: center; }
+            .hero-card { text-align: center; }
+            .hero-card .icon { margin: 0 auto 1rem; }
             .programme-cards, .portal-cards { grid-template-columns: 1fr; }
             .steps-grid { grid-template-columns: 1fr 1fr; }
             .info-grid { grid-template-columns: 1fr; }

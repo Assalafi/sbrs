@@ -32,7 +32,7 @@
         </button>
     </div>
     <div class="form-group">
-        <p class="text-muted small">Default password is the last 6 characters of your application number.</p>
+        <p class="text-muted small">Default password is your application's password.</p>
         <p><a href="{{ url('/') }}" class="fw-medium text-decoration-none" style="color:#006633;">
             <i class="material-symbols-outlined fs-16" style="vertical-align:middle;">arrow_back</i> Back to Homepage
         </a></p>

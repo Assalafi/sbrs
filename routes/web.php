@@ -77,72 +77,98 @@ Route::prefix('student')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->middleware('permission:dashboard.view')->name('admin.dashboard');
     Route::get('/password', [AdminDashboardController::class, 'showPasswordForm'])->name('admin.password');
     Route::post('/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.password.update');
 
     // Settings
-    Route::get('/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
-    Route::get('/settings/{group}/edit', [SettingsController::class, 'edit'])->name('admin.settings.edit');
-    Route::put('/settings/{group}', [SettingsController::class, 'update'])->name('admin.settings.update');
-    Route::post('/settings/clear-cache', [SettingsController::class, 'clearCache'])->name('admin.settings.clear-cache');
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
+        Route::get('/settings/{group}/edit', [SettingsController::class, 'edit'])->name('admin.settings.edit');
+        Route::put('/settings/{group}', [SettingsController::class, 'update'])->middleware('permission:settings.edit')->name('admin.settings.update');
+        Route::post('/settings/clear-cache', [SettingsController::class, 'clearCache'])->name('admin.settings.clear-cache');
+    });
 
     // Academic Sessions
-    Route::resource('academic-sessions', AcademicSessionController::class)->except(['show'])->names('admin.academic-sessions');
-    Route::post('academic-sessions/{academicSession}/set-current', [AcademicSessionController::class, 'setCurrent'])->name('admin.academic-sessions.set-current');
+    Route::middleware('permission:academic-sessions.view')->group(function () {
+        Route::resource('academic-sessions', AcademicSessionController::class)->except(['show'])->names('admin.academic-sessions');
+        Route::post('academic-sessions/{academicSession}/set-current', [AcademicSessionController::class, 'setCurrent'])->name('admin.academic-sessions.set-current');
+    });
 
     // Programmes
-    Route::resource('programmes', ProgrammeController::class)->names('admin.programmes');
-    Route::post('programmes/{programme}/add-combination', [ProgrammeController::class, 'addCombination'])->name('admin.programmes.add-combination');
-    Route::delete('programmes/combinations/{combination}', [ProgrammeController::class, 'removeCombination'])->name('admin.programmes.remove-combination');
-    Route::get('programmes/{programme}/combinations', [ProgrammeController::class, 'getCombinations'])->name('admin.programmes.combinations');
+    Route::middleware('permission:programmes.view')->group(function () {
+        Route::resource('programmes', ProgrammeController::class)->names('admin.programmes');
+        Route::post('programmes/{programme}/add-combination', [ProgrammeController::class, 'addCombination'])->name('admin.programmes.add-combination');
+        Route::delete('programmes/combinations/{combination}', [ProgrammeController::class, 'removeCombination'])->name('admin.programmes.remove-combination');
+        Route::get('programmes/{programme}/combinations', [ProgrammeController::class, 'getCombinations'])->name('admin.programmes.combinations');
+    });
 
     // Fees
-    Route::resource('fees', FeeController::class)->except(['show'])->names('admin.fees');
+    Route::middleware('permission:fees.view')->group(function () {
+        Route::resource('fees', FeeController::class)->except(['show'])->names('admin.fees');
+    });
 
     // Users
-    Route::resource('users', UserController::class)->except(['show'])->names('admin.users');
+    Route::middleware('permission:users.view')->group(function () {
+        Route::resource('users', UserController::class)->except(['show'])->names('admin.users');
+    });
 
     // Roles
-    Route::resource('roles', RoleController::class)->except(['show'])->names('admin.roles');
+    Route::middleware('permission:roles.view')->group(function () {
+        Route::resource('roles', RoleController::class)->except(['show'])->names('admin.roles');
+    });
 
     // Applications
-    Route::get('applications', [ApplicationController::class, 'index'])->name('admin.applications.index');
-    Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('admin.applications.show');
-    Route::post('applications/{application}/approve', [ApplicationController::class, 'approve'])->name('admin.applications.approve');
-    Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('admin.applications.reject');
-    Route::post('applications/bulk-approve', [ApplicationController::class, 'bulkApprove'])->name('admin.applications.bulk-approve');
+    Route::middleware('permission:applications.view')->group(function () {
+        Route::get('applications', [ApplicationController::class, 'index'])->name('admin.applications.index');
+        Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('admin.applications.show');
+        Route::post('applications/{application}/approve', [ApplicationController::class, 'approve'])->middleware('permission:applications.approve')->name('admin.applications.approve');
+        Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->middleware('permission:applications.reject')->name('admin.applications.reject');
+        Route::post('applications/bulk-approve', [ApplicationController::class, 'bulkApprove'])->middleware('permission:applications.approve')->name('admin.applications.bulk-approve');
+    });
 
     // Screening
-    Route::get('screening', [ScreeningController::class, 'index'])->name('admin.screening.index');
-    Route::get('screening/{student}', [ScreeningController::class, 'show'])->name('admin.screening.show');
-    Route::post('screening/{student}/approve', [ScreeningController::class, 'approve'])->name('admin.screening.approve');
-    Route::post('screening/{student}/reject', [ScreeningController::class, 'reject'])->name('admin.screening.reject');
+    Route::middleware('permission:screening.view')->group(function () {
+        Route::get('screening', [ScreeningController::class, 'index'])->name('admin.screening.index');
+        Route::get('screening/{student}', [ScreeningController::class, 'show'])->name('admin.screening.show');
+        Route::post('screening/{student}/approve', [ScreeningController::class, 'approve'])->middleware('permission:screening.approve')->name('admin.screening.approve');
+        Route::post('screening/{student}/reject', [ScreeningController::class, 'reject'])->middleware('permission:screening.reject')->name('admin.screening.reject');
+    });
 
     // Students
-    Route::get('students', [AdminStudentController::class, 'index'])->name('admin.students.index');
-    Route::get('students/export', [AdminStudentController::class, 'export'])->name('admin.students.export');
-    Route::get('students/{student}', [AdminStudentController::class, 'show'])->name('admin.students.show');
+    Route::middleware('permission:students.view')->group(function () {
+        Route::get('students', [AdminStudentController::class, 'index'])->name('admin.students.index');
+        Route::get('students/export', [AdminStudentController::class, 'export'])->middleware('permission:students.export')->name('admin.students.export');
+        Route::get('students/{student}', [AdminStudentController::class, 'show'])->name('admin.students.show');
+    });
 
     // Payments
-    Route::get('payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
-    Route::get('payments/export', [AdminPaymentController::class, 'export'])->name('admin.payments.export');
-    Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
-    Route::post('payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('admin.payments.verify');
+    Route::middleware('permission:payments.view')->group(function () {
+        Route::get('payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
+        Route::get('payments/export', [AdminPaymentController::class, 'export'])->middleware('permission:payments.export')->name('admin.payments.export');
+        Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
+        Route::post('payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->middleware('permission:payments.verify')->name('admin.payments.verify');
+    });
 
     // Courses
-    Route::resource('courses', CourseController::class)->except(['show'])->names('admin.courses');
+    Route::middleware('permission:courses.view')->group(function () {
+        Route::resource('courses', CourseController::class)->except(['show'])->names('admin.courses');
+    });
 
     // Results
-    Route::get('results', [AdminResultController::class, 'index'])->name('admin.results.index');
-    Route::get('results/create', [AdminResultController::class, 'create'])->name('admin.results.create');
-    Route::post('results/upload', [AdminResultController::class, 'upload'])->name('admin.results.upload');
-    Route::get('results/courses', [AdminResultController::class, 'getCoursesForProgramme'])->name('admin.results.courses');
-    Route::get('results/students', [AdminResultController::class, 'getStudentsForCourse'])->name('admin.results.students');
+    Route::middleware('permission:results.view')->group(function () {
+        Route::get('results', [AdminResultController::class, 'index'])->name('admin.results.index');
+        Route::get('results/create', [AdminResultController::class, 'create'])->middleware('permission:results.upload')->name('admin.results.create');
+        Route::post('results/upload', [AdminResultController::class, 'upload'])->middleware('permission:results.upload')->name('admin.results.upload');
+        Route::get('results/courses', [AdminResultController::class, 'getCoursesForProgramme'])->name('admin.results.courses');
+        Route::get('results/students', [AdminResultController::class, 'getStudentsForCourse'])->name('admin.results.students');
+    });
 
     // Audit Logs
-    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
-    Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-logs.show');
+    Route::middleware('permission:audit-logs.view')->group(function () {
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
+        Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-logs.show');
+    });
 });
 
 /*

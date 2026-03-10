@@ -11,7 +11,7 @@
     @csrf
     <div class="form-group mb-4">
         <label class="label text-secondary">Email Address</label>
-        <input type="email" class="form-control h-55" name="email" value="{{ old('email') }}" required autofocus placeholder="admin@sbrs.unimaid.edu.ng">
+        <input type="email" class="form-control h-55" name="email" value="{{ old('email') }}" required autofocus placeholder="admin@sbrs.umstad.online">
     </div>
     <div class="form-group mb-4">
         <label class="label text-secondary">Password</label>
