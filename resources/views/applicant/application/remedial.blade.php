@@ -77,12 +77,13 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-medium">Passport Photo <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" name="passport_photo" accept="image/jpeg,image/png" {{ $disabled }}>
+                            <small class="text-muted">Max: 500KB (JPG, PNG)</small>
                             @if($applicant->passport_photo)
                                 <img src="{{ asset('storage/' . $applicant->passport_photo) }}" alt="Photo" class="mt-2 rounded" style="width:60px;height:60px;object-fit:cover;">
                             @endif
                         </div>
                     </div>
-                    <h6 class="fw-semibold mt-3 mb-2"><i class="material-symbols-outlined me-1 align-middle fs-16">upload_file</i> Document Uploads</h6>
+                    <h6 class="fw-semibold mt-3 mb-2"><i class="material-symbols-outlined me-1 align-middle fs-16">upload_file</i> Document Uploads <small class="text-muted fw-normal">(Max 500KB each, JPG/PNG/PDF)</small></h6>
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="form-label fw-medium">Indigene Certificate <span class="text-danger">*</span></label>

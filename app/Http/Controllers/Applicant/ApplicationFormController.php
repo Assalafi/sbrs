@@ -57,10 +57,10 @@ class ApplicationFormController extends Controller
             'programme_id' => 'required|exists:programmes,id',
             'subject_combination_id' => 'nullable|exists:subject_combinations,id',
             'passport_photo' => 'nullable|image|mimes:jpeg,jpg,png|max:500',
-            'indigene_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'primary_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'ssce_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'birth_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
+            'indigene_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:500',
+            'primary_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:500',
+            'ssce_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:500',
+            'birth_cert' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:500',
         ]);
 
         if ($request->hasFile('passport_photo')) {
