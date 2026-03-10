@@ -348,7 +348,7 @@
                             <li><span class="material-symbols-outlined">check_circle</span> Direct Entry into 200 Level</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Recognized by all Nigerian Universities</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Arts, Social Sciences & Sciences</li>
-                            <li><span class="material-symbols-outlined">check_circle</span> 9-month intensive programme</li>
+                            <li><span class="material-symbols-outlined">check_circle</span> 12-month intensive programme</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Experienced lecturers</li>
                             <li><span class="material-symbols-outlined">check_circle</span> O'Level with 5 credits required</li>
                         </ul>
@@ -357,14 +357,14 @@
                 <div class="programme-card remedial">
                     <div class="card-header">
                         <h3>Remedial Programme</h3>
-                        <p>Pre-Degree Science Programme</p>
+                        <p>Pre-Degree Science & Arts Programme</p>
                     </div>
                     <div class="card-body">
                         <ul>
                             <li><span class="material-symbols-outlined">check_circle</span> Admission into 100 Level</li>
-                            <li><span class="material-symbols-outlined">check_circle</span> Science-based courses focus</li>
-                            <li><span class="material-symbols-outlined">check_circle</span> Medicine, Engineering & Sciences</li>
-                            <li><span class="material-symbols-outlined">check_circle</span> Well-equipped laboratories</li>
+                            <li><span class="material-symbols-outlined">check_circle</span> Science and Arts courses available</li>
+                            <li><span class="material-symbols-outlined">check_circle</span> Medicine, Engineering, Law, Sciences & Arts</li>
+                            <li><span class="material-symbols-outlined">check_circle</span> Well-equipped laboratories & facilities</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Qualified teaching staff</li>
                             <li><span class="material-symbols-outlined">check_circle</span> O'Level with relevant credits</li>
                         </ul>
