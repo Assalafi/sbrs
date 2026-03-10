@@ -28,20 +28,24 @@ class ApplicationFormController extends Controller
         $programmes = Programme::where('type', $applicant->programme_type)
             ->where('is_active', true)->get();
 
+        $openTab = request('tab', 'personalInfo');
+
         if ($applicant->programme_type === 'IJMB') {
             $application = $applicant->ijmbApplication ?? IjmbApplication::create([
                 'applicant_id' => $applicant->id,
                 'academic_session_id' => $applicant->academic_session_id,
             ]);
             $application->load(['schoolsAttended', 'olevelResults.subjects', 'referees']);
-            return view('applicant.application.ijmb', compact('applicant', 'application', 'programmes'));
+            $sections = $applicant->getSectionCompletion();
+            return view('applicant.application.ijmb', compact('applicant', 'application', 'programmes', 'sections', 'openTab'));
         } else {
             $application = $applicant->remedialApplication ?? RemedialApplication::create([
                 'applicant_id' => $applicant->id,
                 'academic_session_id' => $applicant->academic_session_id,
             ]);
             $application->load(['institutions', 'examResults', 'employmentRecords', 'referees']);
-            return view('applicant.application.remedial', compact('applicant', 'application', 'programmes'));
+            $sections = $applicant->getSectionCompletion();
+            return view('applicant.application.remedial', compact('applicant', 'application', 'programmes', 'sections', 'openTab'));
         }
     }
 
@@ -101,7 +105,8 @@ class ApplicationFormController extends Controller
             ]));
         }
 
-        return back()->with('success', 'Personal information saved.');
+        $nextTab = $applicant->programme_type === 'IJMB' ? 'schoolsSection' : 'institutionsSection';
+        return redirect()->route('applicant.application.edit', ['tab' => $nextTab])->with('success', 'Personal information saved.');
     }
 
     public function updateSchools(Request $request)
@@ -132,7 +137,7 @@ class ApplicationFormController extends Controller
             }
         }
 
-        return back()->with('success', 'Education history saved.');
+        return redirect()->route('applicant.application.edit', ['tab' => 'resultsSection'])->with('success', 'Education history saved.');
     }
 
     public function updateResults(Request $request)
@@ -180,7 +185,7 @@ class ApplicationFormController extends Controller
             $application->update($request->only(['exam_date', 'exam_centre', 'exam_number']));
         }
 
-        return back()->with('success', 'Examination results saved.');
+        return redirect()->route('applicant.application.edit', ['tab' => 'sponsorSection'])->with('success', 'Examination results saved.');
     }
 
     public function updateSponsorship(Request $request)
@@ -207,7 +212,7 @@ class ApplicationFormController extends Controller
             }
         }
 
-        return back()->with('success', 'Sponsorship info saved.');
+        return redirect()->route('applicant.application.edit', ['tab' => 'refereesSection'])->with('success', 'Sponsorship info saved.');
     }
 
     public function updateReferees(Request $request)
@@ -236,7 +241,7 @@ class ApplicationFormController extends Controller
             }
         }
 
-        return back()->with('success', 'Referees saved.');
+        return redirect()->route('applicant.application.edit', ['tab' => 'declarationSection'])->with('success', 'Referees saved.');
     }
 
     public function submit(Request $request)
@@ -248,12 +253,17 @@ class ApplicationFormController extends Controller
             'declaration_name' => 'required|string',
         ]);
 
-        if (!$applicant->programme_id) {
-            return back()->with('error', 'Please select a programme first.');
-        }
+        // Comprehensive validation: all sections must be complete
+        $sections = $applicant->getSectionCompletion();
+        $missing = [];
+        if (!$sections['personal']) $missing[] = 'Personal Information (including all document uploads & passport photo)';
+        if (!$sections['schools']) $missing[] = 'Schools / Institutions Attended';
+        if (!$sections['results']) $missing[] = "O'Level / Examination Results";
+        if (!$sections['sponsorship']) $missing[] = 'Sponsorship';
+        if (!$sections['referees']) $missing[] = 'Referees (3 required)';
 
-        if (!$applicant->passport_photo) {
-            return back()->with('error', 'Please upload a passport photograph.');
+        if (!empty($missing)) {
+            return back()->with('error', 'Please complete the following sections before submitting: ' . implode(', ', $missing) . '.');
         }
 
         $application = $applicant->programme_type === 'IJMB'

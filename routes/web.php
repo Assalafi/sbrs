@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\ResultController as AdminResultController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\PasswordResetController;
+use App\Http\Controllers\Admin\RegisteredUserController;
 use App\Http\Controllers\Applicant\DashboardController as ApplicantDashboardController;
 use App\Http\Controllers\Applicant\PaymentController as ApplicantPaymentController;
 use App\Http\Controllers\Applicant\ApplicationFormController;
@@ -168,6 +170,19 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::middleware('permission:audit-logs.view')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
         Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-logs.show');
+    });
+
+    // Password Reset (for all user types)
+    Route::middleware('permission:users.view')->group(function () {
+        Route::get('password-reset', [PasswordResetController::class, 'index'])->name('admin.password-reset.index');
+        Route::post('password-reset/search', [PasswordResetController::class, 'search'])->name('admin.password-reset.search');
+        Route::post('password-reset/reset', [PasswordResetController::class, 'reset'])->name('admin.password-reset.reset');
+    });
+
+    // Registered Users (all applicants including those without submissions)
+    Route::middleware('permission:applications.view')->group(function () {
+        Route::get('registered-users', [RegisteredUserController::class, 'index'])->name('admin.registered-users.index');
+        Route::get('registered-users/export', [RegisteredUserController::class, 'export'])->name('admin.registered-users.export');
     });
 });
 

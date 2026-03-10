@@ -82,6 +82,12 @@
             </li>
             @endcanany
             @can('applications.view')
+            <li class="menu-item {{ request()->routeIs('admin.registered-users.*') ? 'open' : '' }}">
+                <a href="{{ route('admin.registered-users.index') }}" class="menu-link">
+                    <i class="material-symbols-outlined menu-icon">people</i>
+                    <span class="title">Registered Users</span>
+                </a>
+            </li>
             <li class="menu-item {{ request()->routeIs('admin.applications.*') ? 'open' : '' }}">
                 <a href="{{ route('admin.applications.index') }}" class="menu-link">
                     <i class="material-symbols-outlined menu-icon">description</i>
@@ -132,6 +138,12 @@
                 <a href="{{ route('admin.users.index') }}" class="menu-link">
                     <i class="material-symbols-outlined menu-icon">person</i>
                     <span class="title">Users</span>
+                </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('admin.password-reset.*') ? 'open' : '' }}">
+                <a href="{{ route('admin.password-reset.index') }}" class="menu-link">
+                    <i class="material-symbols-outlined menu-icon">lock_reset</i>
+                    <span class="title">Password Reset</span>
                 </a>
             </li>
             @endcan

@@ -115,6 +115,85 @@ class Applicant extends Authenticatable
             ->first();
     }
 
+    /**
+     * Get completion status for each application form section.
+     */
+    public function getSectionCompletion(): array
+    {
+        if ($this->programme_type === 'IJMB') {
+            return $this->getIjmbSectionCompletion();
+        }
+        return $this->getRemedialSectionCompletion();
+    }
+
+    protected function getIjmbSectionCompletion(): array
+    {
+        $app = $this->ijmbApplication;
+        $hasPersonal = $this->programme_id
+            && $this->passport_photo
+            && $this->indigene_cert
+            && $this->primary_cert
+            && $this->ssce_cert
+            && $this->birth_cert
+            && $app
+            && $app->date_of_birth
+            && $app->gender
+            && $app->state_of_origin
+            && $app->lga
+            && $app->nok_name
+            && $app->nok_phone;
+
+        $hasSchools = $app && $app->schoolsAttended()->count() > 0;
+
+        $hasResults = $app && $app->olevelResults()->whereHas('subjects')->count() > 0;
+
+        $hasSponsorship = $app && $app->sponsor_type;
+
+        $hasReferees = $app && $app->referees()->count() >= 3;
+
+        return [
+            'personal' => (bool) $hasPersonal,
+            'schools' => (bool) $hasSchools,
+            'results' => (bool) $hasResults,
+            'sponsorship' => (bool) $hasSponsorship,
+            'referees' => (bool) $hasReferees,
+        ];
+    }
+
+    protected function getRemedialSectionCompletion(): array
+    {
+        $app = $this->remedialApplication;
+        $hasPersonal = $this->programme_id
+            && $this->passport_photo
+            && $this->indigene_cert
+            && $this->primary_cert
+            && $this->ssce_cert
+            && $this->birth_cert
+            && $app
+            && $app->date_of_birth
+            && $app->gender
+            && $app->state_of_origin
+            && $app->lga
+            && $app->guardian_name
+            && $app->guardian_phone;
+
+        $hasInstitutions = $app && $app->institutions()->count() > 0;
+
+        $hasResults = $app && $app->examResults()->count() > 0 && $app->exam_number;
+
+        $hasSponsorship = $app && $app->sponsor_type;
+
+        $hasReferees = $app && $app->referees()->count() >= 3;
+
+        return [
+            'personal' => (bool) $hasPersonal,
+            'schools' => (bool) $hasInstitutions,
+            'results' => (bool) $hasResults,
+            'sponsorship' => (bool) $hasSponsorship,
+            'referees' => (bool) $hasReferees,
+        ];
+    }
+
     public static function generateApplicationNumber(): string
     {
         $session = AcademicSession::current();

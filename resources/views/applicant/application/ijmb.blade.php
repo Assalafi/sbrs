@@ -6,27 +6,62 @@
     $disabled = $isSubmitted ? 'disabled' : '';
     $subjects = config('subjects', []);
     $states = config('states', []);
+    $sections = $sections ?? $applicant->getSectionCompletion();
+    $openTab = $openTab ?? 'personalInfo';
+    $sectionOrder = ['personal', 'schools', 'results', 'sponsorship', 'referees'];
+    $tabIds = ['personal' => 'personalInfo', 'schools' => 'schoolsSection', 'results' => 'resultsSection', 'sponsorship' => 'sponsorSection', 'referees' => 'refereesSection', 'declaration' => 'declarationSection'];
+    // A section is accessible if all previous sections are complete (or it's the first incomplete one)
+    $accessible = [];
+    $allPreviousComplete = true;
+    foreach ($sectionOrder as $key) {
+        $accessible[$key] = $allPreviousComplete;
+        if (!$sections[$key]) $allPreviousComplete = false;
+    }
+    $accessible['declaration'] = $allPreviousComplete; // all 5 must be complete
+    $allComplete = $allPreviousComplete;
+    $completedCount = count(array_filter($sections));
 @endphp
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">IJMB Application Form</h3>
-    <a href="{{ route('applicant.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-{{ $allComplete ? 'success' : 'warning' }} fs-12">{{ $completedCount }}/5 Sections Complete</span>
+        <a href="{{ route('applicant.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
+    </div>
 </div>
 
 @if($isSubmitted)
 <div class="alert alert-info"><i class="material-symbols-outlined align-middle">info</i> Your application has been submitted. You cannot make further changes.</div>
 @endif
 
+{{-- Progress Bar --}}
+@if(!$isSubmitted)
+<div class="mb-4">
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-success" style="width: {{ ($completedCount / 5) * 100 }}%"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-1">
+        @foreach(['Personal', 'Schools', 'O\'Level', 'Sponsor', 'Referees'] as $i => $label)
+            @php $key = $sectionOrder[$i]; @endphp
+            <small class="{{ $sections[$key] ? 'text-success fw-bold' : 'text-muted' }}">
+                {!! $sections[$key] ? '<i class="material-symbols-outlined fs-14 align-middle">check_circle</i>' : '<i class="material-symbols-outlined fs-14 align-middle">radio_button_unchecked</i>' !!} {{ $label }}
+            </small>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <div class="accordion" id="applicationAccordion">
     <!-- Section 1: Personal Information -->
     <div class="accordion-item border-0 rounded-3 mb-3">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#personalInfo">
-                <i class="material-symbols-outlined me-2">person</i> Personal Information & Programme
+            <button class="accordion-button fw-semibold {{ $openTab !== 'personalInfo' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#personalInfo">
+                <i class="material-symbols-outlined me-2">person</i> 1. Personal Information & Programme
+                @if($sections['personal'])<span class="badge bg-success ms-auto me-2">Complete</span>@else<span class="badge bg-secondary ms-auto me-2">Incomplete</span>@endif
             </button>
         </h2>
-        <div id="personalInfo" class="accordion-collapse collapse show" data-bs-parent="#applicationAccordion">
+        <div id="personalInfo" class="accordion-collapse collapse {{ $openTab === 'personalInfo' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 <form action="{{ route('applicant.application.personal') }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -41,7 +76,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">Passport Photo</label>
+                            <label class="form-label fw-medium">Passport Photo <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" name="passport_photo" accept="image/jpeg,image/png" {{ $disabled }}>
                             @if($applicant->passport_photo)
                                 <img src="{{ asset('storage/' . $applicant->passport_photo) }}" alt="Photo" class="mt-2 rounded" style="width:60px;height:60px;object-fit:cover;">
@@ -51,28 +86,28 @@
                     <h6 class="fw-semibold mt-3 mb-2"><i class="material-symbols-outlined me-1 align-middle fs-16">upload_file</i> Document Uploads</h6>
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Indigene Certificate</label>
+                            <label class="form-label fw-medium">Indigene Certificate <span class="text-danger">*</span></label>
                             <input type="file" class="form-control form-control-sm" name="indigene_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
                             @if($applicant->indigene_cert)
                                 <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
                             @endif
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Primary Certificate</label>
+                            <label class="form-label fw-medium">Primary Certificate <span class="text-danger">*</span></label>
                             <input type="file" class="form-control form-control-sm" name="primary_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
                             @if($applicant->primary_cert)
                                 <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
                             @endif
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">SSCE Certificate</label>
+                            <label class="form-label fw-medium">SSCE Certificate <span class="text-danger">*</span></label>
                             <input type="file" class="form-control form-control-sm" name="ssce_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
                             @if($applicant->ssce_cert)
                                 <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
                             @endif
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Birth Certificate</label>
+                            <label class="form-label fw-medium">Birth Certificate <span class="text-danger">*</span></label>
                             <input type="file" class="form-control form-control-sm" name="birth_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
                             @if($applicant->birth_cert)
                                 <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
@@ -162,7 +197,7 @@
                         </div>
                     </div>
                     @if(!$isSubmitted)
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;">Save Personal Info</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;"><i class="material-symbols-outlined fs-16 align-middle">save</i> Save & Continue</button>
                     @endif
                 </form>
             </div>
@@ -170,13 +205,14 @@
     </div>
 
     <!-- Section 2: Schools Attended -->
-    <div class="accordion-item border-0 rounded-3 mb-3">
+    <div class="accordion-item border-0 rounded-3 mb-3 {{ !$accessible['schools'] && !$isSubmitted ? 'opacity-50' : '' }}">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schoolsSection">
-                <i class="material-symbols-outlined me-2">school</i> Schools Attended
+            <button class="accordion-button fw-semibold {{ $openTab !== 'schoolsSection' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#schoolsSection" {{ !$accessible['schools'] && !$isSubmitted ? 'disabled' : '' }}>
+                <i class="material-symbols-outlined me-2">school</i> 2. Schools Attended
+                @if(!$accessible['schools'] && !$isSubmitted)<span class="badge bg-dark ms-auto me-2"><i class="material-symbols-outlined fs-14 align-middle">lock</i> Complete previous</span>@elseif($sections['schools'])<span class="badge bg-success ms-auto me-2">Complete</span>@else<span class="badge bg-secondary ms-auto me-2">Incomplete</span>@endif
             </button>
         </h2>
-        <div id="schoolsSection" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+        <div id="schoolsSection" class="accordion-collapse collapse {{ $openTab === 'schoolsSection' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 <form action="{{ route('applicant.application.schools') }}" method="POST">
                     @csrf
@@ -201,7 +237,7 @@
                     </div>
                     @if(!$isSubmitted)
                     <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addSchool"><i class="material-symbols-outlined fs-16 align-middle">add</i> Add School</button>
-                    <button type="submit" class="btn btn-primary btn-sm mt-2" style="background:#006633;border-color:#006633;">Save Schools</button>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2" style="background:#006633;border-color:#006633;"><i class="material-symbols-outlined fs-16 align-middle">save</i> Save & Continue</button>
                     @endif
                 </form>
             </div>
@@ -209,13 +245,14 @@
     </div>
 
     <!-- Section 3: O'Level Results -->
-    <div class="accordion-item border-0 rounded-3 mb-3">
+    <div class="accordion-item border-0 rounded-3 mb-3 {{ !$accessible['results'] && !$isSubmitted ? 'opacity-50' : '' }}">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#resultsSection">
-                <i class="material-symbols-outlined me-2">grading</i> O'Level Results
+            <button class="accordion-button fw-semibold {{ $openTab !== 'resultsSection' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#resultsSection" {{ !$accessible['results'] && !$isSubmitted ? 'disabled' : '' }}>
+                <i class="material-symbols-outlined me-2">grading</i> 3. O'Level Results <span class="text-danger">*</span>
+                @if(!$accessible['results'] && !$isSubmitted)<span class="badge bg-dark ms-auto me-2"><i class="material-symbols-outlined fs-14 align-middle">lock</i> Complete previous</span>@elseif($sections['results'])<span class="badge bg-success ms-auto me-2">Complete</span>@else<span class="badge bg-secondary ms-auto me-2">Incomplete</span>@endif
             </button>
         </h2>
-        <div id="resultsSection" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+        <div id="resultsSection" class="accordion-collapse collapse {{ $openTab === 'resultsSection' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 @php
                     $olevelResults = $application->olevelResults ?? collect();
@@ -311,7 +348,7 @@
                     </div>
 
                     @if(!$isSubmitted)
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;">Save O'Level Results</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;"><i class="material-symbols-outlined fs-16 align-middle">save</i> Save & Continue</button>
                     @endif
                 </form>
             </div>
@@ -319,13 +356,14 @@
     </div>
 
     <!-- Section 4: Sponsorship -->
-    <div class="accordion-item border-0 rounded-3 mb-3">
+    <div class="accordion-item border-0 rounded-3 mb-3 {{ !$accessible['sponsorship'] && !$isSubmitted ? 'opacity-50' : '' }}">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sponsorSection">
-                <i class="material-symbols-outlined me-2">volunteer_activism</i> Sponsorship
+            <button class="accordion-button fw-semibold {{ $openTab !== 'sponsorSection' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#sponsorSection" {{ !$accessible['sponsorship'] && !$isSubmitted ? 'disabled' : '' }}>
+                <i class="material-symbols-outlined me-2">volunteer_activism</i> 4. Sponsorship
+                @if(!$accessible['sponsorship'] && !$isSubmitted)<span class="badge bg-dark ms-auto me-2"><i class="material-symbols-outlined fs-14 align-middle">lock</i> Complete previous</span>@elseif($sections['sponsorship'])<span class="badge bg-success ms-auto me-2">Complete</span>@else<span class="badge bg-secondary ms-auto me-2">Incomplete</span>@endif
             </button>
         </h2>
-        <div id="sponsorSection" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+        <div id="sponsorSection" class="accordion-collapse collapse {{ $openTab === 'sponsorSection' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 <form action="{{ route('applicant.application.sponsorship') }}" method="POST">
                     @csrf
@@ -349,7 +387,7 @@
                         </div>
                     </div>
                     @if(!$isSubmitted)
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;">Save Sponsorship</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;"><i class="material-symbols-outlined fs-16 align-middle">save</i> Save & Continue</button>
                     @endif
                 </form>
             </div>
@@ -357,13 +395,14 @@
     </div>
 
     <!-- Section 5: Referees -->
-    <div class="accordion-item border-0 rounded-3 mb-3">
+    <div class="accordion-item border-0 rounded-3 mb-3 {{ !$accessible['referees'] && !$isSubmitted ? 'opacity-50' : '' }}">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#refereesSection">
-                <i class="material-symbols-outlined me-2">group</i> Referees (3 Required)
+            <button class="accordion-button fw-semibold {{ $openTab !== 'refereesSection' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#refereesSection" {{ !$accessible['referees'] && !$isSubmitted ? 'disabled' : '' }}>
+                <i class="material-symbols-outlined me-2">group</i> 5. Referees (3 Required)
+                @if(!$accessible['referees'] && !$isSubmitted)<span class="badge bg-dark ms-auto me-2"><i class="material-symbols-outlined fs-14 align-middle">lock</i> Complete previous</span>@elseif($sections['referees'])<span class="badge bg-success ms-auto me-2">Complete</span>@else<span class="badge bg-secondary ms-auto me-2">Incomplete</span>@endif
             </button>
         </h2>
-        <div id="refereesSection" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+        <div id="refereesSection" class="accordion-collapse collapse {{ $openTab === 'refereesSection' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 <form action="{{ route('applicant.application.referees') }}" method="POST">
                     @csrf
@@ -376,7 +415,7 @@
                     </div>
                     @endfor
                     @if(!$isSubmitted)
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;">Save Referees</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;"><i class="material-symbols-outlined fs-16 align-middle">save</i> Save & Continue</button>
                     @endif
                 </form>
             </div>
@@ -385,13 +424,14 @@
 
     <!-- Section 6: Declaration & Submit -->
     @if(!$isSubmitted)
-    <div class="accordion-item border-0 rounded-3 mb-3">
+    <div class="accordion-item border-0 rounded-3 mb-3 {{ !$accessible['declaration'] ? 'opacity-50' : '' }}">
         <h2 class="accordion-header">
-            <button class="accordion-button fw-semibold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#declarationSection">
-                <i class="material-symbols-outlined me-2">fact_check</i> Declaration & Submit
+            <button class="accordion-button fw-semibold {{ $openTab !== 'declarationSection' ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#declarationSection" {{ !$accessible['declaration'] ? 'disabled' : '' }}>
+                <i class="material-symbols-outlined me-2">fact_check</i> 6. Declaration & Submit
+                @if(!$accessible['declaration'])<span class="badge bg-dark ms-auto me-2"><i class="material-symbols-outlined fs-14 align-middle">lock</i> Complete all sections</span>@else<span class="badge bg-info ms-auto me-2">Ready to Submit</span>@endif
             </button>
         </h2>
-        <div id="declarationSection" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+        <div id="declarationSection" class="accordion-collapse collapse {{ $openTab === 'declarationSection' ? 'show' : '' }}" data-bs-parent="#applicationAccordion">
             <div class="accordion-body">
                 <form action="{{ route('applicant.application.submit') }}" method="POST" onsubmit="return confirm('Are you sure? You cannot edit after submission.')">
                     @csrf
