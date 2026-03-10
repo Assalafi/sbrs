@@ -129,7 +129,7 @@
                         <td><small>{{ $applicant->email }}</small></td>
                         <td><small>{{ $applicant->phone }}</small></td>
                         <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ $applicant->programme_type }}</span></td>
-                        <td><small>{{ $applicant->programme->name ?? '<em class="text-muted">Not Selected</em>' }}</small></td>
+                        <td><small>{!! $applicant->programme ? $applicant->programme->name : '<em class="text-muted">Not Selected</em>' !!}</small></td>
                         <td><span class="badge bg-{{ $statusColors[$applicant->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_', ' ', $applicant->status)) }}</span></td>
                         <td>
                             @if($hasPaid)
