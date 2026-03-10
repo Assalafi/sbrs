@@ -22,6 +22,7 @@
             <input type="checkbox" class="form-check-input" id="remember" name="remember">
             <label class="form-check-label" for="remember">Remember me</label>
         </div>
+        <a href="{{ route('applicant.forgot') }}" class="fw-medium text-decoration-none" style="color:#006633;">Forgot Password?</a>
     </div>
     <div class="form-group mb-4">
         <button type="submit" class="btn btn-primary fw-medium py-2 px-3 w-100" style="background:#006633;border-color:#006633;">

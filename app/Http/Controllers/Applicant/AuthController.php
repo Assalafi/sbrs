@@ -82,6 +82,63 @@ class AuthController extends Controller
         return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
     }
 
+    public function showForgotForm()
+    {
+        return view('auth.applicant-forgot');
+    }
+
+    public function verifyIdentity(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'phone' => 'required|string',
+        ]);
+
+        $applicant = Applicant::where('email', $request->email)
+            ->where('phone', $request->phone)
+            ->first();
+
+        if (!$applicant) {
+            return back()->withErrors(['email' => 'No account found with that email and phone combination.'])->onlyInput('email', 'phone');
+        }
+
+        $request->session()->put('applicant_reset_id', $applicant->id);
+
+        return redirect()->route('applicant.forgot.reset');
+    }
+
+    public function showResetForm(Request $request)
+    {
+        if (!$request->session()->has('applicant_reset_id')) {
+            return redirect()->route('applicant.forgot')->with('error', 'Please verify your identity first.');
+        }
+
+        $applicant = Applicant::find($request->session()->get('applicant_reset_id'));
+        if (!$applicant) {
+            return redirect()->route('applicant.forgot')->with('error', 'Invalid session. Please try again.');
+        }
+
+        return view('auth.applicant-reset', compact('applicant'));
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if (!$request->session()->has('applicant_reset_id')) {
+            return redirect()->route('applicant.forgot')->with('error', 'Session expired. Please verify again.');
+        }
+
+        $applicant = Applicant::findOrFail($request->session()->get('applicant_reset_id'));
+        $applicant->update(['password' => Hash::make($request->password)]);
+
+        $request->session()->forget('applicant_reset_id');
+
+        return redirect()->route('applicant.login')->with('success', 'Password reset successfully! You can now log in with your new password.');
+    }
+
     public function logout(Request $request)
     {
         Auth::guard('applicant')->logout();

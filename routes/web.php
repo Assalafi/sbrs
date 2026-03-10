@@ -59,6 +59,10 @@ Route::prefix('applicant')->group(function () {
     Route::post('/login', [ApplicantAuthController::class, 'login']);
     Route::get('/register', [ApplicantAuthController::class, 'showRegisterForm'])->name('applicant.register');
     Route::post('/register', [ApplicantAuthController::class, 'register']);
+    Route::get('/forgot-password', [ApplicantAuthController::class, 'showForgotForm'])->name('applicant.forgot');
+    Route::post('/forgot-password', [ApplicantAuthController::class, 'verifyIdentity'])->name('applicant.forgot.verify');
+    Route::get('/reset-password', [ApplicantAuthController::class, 'showResetForm'])->name('applicant.forgot.reset');
+    Route::post('/reset-password', [ApplicantAuthController::class, 'resetPassword'])->name('applicant.forgot.update');
     Route::post('/logout', [ApplicantAuthController::class, 'logout'])->name('applicant.logout');
 });
 
@@ -70,6 +74,10 @@ Route::prefix('applicant')->group(function () {
 Route::prefix('student')->group(function () {
     Route::get('/login', [StudentAuthController::class, 'showLoginForm'])->name('student.login');
     Route::post('/login', [StudentAuthController::class, 'login']);
+    Route::get('/forgot-password', [StudentAuthController::class, 'showForgotForm'])->name('student.forgot');
+    Route::post('/forgot-password', [StudentAuthController::class, 'verifyIdentity'])->name('student.forgot.verify');
+    Route::get('/reset-password', [StudentAuthController::class, 'showResetForm'])->name('student.forgot.reset');
+    Route::post('/reset-password', [StudentAuthController::class, 'resetPassword'])->name('student.forgot.update');
     Route::post('/logout', [StudentAuthController::class, 'logout'])->name('student.logout');
 });
 
