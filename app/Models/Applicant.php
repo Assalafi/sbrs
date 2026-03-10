@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\HasUuid;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class Applicant extends Authenticatable
+{
+    use HasUuid;
+
+    protected $guard = 'applicant';
+
+    protected $fillable = [
+        'application_number',
+        'surname',
+        'first_name',
+        'other_names',
+        'email',
+        'phone',
+        'password',
+        'programme_type',
+        'programme_id',
+        'subject_combination_id',
+        'academic_session_id',
+        'passport_photo',
+        'indigene_cert',
+        'primary_cert',
+        'ssce_cert',
+        'birth_cert',
+        'status',
+        'is_active',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'password' => 'hashed',
+    ];
+
+    public function programme()
+    {
+        return $this->belongsTo(Programme::class);
+    }
+
+    public function subjectCombination()
+    {
+        return $this->belongsTo(SubjectCombination::class);
+    }
+
+    public function academicSession()
+    {
+        return $this->belongsTo(AcademicSession::class);
+    }
+
+    public function ijmbApplication()
+    {
+        return $this->hasOne(IjmbApplication::class);
+    }
+
+    public function remedialApplication()
+    {
+        return $this->hasOne(RemedialApplication::class);
+    }
+
+    public function application()
+    {
+        if ($this->programme_type === 'IJMB') {
+            return $this->ijmbApplication();
+        }
+        return $this->remedialApplication();
+    }
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function student()
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->surname} {$this->first_name} {$this->other_names}");
+    }
+
+    public function hasPaidApplicationFee(): bool
+    {
+        return $this->payments()
+            ->where('payment_type', 'application')
+            ->where('status', 'successful')
+            ->exists();
+    }
+
+    public function hasPaidAdmissionFee(): bool
+    {
+        return $this->payments()
+            ->where('payment_type', 'admission')
+            ->where('status', 'successful')
+            ->exists();
+    }
+
+    public function getPendingPayment(string $type): ?Payment
+    {
+        return $this->payments()
+            ->where('payment_type', $type)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+    }
+
+    public static function generateApplicationNumber(): string
+    {
+        $session = AcademicSession::current();
+        $year2 = $session ? substr($session->name, 2, 2) : substr(date('Y'), 2, 2);
+        $prefix = "SBRS/{$year2}";
+
+        $lastApplicant = self::where('application_number', 'like', "{$prefix}/%")
+            ->orderBy('application_number', 'desc')
+            ->first();
+
+        if ($lastApplicant) {
+            $lastNumber = (int) substr($lastApplicant->application_number, -6);
+            $newNumber = str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '000001';
+        }
+
+        return "{$prefix}/{$newNumber}";
+    }
+}
