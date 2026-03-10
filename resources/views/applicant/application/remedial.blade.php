@@ -83,37 +83,6 @@
                             @endif
                         </div>
                     </div>
-                    <h6 class="fw-semibold mt-3 mb-2"><i class="material-symbols-outlined me-1 align-middle fs-16">upload_file</i> Document Uploads <small class="text-muted fw-normal">(Max 500KB each, JPG/PNG/PDF)</small></h6>
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Indigene Certificate <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control form-control-sm" name="indigene_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
-                            @if($applicant->indigene_cert)
-                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
-                            @endif
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Primary Certificate <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control form-control-sm" name="primary_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
-                            @if($applicant->primary_cert)
-                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
-                            @endif
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">SSCE Certificate <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control form-control-sm" name="ssce_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
-                            @if($applicant->ssce_cert)
-                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
-                            @endif
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label fw-medium">Birth Certificate <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control form-control-sm" name="birth_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
-                            @if($applicant->birth_cert)
-                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
-                            @endif
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="form-label fw-medium">Date of Birth</label>
@@ -214,6 +183,37 @@
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-medium">To (Year)</label>
                             <input type="text" class="form-control" name="primary_school_to" value="{{ $application->primary_school_to }}" placeholder="e.g. 2016" {{ $disabled }}>
+                        </div>
+                    </div>
+                    <h6 class="fw-semibold mt-3 mb-2"><i class="material-symbols-outlined me-1 align-middle fs-16">upload_file</i> Document Uploads <small class="text-muted fw-normal">(Max 500KB each, JPG/PNG/PDF)</small></h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-medium">Indigene Certificate <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control form-control-sm" name="indigene_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
+                            @if($applicant->indigene_cert)
+                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
+                            @endif
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-medium">Primary Certificate <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control form-control-sm" name="primary_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
+                            @if($applicant->primary_cert)
+                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
+                            @endif
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-medium">SSCE Certificate <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control form-control-sm" name="ssce_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
+                            @if($applicant->ssce_cert)
+                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
+                            @endif
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label fw-medium">Birth Certificate <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control form-control-sm" name="birth_cert" accept=".jpg,.jpeg,.png,.pdf" {{ $disabled }}>
+                            @if($applicant->birth_cert)
+                                <small class="text-success"><i class="material-symbols-outlined fs-16 align-middle">check_circle</i> Uploaded</small>
+                            @endif
                         </div>
                     </div>
                     @if(!$isSubmitted)
