@@ -309,7 +309,7 @@
                         <span class="material-symbols-outlined" style="color:#ff6b6b">biotech</span>
                     </div>
                     <h3>Remedial Programme</h3>
-                    <p>Pre-degree programme for students seeking admission into science-based courses.</p>
+                    <p>Pre-degree programme for students seeking admission into science and arts courses.</p>
                 </div>
                 <div class="hero-card">
                     <div class="icon" style="background:rgba(0,102,51,0.2)">
