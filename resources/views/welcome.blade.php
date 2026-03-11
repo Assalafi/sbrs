@@ -302,7 +302,7 @@
                         <span class="material-symbols-outlined" style="color:var(--secondary)">school</span>
                     </div>
                     <h3>IJMB Programme</h3>
-                    <p>Interim Joint Matriculation Board programme for direct entry admission (JAMB) into 200 level.</p>
+                    <p>Interim Joint Matriculation Board programme for direct entry (JAMB) admission into 200 level.</p>
                 </div>
                 <div class="hero-card">
                     <div class="icon" style="background:rgba(139,0,0,0.2)">
