@@ -302,7 +302,7 @@
                         <span class="material-symbols-outlined" style="color:var(--secondary)">school</span>
                     </div>
                     <h3>IJMB Programme</h3>
-                    <p>Interim Joint Matriculation Board programme for direct entry admission into 200 level.</p>
+                    <p>Interim Joint Matriculation Board programme for direct entry admission (JAMB) into 200 level.</p>
                 </div>
                 <div class="hero-card">
                     <div class="icon" style="background:rgba(139,0,0,0.2)">
@@ -345,7 +345,7 @@
                     </div>
                     <div class="card-body">
                         <ul>
-                            <li><span class="material-symbols-outlined">check_circle</span> Direct Entry into 200 Level</li>
+                            <li><span class="material-symbols-outlined">check_circle</span> Direct Entry (JAMB) into 200 Level</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Recognized by all Nigerian Universities</li>
                             <li><span class="material-symbols-outlined">check_circle</span> Arts, Social Sciences & Sciences</li>
                             <li><span class="material-symbols-outlined">check_circle</span> 12-month intensive programme</li>
