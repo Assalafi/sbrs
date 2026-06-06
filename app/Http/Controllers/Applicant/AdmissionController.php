@@ -35,4 +35,16 @@ class AdmissionController extends Controller
         $filename = 'admission_letter_' . str_replace('/', '_', $applicant->application_number) . '.pdf';
         return $pdf->download($filename);
     }
+
+    public function paymentConfirmation()
+    {
+        $applicant = Auth::guard('applicant')->user();
+
+        if ($applicant->status !== 'admitted') {
+            return redirect()->route('applicant.dashboard')
+                ->with('error', 'You have not been admitted yet.');
+        }
+
+        return view('applicant.admission.payment-confirmation', compact('applicant'));
+    }
 }

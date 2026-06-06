@@ -214,7 +214,7 @@ class PaymentController extends Controller
 
                 DB::commit();
 
-                return redirect()->route('applicant.admission.letter')
+                return redirect()->route('applicant.admission.payment-confirmation')
                     ->with('success', 'Admission fee verified! Your student account has been created. Use your applicant password to log in as a student.');
             } catch (\Exception $e) {
                 DB::rollBack();

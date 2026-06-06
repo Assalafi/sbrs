@@ -227,6 +227,7 @@ Route::prefix('applicant')->middleware(['applicant.auth'])->group(function () {
     // Admission
     Route::get('/admission/letter', [AdmissionController::class, 'letter'])->name('applicant.admission.letter');
     Route::get('/admission/download', [AdmissionController::class, 'downloadLetter'])->name('applicant.admission.download');
+    Route::get('/admission/payment-confirmation', [AdmissionController::class, 'paymentConfirmation'])->name('applicant.admission.payment-confirmation');
 });
 
 /*
