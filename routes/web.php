@@ -181,7 +181,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     });
 
     // Password Reset (for all user types)
-    Route::middleware('permission:users.view')->group(function () {
+    Route::middleware('permission:password-reset.view')->group(function () {
         Route::get('password-reset', [PasswordResetController::class, 'index'])->name('admin.password-reset.index');
         Route::post('password-reset/search', [PasswordResetController::class, 'search'])->name('admin.password-reset.search');
         Route::post('password-reset/reset', [PasswordResetController::class, 'reset'])->name('admin.password-reset.reset');

@@ -140,6 +140,8 @@
                     <span class="title">Users</span>
                 </a>
             </li>
+            @endcan
+            @can('password-reset.view')
             <li class="menu-item {{ request()->routeIs('admin.password-reset.*') ? 'open' : '' }}">
                 <a href="{{ route('admin.password-reset.index') }}" class="menu-link">
                     <i class="material-symbols-outlined menu-icon">lock_reset</i>
