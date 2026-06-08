@@ -95,8 +95,8 @@
 
                     @if($applicant->status === 'admitted')
                     <div class="col-md-6">
-                        <a href="{{ route('applicant.admission.letter') }}" class="btn btn-success w-100">
-                            <i class="material-symbols-outlined fs-16 align-middle">description</i> View Admission Letter
+                        <a href="{{ route('applicant.admission.payment-confirmation') }}" class="btn btn-success w-100">
+                            <i class="material-symbols-outlined fs-16 align-middle">description</i> View Admission Instructions
                         </a>
                     </div>
                     @endif
