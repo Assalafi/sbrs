@@ -140,6 +140,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     // Screening
     Route::middleware('permission:screening.view')->group(function () {
         Route::get('screening', [ScreeningController::class, 'index'])->name('admin.screening.index');
+        Route::get('screening/export', [ScreeningController::class, 'export'])->name('admin.screening.export');
         Route::get('screening/{student}', [ScreeningController::class, 'show'])->name('admin.screening.show');
         Route::post('screening/{student}/approve', [ScreeningController::class, 'approve'])->middleware('permission:screening.approve')->name('admin.screening.approve');
         Route::post('screening/{student}/reject', [ScreeningController::class, 'reject'])->middleware('permission:screening.reject')->name('admin.screening.reject');

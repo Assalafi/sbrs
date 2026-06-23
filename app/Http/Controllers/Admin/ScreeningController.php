@@ -64,4 +64,43 @@ class ScreeningController extends Controller
 
         return back()->with('success', 'Student screening rejected.');
     }
+
+    public function export(Request $request)
+    {
+        $query = Student::with(['programme', 'academicSession', 'applicant']);
+
+        if ($request->filled('screening_status')) {
+            $query->where('screening_status', $request->screening_status);
+        }
+        if ($request->filled('academic_session_id')) {
+            $query->where('academic_session_id', $request->academic_session_id);
+        }
+
+        $students = $query->orderBy('surname')->orderBy('first_name')->get();
+
+        $filename = 'screening_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($students) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Name', 'Phone', 'Application Number', 'Registration Number', 'Program', 'Screening Status', 'Session']);
+            foreach ($students as $s) {
+                fputcsv($file, [
+                    $s->surname . ' ' . $s->first_name,
+                    $s->phone ?? 'N/A',
+                    $s->applicant->application_number ?? 'N/A',
+                    $s->registration_number,
+                    $s->programme->name ?? 'N/A',
+                    ucfirst($s->screening_status),
+                    $s->academicSession->name ?? 'N/A',
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

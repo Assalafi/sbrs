@@ -4,11 +4,23 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Student Screening</h3>
+    <a href="{{ route('admin.screening.export', request()->only(['screening_status', 'academic_session_id'])) }}" class="btn btn-success btn-sm" style="background:#006633;border-color:#006633;">
+        <i class="material-symbols-outlined fs-16 align-middle">download</i> Export
+    </a>
 </div>
 
 <div class="card border-0 rounded-3 mb-4">
     <div class="card-body p-4">
         <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small">Session</label>
+                <select class="form-select form-select-sm" name="academic_session_id">
+                    <option value="">All</option>
+                    @foreach(\App\Models\AcademicSession::orderBy('name', 'desc')->get() as $session)
+                        <option value="{{ $session->id }}" {{ request('academic_session_id') == $session->id ? 'selected' : '' }}>{{ $session->name }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-2">
                 <label class="form-label small">Status</label>
                 <select class="form-select form-select-sm" name="screening_status">
