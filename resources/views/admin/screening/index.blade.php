@@ -4,9 +4,49 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Student Screening</h3>
-    <a href="{{ route('admin.screening.export', request()->only(['screening_status', 'academic_session_id'])) }}" class="btn btn-success btn-sm" style="background:#006633;border-color:#006633;">
+    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#exportModal" style="background:#006633;border-color:#006633;">
         <i class="material-symbols-outlined fs-16 align-middle">download</i> Export
-    </a>
+    </button>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Screening Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('admin.screening.export') }}" method="GET">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Session</label>
+                        <select class="form-select" name="academic_session_id">
+                            <option value="">All Sessions</option>
+                            @foreach(\App\Models\AcademicSession::orderBy('name', 'desc')->get() as $session)
+                                <option value="{{ $session->id }}" {{ request('academic_session_id') == $session->id ? 'selected' : '' }}>{{ $session->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Screening Status</label>
+                        <select class="form-select" name="screening_status">
+                            <option value="">All Status</option>
+                            @foreach(['pending','approved','rejected'] as $s)
+                                <option value="{{ $s }}" {{ request('screening_status') == $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" style="background:#006633;border-color:#006633;">
+                        <i class="material-symbols-outlined fs-16 align-middle">download</i> Export Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="card border-0 rounded-3 mb-4">

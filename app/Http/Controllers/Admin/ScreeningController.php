@@ -78,29 +78,49 @@ class ScreeningController extends Controller
 
         $students = $query->orderBy('surname')->orderBy('first_name')->get();
 
-        $filename = 'screening_' . date('Y-m-d_His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set headers
+        $sheet->setCellValue('A1', 'Name');
+        $sheet->setCellValue('B1', 'Phone');
+        $sheet->setCellValue('C1', 'Application Number');
+        $sheet->setCellValue('D1', 'Registration Number');
+        $sheet->setCellValue('E1', 'Program');
+        $sheet->setCellValue('F1', 'Screening Status');
+        $sheet->setCellValue('G1', 'Session');
+
+        // Style headers
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '006633']],
+            'font' => ['color' => ['rgb' => 'FFFFFF']],
         ];
+        $sheet->getStyle('A1:G1')->applyFromArray($headerStyle);
 
-        $callback = function() use ($students) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Name', 'Phone', 'Application Number', 'Registration Number', 'Program', 'Screening Status', 'Session']);
-            foreach ($students as $s) {
-                fputcsv($file, [
-                    $s->surname . ' ' . $s->first_name,
-                    $s->phone ?? 'N/A',
-                    $s->applicant->application_number ?? 'N/A',
-                    $s->registration_number,
-                    $s->programme->name ?? 'N/A',
-                    ucfirst($s->screening_status),
-                    $s->academicSession->name ?? 'N/A',
-                ]);
-            }
-            fclose($file);
-        };
+        // Add data
+        $row = 2;
+        foreach ($students as $s) {
+            $sheet->setCellValue('A' . $row, $s->surname . ' ' . $s->first_name);
+            $sheet->setCellValue('B' . $row, $s->phone ?? 'N/A');
+            $sheet->setCellValue('C' . $row, $s->applicant->application_number ?? 'N/A');
+            $sheet->setCellValue('D' . $row, $s->registration_number);
+            $sheet->setCellValue('E' . $row, $s->programme->name ?? 'N/A');
+            $sheet->setCellValue('F' . $row, ucfirst($s->screening_status));
+            $sheet->setCellValue('G' . $row, $s->academicSession->name ?? 'N/A');
+            $row++;
+        }
 
-        return response()->stream($callback, 200, $headers);
+        // Auto-size columns
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'screening_' . date('Y-m-d_His') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function() use ($writer) {
+            $writer->save('php://output');
+        }, $filename);
     }
 }
