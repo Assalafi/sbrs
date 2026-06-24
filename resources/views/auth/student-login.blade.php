@@ -4,14 +4,14 @@
 @section('auth-image', 'login.jpg')
 @section('auth-image-key', 'auth_student_login_image')
 @section('auth-title', 'Student Portal')
-@section('auth-subtitle', 'Sign in with your registration number')
+@section('auth-subtitle', 'Sign in with your registration number or email')
 
 @section('content')
 <form method="POST" action="{{ route('student.login') }}">
     @csrf
     <div class="form-group mb-4">
-        <label class="label text-secondary">Registration Number</label>
-        <input type="text" class="form-control h-55" name="registration_number" value="{{ old('registration_number') }}" required autofocus placeholder="e.g. SBRS/IJMB/2026/001">
+        <label class="label text-secondary">Registration Number or Email</label>
+        <input type="text" class="form-control h-55" name="login" value="{{ old('login') }}" required autofocus placeholder="e.g. SBRS/IJMB/2026/001 or email@example.com">
     </div>
     <div class="form-group mb-4">
         <label class="label text-secondary">Password</label>

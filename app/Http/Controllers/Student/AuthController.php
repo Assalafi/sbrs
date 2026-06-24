@@ -18,11 +18,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'registration_number' => 'required|string',
+            'login' => 'required|string',
             'password' => 'required',
         ]);
 
-        $student = \App\Models\Student::where('registration_number', $credentials['registration_number'])->first();
+        $student = Student::where('registration_number', $credentials['login'])
+            ->orWhere('email', $credentials['login'])
+            ->first();
 
         if ($student && \Illuminate\Support\Facades\Hash::check($credentials['password'], $student->password)) {
             if (!$student->is_active) {
@@ -33,7 +35,7 @@ class AuthController extends Controller
             return redirect()->intended(route('student.dashboard'));
         }
 
-        return back()->withErrors(['registration_number' => 'Invalid credentials.'])->onlyInput('registration_number');
+        return back()->withErrors(['login' => 'Invalid credentials.'])->onlyInput('login');
     }
 
     public function showForgotForm()
