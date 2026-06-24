@@ -109,20 +109,37 @@
     </div>
 </div>
 
-<div class="card border-0 rounded-3 mb-4">
-    <div class="card-header bg-primary text-white" style="background:#006633;">
-        <h5 class="mb-0"><i class="material-symbols-outlined me-2 align-middle">campaign</i>Notice Board</h5>
-    </div>
-    <div class="card-body p-4">
-        <div class="alert alert-info mb-0">
-            <h6 class="fw-bold mb-3"><i class="material-symbols-outlined align-middle me-1">notifications</i>All Newly Admitted IJMB Students (2026/2027 Academic Session)</h6>
-            <p class="mb-3">This is to inform all newly admitted students into the Interim Joint Matriculation Board (IJMB) Programme for the 2026/2027 Academic Session that they are required to report to the School of Basic and Remedial Studies on <strong>Monday, 29th June, 2026, at 10:00 a.m. prompt</strong> for the commencement of registration and lectures.</p>
-            <p class="mb-3">All admitted students are advised to come along with their admission documents and other relevant credentials necessary for registration.</p>
-            <p class="mb-3">Attendance is mandatory as important information regarding the programme will be communicated during the session.</p>
-            <p class="mb-0">Please be punctual and comply accordingly.</p>
-            <hr class="my-3">
-            <p class="mb-0 text-end fst-italic fw-medium">Signed<br>Management<br>School of Basic and Remedial Studies</p>
+<!-- Notice Board Modal -->
+<div class="modal fade" id="noticeModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="background:#006633;">
+                <h5 class="modal-title"><i class="material-symbols-outlined me-2 align-middle">campaign</i>Notice Board</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info mb-0">
+                    <h6 class="fw-bold mb-3"><i class="material-symbols-outlined align-middle me-1">notifications</i>All Newly Admitted IJMB Students (2026/2027 Academic Session)</h6>
+                    <p class="mb-3">This is to inform all newly admitted students into the Interim Joint Matriculation Board (IJMB) Programme for the 2026/2027 Academic Session that they are required to report to the School of Basic and Remedial Studies on <strong>Monday, 29th June, 2026, at 10:00 a.m. prompt</strong> for the commencement of registration and lectures.</p>
+                    <p class="mb-3">All admitted students are advised to come along with their admission documents and other relevant credentials necessary for registration.</p>
+                    <p class="mb-3">Attendance is mandatory as important information regarding the programme will be communicated during the session.</p>
+                    <p class="mb-0">Please be punctual and comply accordingly.</p>
+                    <hr class="my-3">
+                    <p class="mb-0 text-end fst-italic fw-medium">Signed<br>Management<br>School of Basic and Remedial Studies</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" style="background:#006633;border-color:#006633;" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show notice modal on page load
+    var noticeModal = new bootstrap.Modal(document.getElementById('noticeModal'));
+    noticeModal.show();
+});
+</script>
 @endsection
