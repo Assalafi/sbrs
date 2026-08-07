@@ -44,15 +44,14 @@ class HostelController extends Controller
     }
 
     /**
-     * Only remedial students are eligible to apply for hostel via this portal.
+     * All SBRS students (IJMB and Remedial) can apply for hostel via this portal.
      */
-    private function remedialStudentOrRedirect()
+    private function authStudentOrFail()
     {
         $student = Auth::guard('student')->user();
 
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return redirect()->route('student.dashboard')
-                ->with('error', 'Hostel application is only available to Remedial students.');
+        if (!$student) {
+            abort(401, 'Unauthorized');
         }
 
         return $student;
@@ -60,13 +59,8 @@ class HostelController extends Controller
 
     public function index()
     {
-        $student = Auth::guard('student')->user();
+        $student = $this->authStudentOrFail();
         $student->load(['programme', 'academicSession']);
-
-        if ($student->programme_type !== 'Remedial') {
-            return redirect()->route('student.dashboard')
-                ->with('error', 'Hostel application is only available to Remedial students.');
-        }
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
 
@@ -85,10 +79,7 @@ class HostelController extends Controller
 
     public function overview(Request $request)
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
         return response()->json($this->apiCall('get', 'overview', ['gender' => $gender]));
@@ -96,10 +87,7 @@ class HostelController extends Controller
 
     public function blocks(Request $request)
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
 
@@ -111,10 +99,7 @@ class HostelController extends Controller
 
     public function rooms(Request $request)
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
 
@@ -127,10 +112,7 @@ class HostelController extends Controller
 
     public function beds(Request $request)
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
 
@@ -144,10 +126,7 @@ class HostelController extends Controller
 
     public function reserve(Request $request)
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         $request->validate([
             'hall' => 'required|string',
@@ -170,10 +149,7 @@ class HostelController extends Controller
 
     public function status()
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         return response()->json($this->apiCall('get', 'status', [
             'registration_number' => $student->registration_number,
@@ -182,10 +158,7 @@ class HostelController extends Controller
 
     public function release()
     {
-        $student = Auth::guard('student')->user();
-        if (!$student || $student->programme_type !== 'Remedial') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $student = $this->authStudentOrFail();
 
         return response()->json($this->apiCall('post', 'release', [
             'registration_number' => $student->registration_number,
