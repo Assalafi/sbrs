@@ -33,6 +33,14 @@ class RemitaService
      */
     public function getServiceTypeId(?string $programmeType = null, ?string $feeType = null): string
     {
+        // Hostel fee uses its own dedicated service type ID
+        if (strtolower((string) $feeType) === 'hostel') {
+            $hostel = setting('remita_hostel_service_type_id');
+            if ($hostel) {
+                return $hostel;
+            }
+        }
+
         if ($programmeType && $feeType) {
             $key = 'remita_' . strtolower($programmeType) . '_' . strtolower($feeType) . '_service_type_id';
             $value = setting($key);

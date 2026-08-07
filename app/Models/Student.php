@@ -130,6 +130,14 @@ class Student extends Authenticatable
             ->exists();
     }
 
+    public function hasPaidHostelFee(): bool
+    {
+        return $this->payments()
+            ->where('payment_type', 'hostel')
+            ->where('status', 'successful')
+            ->exists();
+    }
+
     public static function generateRegistrationNumber(string $programmeType): string
     {
         $session = AcademicSession::current();

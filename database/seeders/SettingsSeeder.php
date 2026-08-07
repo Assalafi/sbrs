@@ -63,6 +63,8 @@ class SettingsSeeder extends Seeder
             ['group' => 'remita', 'key' => 'remita_remedial_admission_service_type_id', 'value' => '4430731', 'type' => 'text', 'description' => 'Service Type ID for Remedial Admission/Acceptance Fee'],
             ['group' => 'remita', 'key' => 'remita_remedial_registration_service_type_id', 'value' => '4430731', 'type' => 'text', 'description' => 'Service Type ID for Remedial Registration Fee'],
             ['group' => 'remita', 'key' => 'remita_remedial_exam_service_type_id', 'value' => '4430731', 'type' => 'text', 'description' => 'Service Type ID for Remedial Exam Fee'],
+            ['group' => 'remita', 'key' => 'remita_hostel_service_type_id', 'value' => '767540443', 'type' => 'text', 'description' => 'Service Type ID for Hostel Fee Payment'],
+            ['group' => 'remita', 'key' => 'remita_hostel_description', 'value' => 'HOSTEL-MAINTENANCE/FEES', 'type' => 'text', 'description' => 'Remita description for hostel fee payment'],
 
             // Auth Page Images
             ['group' => 'appearance', 'key' => 'auth_applicant_login_image', 'value' => null, 'type' => 'image', 'description' => 'Image displayed on the Applicant Login page'],

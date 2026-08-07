@@ -50,7 +50,12 @@
                 </tbody>
             </table>
         </div>
-        @if(strtolower($reservation['payment_method'] ?? '') === 'bank')
+        @if(($reservation['hostel_payment'] ?? 0) == 1)
+            <div class="alert alert-success mb-3">
+                <i class="material-symbols-outlined align-middle me-1">check_circle</i>
+                Your hostel fee has been <strong>paid and confirmed</strong>. Your allocation is complete.
+            </div>
+        @elseif(strtolower($reservation['payment_method'] ?? '') === 'bank')
             <div class="alert alert-info mb-3">
                 <i class="material-symbols-outlined align-middle me-1">account_balance</i>
                 Your hostel is on <strong>Bank (Cash)</strong> payment. Proceed to the Office of the Dean of Students (Student Affairs) to complete your payment and confirm your allocation.
@@ -60,6 +65,39 @@
                 <i class="material-symbols-outlined align-middle me-1">credit_card</i>
                 Your hostel is on <strong>Online</strong> payment. Complete your payment online to confirm your allocation.
             </div>
+            @if($payment && $payment->hasRrr())
+                <div class="bg-light p-4 rounded text-center mb-4">
+                    <p class="text-muted mb-2">Your RRR</p>
+                    <h2 class="text-primary mb-0" style="letter-spacing: 3px;">{{ $payment->rrr }}</h2>
+                    <p class="text-muted mt-2 mb-0">Amount: &#8358;{{ number_format($payment->amount, 2) }}</p>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <button type="button" onclick="makePayment()" class="btn btn-success btn-lg w-100">
+                            <i class="material-symbols-outlined me-2 align-middle">credit_card</i>Pay Online Now
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <form id="verify-form" action="{{ route('student.hostel.pay-verify') }}" method="GET">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="material-symbols-outlined me-2 align-middle">verified</i>Verify Payment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="text-center mb-3">
+                    <small class="text-muted">Or pay at any bank with RRR: <strong>{{ $payment->rrr }}</strong></small>
+                </div>
+            @else
+                <form action="{{ route('student.hostel.pay-initiate') }}" method="POST">
+                    @csrf
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" style="background:#006633;border-color:#006633;">
+                            <i class="material-symbols-outlined me-2 align-middle">receipt</i>Generate RRR & Continue
+                        </button>
+                    </div>
+                </form>
+            @endif
         @endif
         <button type="button" class="btn btn-outline-danger" onclick="releaseReservation()">
             <i class="material-symbols-outlined fs-16 align-middle">undo</i> Release Reservation
@@ -243,3 +281,7 @@
     }
 </script>
 @endpush
+
+@if(isset($payment) && $payment && $payment->hasRrr() && ($reservation['hostel_payment'] ?? 0) != 1)
+    @include('partials.remita-pay')
+@endif

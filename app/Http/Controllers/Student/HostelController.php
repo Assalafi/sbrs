@@ -3,13 +3,24 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
+use App\Models\Student;
+use App\Services\RemitaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class HostelController extends Controller
 {
+    protected RemitaService $remitaService;
+
+    public function __construct(RemitaService $remitaService)
+    {
+        $this->remitaService = $remitaService;
+    }
+
     private function getApiUrl()
     {
         return config('app.usp_hostel_api_url', env('USP_HOSTEL_API_URL', 'https://umstad.online/api/v1/hostel'));
@@ -67,9 +78,16 @@ class HostelController extends Controller
         $overview = $this->apiCall('get', 'overview', ['gender' => $gender]);
         $reservation = $this->apiCall('get', 'status', ['registration_number' => $student->registration_number]);
 
+        $payment = $student->payments()
+            ->where('payment_type', 'hostel')
+            ->where('status', Payment::STATUS_PENDING)
+            ->latest()
+            ->first();
+
         return view('student.hostel.index', [
             'student' => $student,
             'gender' => $gender,
+            'payment' => $payment,
             'overview' => $overview['data'] ?? [],
             'overviewError' => isset($overview['success']) && !$overview['success'] ? ($overview['message'] ?? 'Unable to reach hostel service.') : null,
             'reservation' => $reservation['data'] ?? null,
@@ -163,5 +181,106 @@ class HostelController extends Controller
         return response()->json($this->apiCall('post', 'release', [
             'registration_number' => $student->registration_number,
         ]));
+    }
+
+    /**
+     * Generate a Remita RRR for the reserved hostel bed.
+     */
+    public function payInitiate()
+    {
+        $student = $this->authStudentOrFail();
+
+        if ($student->hasPaidHostelFee()) {
+            return back()->with('info', 'Hostel fee already paid.');
+        }
+
+        $reservation = $this->apiCall('get', 'status', ['registration_number' => $student->registration_number]);
+        $reservationData = $reservation['data'] ?? null;
+
+        if (!$reservationData) {
+            return back()->with('error', 'No hostel reservation found. Please reserve a bed first.');
+        }
+
+        if (($reservationData['hostel_payment'] ?? 0) == 1) {
+            return back()->with('info', 'Hostel fee already paid.');
+        }
+
+        $amount = $reservationData['amount'] ?? 0;
+        if ($amount <= 0) {
+            return back()->with('error', 'Invalid hostel fee amount.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $existingPayment = $student->payments()
+                ->where('payment_type', 'hostel')
+                ->where('status', Payment::STATUS_PENDING)
+                ->latest()
+                ->first();
+
+            $payment = $existingPayment ?? new Payment();
+            $payment->fill([
+                'payable_type' => Student::class,
+                'payable_id' => $student->id,
+                'payment_type' => 'hostel',
+                'academic_session_id' => $student->academic_session_id,
+                'amount' => $amount,
+                'currency' => 'NGN',
+                'description' => 'Hostel Fee - ' . $student->programme_type,
+                'status' => Payment::STATUS_PENDING,
+            ]);
+            $payment->save();
+
+            $result = $this->remitaService->generateRRR($payment, [
+                'name' => $student->full_name,
+                'email' => $student->email,
+                'phone' => $student->phone,
+            ], null, 'hostel');
+
+            if (!$result['success']) {
+                DB::rollBack();
+                return back()->with('error', $result['message']);
+            }
+
+            DB::commit();
+            return back()->with('success', 'RRR generated: ' . $result['rrr']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Hostel Fee Init Failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'An error occurred.');
+        }
+    }
+
+    /**
+     * Verify the hostel fee payment and confirm to USP.
+     */
+    public function payVerify()
+    {
+        $student = $this->authStudentOrFail();
+
+        $payment = $student->payments()
+            ->where('payment_type', 'hostel')
+            ->where('status', Payment::STATUS_PENDING)
+            ->latest()
+            ->first();
+
+        if (!$payment || !$payment->hasRrr()) {
+            return back()->with('error', 'No pending payment found.');
+        }
+
+        $result = $this->remitaService->verifyPayment($payment);
+
+        if ($result['success'] && $result['status'] === 'successful') {
+            $payment->update(['verified_at' => now()]);
+
+            $confirm = $this->apiCall('post', 'confirm-payment', [
+                'registration_number' => $student->registration_number,
+            ]);
+
+            return redirect()->route('student.hostel.index')
+                ->with('success', 'Hostel fee verified and payment confirmed.');
+        }
+
+        return back()->with('info', $result['message'] ?? 'Payment not yet confirmed.');
     }
 }
