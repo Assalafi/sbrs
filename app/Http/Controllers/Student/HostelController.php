@@ -239,15 +239,25 @@ class HostelController extends Controller
 
             if (!$result['success']) {
                 DB::rollBack();
-                return back()->with('error', $result['message']);
+                Log::error('Hostel Fee RRR Generation Failed', [
+                    'registration_number' => $student->registration_number,
+                    'amount' => $amount,
+                    'message' => $result['message'] ?? 'Unknown error',
+                    'debug' => $result['debug'] ?? null,
+                ]);
+                return back()->with('error', 'RRR generation failed: ' . ($result['message'] ?? 'Unknown error'));
             }
 
             DB::commit();
             return back()->with('success', 'RRR generated: ' . $result['rrr']);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Hostel Fee Init Failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'An error occurred.');
+            Log::error('Hostel Fee Init Failed', [
+                'registration_number' => $student->registration_number,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'An error occurred while generating RRR: ' . $e->getMessage());
         }
     }
 
