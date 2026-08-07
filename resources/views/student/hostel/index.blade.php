@@ -29,7 +29,15 @@
                     <tr><td class="text-muted">Room:</td><td class="fw-bold">{{ $reservation['room'] }}</td></tr>
                     <tr><td class="text-muted">Bed:</td><td class="fw-bold">{{ $reservation['bed'] }}</td></tr>
                     <tr><td class="text-muted">Hostel Fee:</td><td class="fw-bold text-success">&#8358;{{ number_format($reservation['amount'] ?? 0, 2) }}</td></tr>
-                    <tr><td class="text-muted">Payment Method:</td><td>{{ $reservation['payment_method'] ?? 'Online' }}</td></tr>
+                    <tr><td class="text-muted">Payment Method:</td>
+                        <td>
+                            @if(strtolower($reservation['payment_method'] ?? '') === 'bank')
+                                <span class="badge bg-info">Bank (Cash)</span>
+                            @else
+                                <span class="badge bg-primary">Online</span>
+                            @endif
+                        </td>
+                    </tr>
                     <tr><td class="text-muted">Payment Status:</td>
                         <td>
                             @if(($reservation['hostel_payment'] ?? 0) == 1)
@@ -42,10 +50,17 @@
                 </tbody>
             </table>
         </div>
-        <div class="alert alert-info mb-3">
-            <i class="material-symbols-outlined align-middle me-1">info</i>
-            To complete your hostel allocation, please proceed to the Hostel/Student Affairs office or pay online as directed.
-        </div>
+        @if(strtolower($reservation['payment_method'] ?? '') === 'bank')
+            <div class="alert alert-info mb-3">
+                <i class="material-symbols-outlined align-middle me-1">account_balance</i>
+                Your hostel is on <strong>Bank (Cash)</strong> payment. Proceed to the Office of the Dean of Students (Student Affairs) to complete your payment and confirm your allocation.
+            </div>
+        @else
+            <div class="alert alert-info mb-3">
+                <i class="material-symbols-outlined align-middle me-1">credit_card</i>
+                Your hostel is on <strong>Online</strong> payment. Complete your payment online to confirm your allocation.
+            </div>
+        @endif
         <button type="button" class="btn btn-outline-danger" onclick="releaseReservation()">
             <i class="material-symbols-outlined fs-16 align-middle">undo</i> Release Reservation
         </button>
