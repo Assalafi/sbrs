@@ -264,4 +264,14 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
 
     // Results
     Route::get('/results', [StudentResultController::class, 'index'])->name('student.results.index');
+
+    // Hostel (Remedial students only)
+    Route::get('/hostel', [\App\Http\Controllers\Student\HostelController::class, 'index'])->name('student.hostel.index');
+    Route::get('/hostel/overview', [\App\Http\Controllers\Student\HostelController::class, 'overview'])->name('student.hostel.overview');
+    Route::get('/hostel/blocks', [\App\Http\Controllers\Student\HostelController::class, 'blocks'])->name('student.hostel.blocks');
+    Route::get('/hostel/rooms', [\App\Http\Controllers\Student\HostelController::class, 'rooms'])->name('student.hostel.rooms');
+    Route::get('/hostel/beds', [\App\Http\Controllers\Student\HostelController::class, 'beds'])->name('student.hostel.beds');
+    Route::post('/hostel/reserve', [\App\Http\Controllers\Student\HostelController::class, 'reserve'])->name('student.hostel.reserve');
+    Route::get('/hostel/status', [\App\Http\Controllers\Student\HostelController::class, 'status'])->name('student.hostel.status');
+    Route::post('/hostel/release', [\App\Http\Controllers\Student\HostelController::class, 'release'])->name('student.hostel.release');
 });

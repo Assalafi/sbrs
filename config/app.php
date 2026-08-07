@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | USP Hostel API
+    |--------------------------------------------------------------------------
+    |
+    | Base URL and shared secret used to consume the USP hostel API from the
+    | SBRS student portal (remedial students apply for hostel bed spaces).
+    |
+    */
+
+    'usp_hostel_api_url' => env('USP_HOSTEL_API_URL', 'https://umstad.online/api/v1/hostel'),
+    'usp_hostel_api_key' => env('USP_HOSTEL_API_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

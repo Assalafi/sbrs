@@ -98,6 +98,13 @@
                             <i class="material-symbols-outlined fs-16 align-middle">receipt_long</i> Exam Fee
                         </a>
                     </div>
+                    @if($student->programme_type === 'Remedial')
+                    <div class="col-md-6">
+                        <a href="{{ route('student.hostel.index') }}" class="btn btn-outline-primary w-100">
+                            <i class="material-symbols-outlined fs-16 align-middle">bed</i> Hostel Application
+                        </a>
+                    </div>
+                    @endif
                     <div class="col-md-6">
                         <a href="{{ route('student.password') }}" class="btn btn-outline-secondary w-100">
                             <i class="material-symbols-outlined fs-16 align-middle">lock</i> Change Password
