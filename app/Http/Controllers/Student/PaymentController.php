@@ -87,9 +87,11 @@ class PaymentController extends Controller
         $installment = null;
         $installmentLabel = null;
         $installmentTotal = null;
+        $isFullPayment = false;
 
         if ($request->mode === 'full') {
             $amount = $progress['remaining'];
+            $isFullPayment = true;
         } else {
             // split / installment
             $installment = $progress['installment'];
@@ -127,6 +129,7 @@ class PaymentController extends Controller
                 'installment' => $installment,
                 'installment_label' => $installmentLabel,
                 'installment_total' => $installmentTotal,
+                'is_full_payment' => $isFullPayment,
                 'academic_session_id' => $student->academic_session_id,
                 'amount' => $amount,
                 'currency' => 'NGN',
@@ -183,7 +186,11 @@ class PaymentController extends Controller
         $result = $this->remitaService->verifyPayment($payment);
 
         if ($result['success'] && $result['status'] === 'successful') {
-            $payment->update(['verified_at' => now()]);
+            $updates = ['verified_at' => now()];
+            if ($payment->is_full_payment) {
+                $updates['full_payment_at'] = now();
+            }
+            $payment->update($updates);
 
             // Side effect: registration fully paid -> mark registered
             if ($type->code === 'registration') {

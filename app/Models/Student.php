@@ -162,9 +162,12 @@ class Student extends Authenticatable
         $payments = $this->paymentsForType($paymentType);
         $paid = $payments->sum('amount');
 
-        // Legacy rule: any successful payment with installment IS NULL is 100% satisfied.
+        // Full-payment rule: any successful payment explicitly marked as a full
+        // payment (legacy 100% conversion or a "Pay Full" transaction) satisfies
+        // the type. Fallback: installment IS NULL also counts as full (covers any
+        // rows created before the flag was introduced).
         $legacyFull = $payments->contains(function ($p) {
-            return $p->installment === null;
+            return $p->is_full_payment || $p->installment === null;
         });
 
         if ($legacyFull || $paid >= $fullAmount) {
