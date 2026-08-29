@@ -14,7 +14,10 @@ class DashboardController extends Controller
         $student = Auth::guard('student')->user();
         $student->load(['programme', 'subjectCombination', 'academicSession', 'payments', 'courseRegistrations.course', 'results.course']);
 
-        return view('student.dashboard.index', compact('student'));
+        $dueTypes = $student->duePaymentTypes();
+        $requiredDue = $dueTypes->filter(fn ($t) => $t->is_required)->values();
+
+        return view('student.dashboard.index', compact('student', 'requiredDue', 'dueTypes'));
     }
 
     public function showPasswordForm()

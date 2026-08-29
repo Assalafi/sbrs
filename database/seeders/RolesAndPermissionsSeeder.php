@@ -72,6 +72,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'payments.verify',
             'payments.export',
 
+            // Payment Types
+            'payment-types.view',
+            'payment-types.create',
+            'payment-types.edit',
+            'payment-types.delete',
+
             // Courses
             'courses.view',
             'courses.create',

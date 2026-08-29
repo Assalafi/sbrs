@@ -19,6 +19,10 @@ class Payment extends Model
         'payable_type',
         'payable_id',
         'payment_type',
+        'payment_type_id',
+        'installment',
+        'installment_label',
+        'installment_total',
         'academic_session_id',
         'fee_id',
         'amount',
@@ -35,6 +39,8 @@ class Payment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'installment' => 'integer',
+        'installment_total' => 'integer',
         'gateway_response' => 'array',
         'paid_at' => 'datetime',
         'verified_at' => 'datetime',
@@ -53,6 +59,11 @@ class Payment extends Model
     public function fee()
     {
         return $this->belongsTo(Fee::class);
+    }
+
+    public function paymentType()
+    {
+        return $this->belongsTo(PaymentType::class);
     }
 
     public function hasRrr(): bool

@@ -65,6 +65,12 @@
                     <span class="title">Fee Management</span>
                 </a>
             </li>
+            <li class="menu-item {{ request()->routeIs('admin.payment-types.*') ? 'open' : '' }}">
+                <a href="{{ route('admin.payment-types.index') }}" class="menu-link">
+                    <i class="material-symbols-outlined menu-icon">settings_input_component</i>
+                    <span class="title">Payment Types</span>
+                </a>
+            </li>
             @endcan
             @can('payments.view')
             <li class="menu-item {{ request()->routeIs('admin.payments.*') ? 'open' : '' }}">

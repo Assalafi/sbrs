@@ -30,6 +30,8 @@ use App\Http\Controllers\Student\BiodataController;
 use App\Http\Controllers\Student\CourseRegistrationController;
 use App\Http\Controllers\Student\ExamController;
 use App\Http\Controllers\Student\ResultController as StudentResultController;
+use App\Http\Controllers\Student\PaymentController as StudentPaymentController;
+use App\Http\Controllers\Admin\PaymentTypeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +118,11 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     // Fees
     Route::middleware('permission:fees.view')->group(function () {
         Route::resource('fees', FeeController::class)->except(['show'])->names('admin.fees');
+    });
+
+    // Payment Types (configurable payments with split/required/remita)
+    Route::middleware('permission:fees.view')->group(function () {
+        Route::resource('payment-types', PaymentTypeController::class)->except(['show'])->names('admin.payment-types');
     });
 
     // Users
@@ -261,6 +268,11 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
     Route::get('/exam', [ExamController::class, 'index'])->name('student.exam.index');
     Route::post('/exam/initiate', [ExamController::class, 'initiatePayment'])->name('student.exam.initiate');
     Route::get('/exam/verify', [ExamController::class, 'verifyPayment'])->name('student.exam.verify');
+
+    // Generic Payments (configurable payment types, split/required)
+    Route::get('/payments', [StudentPaymentController::class, 'index'])->name('student.payments.index');
+    Route::post('/payments/initiate', [StudentPaymentController::class, 'initiate'])->name('student.payments.initiate');
+    Route::get('/payments/verify', [StudentPaymentController::class, 'verify'])->name('student.payments.verify');
 
     // Results
     Route::get('/results', [StudentResultController::class, 'index'])->name('student.results.index');

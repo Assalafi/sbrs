@@ -138,6 +138,111 @@ class Student extends Authenticatable
             ->exists();
     }
 
+    /**
+     * All payments applicable to this student against a given payment type.
+     */
+    public function paymentsForType($paymentType)
+    {
+        return $this->payments()
+            ->where(function ($q) use ($paymentType) {
+                $q->where('payment_type', $paymentType->code)
+                    ->orWhere('payment_type_id', $paymentType->id);
+            })
+            ->where('status', 'successful')
+            ->get();
+    }
+
+    /**
+     * Progress of a payment type for this student.
+     * Returns paid amount, full amount, fully_paid flag, and next installment info.
+     */
+    public function paymentTypeProgress($paymentType): array
+    {
+        $fullAmount = (float) $paymentType->amount;
+        $payments = $this->paymentsForType($paymentType);
+        $paid = $payments->sum('amount');
+
+        // Legacy rule: any successful payment with installment IS NULL is 100% satisfied.
+        $legacyFull = $payments->contains(function ($p) {
+            return $p->installment === null;
+        });
+
+        if ($legacyFull || $paid >= $fullAmount) {
+            return [
+                'paid' => $fullAmount,
+                'full_amount' => $fullAmount,
+                'remaining' => 0,
+                'fully_paid' => true,
+                'installment' => null,
+                'installment_label' => null,
+                'installment_amount' => null,
+                'installment_total' => null,
+            ];
+        }
+
+        // Next installment (for split)
+        $installment = null;
+        $installmentAmount = null;
+        $installmentLabel = null;
+        $installmentTotal = null;
+
+        if ($paymentType->split_enabled && $paymentType->installment_count > 1) {
+            $usedInstallments = $payments->whereNotNull('installment')->pluck('installment')->all();
+            for ($i = 1; $i <= $paymentType->installment_count; $i++) {
+                if (!in_array($i, $usedInstallments)) {
+                    $installment = $i;
+                    break;
+                }
+            }
+            $installmentTotal = $paymentType->installment_count;
+            if ($installment !== null) {
+                if ($installment === 1) {
+                    $installmentAmount = (float) ($paymentType->first_installment_amount ?: $fullAmount);
+                    $installmentLabel = 'First Installment (' . rtrim(rtrim((string) ($paymentType->split_percent ?: (100 / $paymentType->installment_count)), '0'), '.') . '%)';
+                } else {
+                    $installmentAmount = round($fullAmount - $paid, 2);
+                    $installmentLabel = 'Installment ' . $installment . ' of ' . $paymentType->installment_count;
+                }
+            }
+        }
+
+        return [
+            'paid' => $paid,
+            'full_amount' => $fullAmount,
+            'remaining' => round($fullAmount - $paid, 2),
+            'fully_paid' => false,
+            'installment' => $installment,
+            'installment_label' => $installmentLabel,
+            'installment_amount' => $installmentAmount,
+            'installment_total' => $installmentTotal,
+        ];
+    }
+
+    /**
+     * Payment types currently due for this student (active, matching programme + session, not fully paid).
+     */
+    public function duePaymentTypes()
+    {
+        $sessionId = $this->academic_session_id;
+
+        $types = PaymentType::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($sessionId) {
+                $q->where('academic_session_id', $sessionId)
+                    ->orWhereNull('academic_session_id');
+            })
+            ->where(function ($q) {
+                $q->where('programme_type', $this->programme_type)
+                    ->orWhere('programme_type', 'all');
+            })
+            ->orderBy('sort_order')
+            ->get();
+
+        return $types->filter(function ($type) {
+            return !$this->paymentTypeProgress($type)['fully_paid'];
+        })->values();
+    }
+
     public static function generateRegistrationNumber(string $programmeType): string
     {
         $session = AcademicSession::current();

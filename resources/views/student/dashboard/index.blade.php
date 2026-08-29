@@ -99,6 +99,14 @@
                         </a>
                     </div>
                     <div class="col-md-6">
+                        <a href="{{ route('student.payments.index') }}" class="btn btn-primary w-100" style="background:#006633;border-color:#006633;">
+                            <i class="material-symbols-outlined fs-16 align-middle">payments</i> Fee Payments
+                            @if($requiredDue->count() > 0)
+                                <span class="badge bg-danger ms-1">{{ $requiredDue->count() }} due</span>
+                            @endif
+                        </a>
+                    </div>
+                    <div class="col-md-6">
                         <a href="{{ route('student.hostel.index') }}" class="btn btn-outline-primary w-100">
                             <i class="material-symbols-outlined fs-16 align-middle">bed</i> Hostel Application
                         </a>
@@ -113,6 +121,41 @@
         </div>
     </div>
 </div>
+
+<!-- Required Payment Modal -->
+@if($requiredDue->count() > 0)
+<div class="modal fade" id="requiredPaymentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="material-symbols-outlined me-2 align-middle">payments</i>Outstanding Payment(s) Required</h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted">You have the following required payment(s) outstanding for this session. Please complete them to continue.</p>
+                <div class="list-group mb-3">
+                    @foreach($requiredDue as $type)
+                        @php $pr = $student->paymentTypeProgress($type); @endphp
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ $type->name }}</strong>
+                                @if($type->split_enabled && $pr['installment'] !== null)
+                                    <br><small class="text-muted">{{ $pr['installment_label'] }} (&#8358;{{ number_format($pr['installment_amount'], 2) }})</small>
+                                @endif
+                            </div>
+                            <span class="fw-bold text-danger">&#8358;{{ number_format($pr['remaining'], 2) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ route('student.payments.index') }}" class="btn btn-primary" style="background:#006633;border-color:#006633;">
+                    <i class="material-symbols-outlined fs-16 align-middle me-1">payments</i> Proceed to Payment
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Notice Board Modal -->
 <div class="modal fade" id="noticeModal" tabindex="-1" data-bs-backdrop="static">
@@ -142,9 +185,15 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Show notice modal on page load
-    var noticeModal = new bootstrap.Modal(document.getElementById('noticeModal'));
-    noticeModal.show();
+    // Show required payment modal first (if any), else notice board
+    var requiredModalEl = document.getElementById('requiredPaymentModal');
+    if (requiredModalEl) {
+        var requiredModal = new bootstrap.Modal(requiredModalEl);
+        requiredModal.show();
+    } else {
+        var noticeModal = new bootstrap.Modal(document.getElementById('noticeModal'));
+        noticeModal.show();
+    }
 });
 </script>
 @endsection

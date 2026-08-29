@@ -51,10 +51,10 @@ class RemitaService
         return $this->serviceTypeId;
     }
 
-    public function generateRRR(Payment $payment, array $payerDetails, ?string $programmeType = null, ?string $feeType = null): array
+    public function generateRRR(Payment $payment, array $payerDetails, ?string $programmeType = null, ?string $feeType = null, ?string $serviceTypeId = null): array
     {
         try {
-            $serviceTypeId = $this->getServiceTypeId($programmeType, $feeType);
+            $serviceTypeId = $serviceTypeId ?? $this->getServiceTypeId($programmeType, $feeType);
             $orderId = $this->generateOrderId();
             $hash = $this->generateHash($orderId, $payment->amount, $serviceTypeId);
 
