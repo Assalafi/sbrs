@@ -222,6 +222,11 @@ Route::prefix('applicant')->middleware(['applicant.auth'])->group(function () {
     Route::get('/payment/admission-fee/verify', [ApplicantPaymentController::class, 'verifyAdmissionFee'])->name('applicant.payment.admission-fee.verify');
     Route::get('/payment/callback', [ApplicantPaymentController::class, 'callback'])->name('applicant.payment.callback');
 
+    // Generic configurable payments (applicant/both payer types)
+    Route::get('/payments', [ApplicantPaymentController::class, 'index'])->name('applicant.payments.index');
+    Route::post('/payments/initiate', [ApplicantPaymentController::class, 'initiate'])->name('applicant.payments.initiate');
+    Route::get('/payments/verify', [ApplicantPaymentController::class, 'verify'])->name('applicant.payments.verify');
+
     // Application Form
     Route::get('/application', [ApplicationFormController::class, 'edit'])->name('applicant.application.edit');
     Route::post('/application/personal', [ApplicationFormController::class, 'updatePersonalInfo'])->name('applicant.application.personal');

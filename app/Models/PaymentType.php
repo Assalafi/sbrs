@@ -16,6 +16,7 @@ class PaymentType extends Model
         'description',
         'programme_type',
         'academic_session_id',
+        'payer_type',
         'amount',
         'split_enabled',
         'split_percent',
@@ -35,6 +36,26 @@ class PaymentType extends Model
         'sort_order' => 'integer',
         'installment_count' => 'integer',
     ];
+
+    /**
+     * Unique Remita service type IDs pulled from the settings table.
+     * Returns [value => label] for dropdowns.
+     */
+    public static function remitaServiceTypeOptions(): array
+    {
+        $values = \App\Models\Setting::where('key', 'like', 'remita%service_type_id%')
+            ->pluck('value')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $options = [];
+        foreach ($values as $value) {
+            $options[$value] = $value;
+        }
+        return $options;
+    }
 
     public function academicSession()
     {

@@ -12,12 +12,15 @@
             @csrf @method('PUT')
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="code" value="{{ old('code', $paymentType->code) }}" required placeholder="e.g. library_fee">
+                    <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="pt_name" name="name" value="{{ old('name', $paymentType->name) }}" required oninput="autoCode()">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="name" value="{{ old('name', $paymentType->name) }}" required>
+                    <label class="form-label fw-medium">Code <span class="text-danger">*</span> <small class="text-muted">(auto)</small></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="pt_code" name="code" value="{{ old('code', $paymentType->code) }}" required placeholder="auto-generated">
+                        <button type="button" class="btn btn-outline-secondary" onclick="autoCode(true)" title="Regenerate"><i class="material-symbols-outlined fs-18">refresh</i></button>
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-medium">Programme Type <span class="text-danger">*</span></label>
@@ -39,16 +42,31 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
+                    <label class="form-label fw-medium">Payer <span class="text-danger">*</span></label>
+                    <select class="form-select" name="payer_type" required>
+                        <option value="both" {{ old('payer_type', $paymentType->payer_type) == 'both' ? 'selected' : '' }}>Both (Applicants &amp; Students)</option>
+                        <option value="applicant" {{ old('payer_type', $paymentType->payer_type) == 'applicant' ? 'selected' : '' }}>Applicants only</option>
+                        <option value="student" {{ old('payer_type', $paymentType->payer_type) == 'student' ? 'selected' : '' }}>Students only</option>
+                    </select>
+                    <small class="text-muted">Applicants = before admission. Students = after admission.</small>
+                </div>
+                <div class="col-md-4 mb-3">
                     <label class="form-label fw-medium">Amount (&#8358;) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" class="form-control" name="amount" value="{{ old('amount', $paymentType->amount) }}" required>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-medium">Remita Service Type ID</label>
-                    <input type="text" class="form-control" name="remita_service_type_id" value="{{ old('remita_service_type_id', $paymentType->remita_service_type_id) }}" placeholder="e.g. 982250364">
-                </div>
             </div>
             <div class="row">
-                <div class="col-md-12 mb-3">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-medium">Remita Service Type ID</label>
+                    <select class="form-select" name="remita_service_type_id" id="remita_select">
+                        <option value="">-- Select from configured service types --</option>
+                        @foreach($remitaOptions as $val => $label)
+                            <option value="{{ $val }}" {{ old('remita_service_type_id', $paymentType->remita_service_type_id) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">Only unique service type IDs from settings are shown.</small>
+                </div>
+                <div class="col-md-6 mb-3">
                     <label class="form-label fw-medium">Description</label>
                     <textarea class="form-control" name="description" rows="2">{{ old('description', $paymentType->description) }}</textarea>
                 </div>
@@ -104,3 +122,40 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    var existingCodes = {!! json_encode(\App\Models\PaymentType::pluck('code')->map(fn($c) => strtolower($c))->all()) !!};
+    var currentCode = '{{ $paymentType->code }}';
+
+    function slugify(str) {
+        return str.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '_')
+            .replace(/-+/g, '_');
+    }
+
+    function autoCode(force) {
+        var name = document.getElementById('pt_name').value.trim();
+        var codeInput = document.getElementById('pt_code');
+        if (!name) { return; }
+        if (!force && codeInput.dataset.touched === '1' && codeInput.value) { return; }
+
+        var base = slugify(name);
+        var code = base;
+        var n = 1;
+        while (existingCodes.indexOf(code) !== -1 && code !== currentCode) {
+            n++;
+            code = base + '_' + n;
+        }
+        codeInput.value = code;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var codeInput = document.getElementById('pt_code');
+        codeInput.addEventListener('input', function () { codeInput.dataset.touched = '1'; });
+        autoCode(false);
+    });
+</script>
+@endpush

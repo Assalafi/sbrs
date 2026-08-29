@@ -238,6 +238,7 @@ class Student extends Authenticatable
                 $q->where('programme_type', $this->programme_type)
                     ->orWhere('programme_type', 'all');
             })
+            ->whereIn('payer_type', ['student', 'both'])
             ->orderBy('sort_order')
             ->get();
 

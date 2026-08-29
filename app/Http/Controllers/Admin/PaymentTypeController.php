@@ -18,7 +18,8 @@ class PaymentTypeController extends Controller
     public function create()
     {
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
-        return view('admin.payment-types.create', compact('sessions'));
+        $remitaOptions = PaymentType::remitaServiceTypeOptions();
+        return view('admin.payment-types.create', compact('sessions', 'remitaOptions'));
     }
 
     public function store(Request $request)
@@ -29,6 +30,7 @@ class PaymentTypeController extends Controller
             'description' => 'nullable|string',
             'programme_type' => 'required|in:IJMB,Remedial,all',
             'academic_session_id' => 'nullable|exists:academic_sessions,id',
+            'payer_type' => 'required|in:both,applicant,student',
             'amount' => 'required|numeric|min:0',
             'split_enabled' => 'boolean',
             'split_percent' => 'nullable|numeric|min:1|max:100',
@@ -48,7 +50,8 @@ class PaymentTypeController extends Controller
     public function edit(PaymentType $paymentType)
     {
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
-        return view('admin.payment-types.edit', compact('paymentType', 'sessions'));
+        $remitaOptions = PaymentType::remitaServiceTypeOptions();
+        return view('admin.payment-types.edit', compact('paymentType', 'sessions', 'remitaOptions'));
     }
 
     public function update(Request $request, PaymentType $paymentType)
@@ -59,6 +62,7 @@ class PaymentTypeController extends Controller
             'description' => 'nullable|string',
             'programme_type' => 'required|in:IJMB,Remedial,all',
             'academic_session_id' => 'nullable|exists:academic_sessions,id',
+            'payer_type' => 'required|in:both,applicant,student',
             'amount' => 'required|numeric|min:0',
             'split_enabled' => 'boolean',
             'split_percent' => 'nullable|numeric|min:1|max:100',

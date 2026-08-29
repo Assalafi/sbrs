@@ -17,6 +17,7 @@
                     <tr>
                         <th>Code</th>
                         <th>Name</th>
+                        <th>Payer</th>
                         <th>Programme</th>
                         <th>Session</th>
                         <th>Amount</th>
@@ -34,6 +35,15 @@
                             {{ $pt->name }}
                             @if($pt->description)
                                 <br><small class="text-muted">{{ $pt->description }}</small>
+                            @endif
+                        </td>
+                        <td>
+                            @if($pt->payer_type === 'applicant')
+                                <span class="badge bg-info">Applicant</span>
+                            @elseif($pt->payer_type === 'student')
+                                <span class="badge bg-primary">Student</span>
+                            @else
+                                <span class="badge bg-secondary">Both</span>
                             @endif
                         </td>
                         <td>{{ $pt->programme_type === 'all' ? 'All Programmes' : $pt->programme_type }}</td>
@@ -63,7 +73,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="9" class="text-center text-muted py-4">No payment types configured.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4">No payment types configured.</td></tr>
                     @endforelse
                 </tbody>
             </table>

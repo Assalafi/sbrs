@@ -116,6 +116,102 @@ class Applicant extends Authenticatable
     }
 
     /**
+     * Payment types due for this applicant (active, matching programme + session,
+     * payer type applicant/both, not fully paid).
+     */
+    public function duePaymentTypes()
+    {
+        $sessionId = $this->academic_session_id;
+
+        $types = PaymentType::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($sessionId) {
+                $q->where('academic_session_id', $sessionId)
+                    ->orWhereNull('academic_session_id');
+            })
+            ->where(function ($q) {
+                $q->where('programme_type', $this->programme_type)
+                    ->orWhere('programme_type', 'all');
+            })
+            ->whereIn('payer_type', ['applicant', 'both'])
+            ->orderBy('sort_order')
+            ->get();
+
+        return $types->filter(function ($type) {
+            return !$this->paymentTypeProgress($type)['fully_paid'];
+        })->values();
+    }
+
+    /**
+     * Progress of a payment type for this applicant (shared logic with Student).
+     */
+    public function paymentTypeProgress($paymentType): array
+    {
+        $fullAmount = (float) $paymentType->amount;
+        $payments = $this->payments()
+            ->where(function ($q) use ($paymentType) {
+                $q->where('payment_type', $paymentType->code)
+                    ->orWhere('payment_type_id', $paymentType->id);
+            })
+            ->where('status', 'successful')
+            ->get();
+
+        $paid = $payments->sum('amount');
+        $legacyFull = $payments->contains(function ($p) {
+            return $p->is_full_payment || $p->installment === null;
+        });
+
+        if ($legacyFull || $paid >= $fullAmount) {
+            return [
+                'paid' => $fullAmount,
+                'full_amount' => $fullAmount,
+                'remaining' => 0,
+                'fully_paid' => true,
+                'installment' => null,
+                'installment_label' => null,
+                'installment_amount' => null,
+                'installment_total' => null,
+            ];
+        }
+
+        $installment = null;
+        $installmentAmount = null;
+        $installmentLabel = null;
+        $installmentTotal = null;
+
+        if ($paymentType->split_enabled && $paymentType->installment_count > 1) {
+            $usedInstallments = $payments->whereNotNull('installment')->pluck('installment')->all();
+            for ($i = 1; $i <= $paymentType->installment_count; $i++) {
+                if (!in_array($i, $usedInstallments)) {
+                    $installment = $i;
+                    break;
+                }
+            }
+            $installmentTotal = $paymentType->installment_count;
+            if ($installment !== null) {
+                if ($installment === 1) {
+                    $installmentAmount = (float) ($paymentType->first_installment_amount ?: $fullAmount);
+                    $installmentLabel = 'First Installment (' . rtrim(rtrim((string) ($paymentType->split_percent ?: (100 / $paymentType->installment_count)), '0'), '.') . '%)';
+                } else {
+                    $installmentAmount = round($fullAmount - $paid, 2);
+                    $installmentLabel = 'Installment ' . $installment . ' of ' . $paymentType->installment_count;
+                }
+            }
+        }
+
+        return [
+            'paid' => $paid,
+            'full_amount' => $fullAmount,
+            'remaining' => round($fullAmount - $paid, 2),
+            'fully_paid' => false,
+            'installment' => $installment,
+            'installment_label' => $installmentLabel,
+            'installment_amount' => $installmentAmount,
+            'installment_total' => $installmentTotal,
+        ];
+    }
+
+    /**
      * Get completion status for each application form section.
      */
     public function getSectionCompletion(): array
