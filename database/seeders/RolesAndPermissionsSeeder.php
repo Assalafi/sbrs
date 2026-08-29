@@ -55,6 +55,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Applications
             'applications.view',
+            'applications.edit',
             'applications.approve',
             'applications.reject',
 
