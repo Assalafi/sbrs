@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\AcademicSession;
+use App\Models\Programme;
+use App\Models\SubjectCombination;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
@@ -50,6 +53,78 @@ class ApplicationController extends Controller
         }
 
         return view('admin.applications.show', compact('application'));
+    }
+
+    /**
+     * Show the edit form for an applicant's basic record and status.
+     */
+    public function edit(Applicant $application)
+    {
+        $application->load(['programme', 'subjectCombination', 'academicSession', 'student']);
+
+        $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        $programmes = Programme::orderBy('name')->get();
+        $combinations = SubjectCombination::orderBy('name')->get();
+
+        return view('admin.applications.edit', compact('application', 'sessions', 'programmes', 'combinations'));
+    }
+
+    /**
+     * Update the applicant's basic record + status.
+     * Changes propagate to the linked student record when present.
+     */
+    public function update(Request $request, Applicant $application)
+    {
+        $request->validate([
+            'surname' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'other_names' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:applicants,email,' . $application->id,
+            'phone' => 'nullable|string|max:20',
+            'programme_type' => 'required|in:IJMB,Remedial',
+            'programme_id' => 'required|exists:programmes,id',
+            'subject_combination_id' => 'nullable|exists:subject_combinations,id',
+            'academic_session_id' => 'required|exists:academic_sessions,id',
+            'status' => 'required|in:registered,payment_pending,form_filling,submitted,under_review,approved,rejected,admitted',
+            'is_active' => 'boolean',
+        ]);
+
+        $application->update($request->only([
+            'surname',
+            'first_name',
+            'other_names',
+            'email',
+            'phone',
+            'programme_type',
+            'programme_id',
+            'subject_combination_id',
+            'academic_session_id',
+            'status',
+        ]) + ['is_active' => $request->boolean('is_active')]);
+
+        // Propagate changes to the linked student record if it exists
+        $student = $application->student;
+        if ($student) {
+            $student->update([
+                'surname' => $application->surname,
+                'first_name' => $application->first_name,
+                'middle_name' => $application->other_names,
+                'email' => $application->email,
+                'phone' => $application->phone,
+                'programme_type' => $application->programme_type,
+                'programme_id' => $application->programme_id,
+                'subject_combination_id' => $application->subject_combination_id,
+                'academic_session_id' => $application->academic_session_id,
+            ]);
+        }
+
+        // If set to admitted and no student record yet, create one (matches the admission-fee flow)
+        if ($application->status === 'admitted' && !$student) {
+            Student::createFromApplicant($application, $application->password);
+        }
+
+        return redirect()->route('admin.applications.show', $application)
+            ->with('success', 'Application updated successfully.');
     }
 
     public function approve(Applicant $application)

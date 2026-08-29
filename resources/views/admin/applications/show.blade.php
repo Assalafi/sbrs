@@ -72,6 +72,11 @@
                     </form>
                 </div>
                 @endif
+
+                <hr>
+                <a href="{{ route('admin.applications.edit', $application) }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="material-symbols-outlined fs-16 align-middle">edit</i> Edit Application / Status
+                </a>
             </div>
         </div>
     </div>

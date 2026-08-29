@@ -137,12 +137,14 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
     // Applications
     Route::middleware('permission:applications.view')->group(function () {
-        Route::get('applications', [ApplicationController::class, 'index'])->name('admin.applications.index');
-        Route::get('applications/export', [ApplicationController::class, 'export'])->name('admin.applications.export');
-        Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('admin.applications.show');
-        Route::post('applications/{application}/approve', [ApplicationController::class, 'approve'])->middleware('permission:applications.approve')->name('admin.applications.approve');
-        Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->middleware('permission:applications.reject')->name('admin.applications.reject');
-        Route::post('applications/bulk-approve', [ApplicationController::class, 'bulkApprove'])->middleware('permission:applications.approve')->name('admin.applications.bulk-approve');
+    Route::get('applications', [ApplicationController::class, 'index'])->name('admin.applications.index');
+    Route::get('applications/export', [ApplicationController::class, 'export'])->name('admin.applications.export');
+    Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('admin.applications.show');
+    Route::get('applications/{application}/edit', [ApplicationController::class, 'edit'])->name('admin.applications.edit');
+    Route::put('applications/{application}', [ApplicationController::class, 'update'])->name('admin.applications.update');
+    Route::post('applications/{application}/approve', [ApplicationController::class, 'approve'])->middleware('permission:applications.approve')->name('admin.applications.approve');
+    Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->middleware('permission:applications.reject')->name('admin.applications.reject');
+    Route::post('applications/bulk-approve', [ApplicationController::class, 'bulkApprove'])->middleware('permission:applications.approve')->name('admin.applications.bulk-approve');
     });
 
     // Screening
