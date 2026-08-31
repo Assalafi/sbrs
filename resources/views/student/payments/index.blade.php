@@ -20,7 +20,7 @@
             </p>
             <div class="list-group">
                 @foreach($pendingPayments as $payment)
-                    @php $widgetKey = '-pay' . $payment->id; @endphp
+                    @php $widgetKey = 'Pay' . str_replace('-', '', $payment->id); @endphp
                     <div class="list-group-item border-0 rounded-3 shadow-sm mb-3">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                             <div>
@@ -160,7 +160,7 @@
                                 <i class="material-symbols-outlined align-middle me-1">check_circle</i> Fully Paid
                             </div>
                         @elseif($pending && $pending->hasRrr())
-                            @php $widgetKey = '-card' . $pending->id; @endphp
+                            @php $widgetKey = 'Card' . str_replace('-', '', $pending->id); @endphp
                             <div class="alert alert-warning mb-3 small">
                                 <i class="material-symbols-outlined align-middle me-1">schedule</i>
                                 A payment for this fee is pending with RRR <code>{{ $pending->rrr }}</code>. Complete it online, then verify below.
@@ -264,8 +264,8 @@
 @endsection
 
 @foreach($pendingPayments as $payment)
-    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => '-pay' . $payment->id])
-    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => '-card' . $payment->id])
+    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => 'Pay' . str_replace('-', '', $payment->id)])
+    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => 'Card' . str_replace('-', '', $payment->id)])
 @endforeach
 
 @push('scripts')
