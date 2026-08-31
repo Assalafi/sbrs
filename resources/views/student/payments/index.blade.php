@@ -16,10 +16,11 @@
         </div>
         <div class="card-body">
             <p class="text-muted small mb-3">
-                You have payment(s) already started but not yet confirmed. Please <strong>complete the payment</strong> at the Remita gateway using your RRR, then <strong>verify</strong> it — or cancel it to start a fresh one.
+                You have payment(s) already started but not yet confirmed. Please <strong>complete the payment</strong> online, then <strong>verify</strong> it — or cancel it to start a fresh one.
             </p>
             <div class="list-group">
                 @foreach($pendingPayments as $payment)
+                    @php $widgetKey = '-pay' . $payment->id; @endphp
                     <div class="list-group-item border-0 rounded-3 shadow-sm mb-3">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                             <div>
@@ -39,12 +40,14 @@
                                 </div>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ $payment->payment_url }}" target="_blank" class="btn btn-warning btn-sm">
-                                    <i class="material-symbols-outlined fs-16 align-middle me-1">payments</i> Complete Payment at Remita
-                                </a>
-                                <a href="{{ route('student.payments.verify', ['payment_type_id' => $payment->payment_type_id]) }}" class="btn btn-success btn-sm">
-                                    <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify Payment
-                                </a>
+                                <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning btn-sm">
+                                    <i class="material-symbols-outlined fs-16 align-middle me-1">credit_card</i> Pay Online Now
+                                </button>
+                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', ['payment_type_id' => $payment->payment_type_id]) }}" method="GET">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify Payment
+                                    </button>
+                                </form>
                                 <form action="{{ route('student.payments.cancel') }}" method="POST" onsubmit="return confirm('Cancel this pending payment and start a fresh one?');">
                                     @csrf
                                     <input type="hidden" name="payment_type_id" value="{{ $payment->payment_type_id }}">
@@ -157,17 +160,20 @@
                                 <i class="material-symbols-outlined align-middle me-1">check_circle</i> Fully Paid
                             </div>
                         @elseif($pending && $pending->hasRrr())
+                            @php $widgetKey = '-card' . $pending->id; @endphp
                             <div class="alert alert-warning mb-3 small">
                                 <i class="material-symbols-outlined align-middle me-1">schedule</i>
-                                A payment for this fee is pending with RRR <code>{{ $pending->rrr }}</code>. Complete it at Remita, then verify below.
+                                A payment for this fee is pending with RRR <code>{{ $pending->rrr }}</code>. Complete it online, then verify below.
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ $pending->payment_url }}" target="_blank" class="btn btn-warning btn-sm flex-fill">
-                                    <i class="material-symbols-outlined fs-16 align-middle me-1">payments</i> Complete Payment
-                                </a>
-                                <a href="{{ route('student.payments.verify', ['payment_type_id' => $type->id]) }}" class="btn btn-success btn-sm flex-fill">
-                                    <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify
-                                </a>
+                                <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning btn-sm flex-fill">
+                                    <i class="material-symbols-outlined fs-16 align-middle me-1">credit_card</i> Pay Online Now
+                                </button>
+                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', ['payment_type_id' => $type->id]) }}" method="GET" class="flex-fill">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify
+                                    </button>
+                                </form>
                             </div>
                         @else
                             @if($p['installment'] !== null && $type->split_enabled)
@@ -256,6 +262,11 @@
     </div>
 </div>
 @endsection
+
+@foreach($pendingPayments as $payment)
+    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => '-pay' . $payment->id])
+    @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => '-card' . $payment->id])
+@endforeach
 
 @push('scripts')
 <script>

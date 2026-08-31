@@ -59,14 +59,7 @@ class PaymentController extends Controller
             ->with('paymentType')
             ->where('status', Payment::STATUS_PENDING)
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($payment) {
-                $payment->payment_url = $this->remitaService->getPaymentUrl(
-                    $payment,
-                    route('student.payments.verify', ['payment_type_id' => $payment->payment_type_id])
-                );
-                return $payment;
-            });
+            ->get();
 
         // Payment history
         $history = $student->payments()
