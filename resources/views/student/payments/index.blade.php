@@ -43,14 +43,13 @@
                                 <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning btn-sm">
                                     <i class="material-symbols-outlined fs-16 align-middle me-1">credit_card</i> Pay Online Now
                                 </button>
-                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', ['payment_type_id' => $payment->payment_type_id]) }}" method="GET">
+                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', $payment) }}" method="GET">
                                     <button type="submit" class="btn btn-success btn-sm">
                                         <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify Payment
                                     </button>
                                 </form>
-                                <form action="{{ route('student.payments.cancel') }}" method="POST" onsubmit="return confirm('Cancel this pending payment and start a fresh one?');">
+                                <form action="{{ route('student.payments.cancel', $payment) }}" method="POST" onsubmit="return confirm('Cancel this pending payment and start a fresh one?');">
                                     @csrf
-                                    <input type="hidden" name="payment_type_id" value="{{ $payment->payment_type_id }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm">
                                         <i class="material-symbols-outlined fs-16 align-middle me-1">cancel</i> Cancel
                                     </button>
@@ -169,7 +168,7 @@
                                 <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning btn-sm flex-fill">
                                     <i class="material-symbols-outlined fs-16 align-middle me-1">credit_card</i> Pay Online Now
                                 </button>
-                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', ['payment_type_id' => $type->id]) }}" method="GET" class="flex-fill">
+                                <form id="verify-form{{ $widgetKey }}" action="{{ route('student.payments.verify', $pending) }}" method="GET" class="flex-fill">
                                     <button type="submit" class="btn btn-success btn-sm w-100">
                                         <i class="material-symbols-outlined fs-16 align-middle me-1">verified</i> Verify
                                     </button>

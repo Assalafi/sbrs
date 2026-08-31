@@ -175,23 +175,28 @@ class PaymentController extends Controller
     }
 
     /**
-     * Verify a pending payment for a given type and apply side effects.
+     * Verify a pending payment and apply side effects.
      */
-    public function verify(Request $request)
+    public function verify(Request $request, Payment $payment = null)
     {
         $student = $this->student();
 
-        $request->validate([
-            'payment_type_id' => 'required|exists:payment_types,id',
-        ]);
-
-        $type = PaymentType::findOrFail($request->payment_type_id);
-
-        $payment = $student->payments()
-            ->where('payment_type_id', $type->id)
-            ->where('status', Payment::STATUS_PENDING)
-            ->latest()
-            ->first();
+        if ($payment === null) {
+            $request->validate([
+                'payment_type_id' => 'required|exists:payment_types,id',
+            ]);
+            $payment = $student->payments()
+                ->where('payment_type_id', $request->payment_type_id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->latest()
+                ->first();
+        } else {
+            // Ensure the payment belongs to this student and is pending
+            $payment = $student->payments()
+                ->where('id', $payment->id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->first();
+        }
 
         if (!$payment || !$payment->hasRrr()) {
             return back()->with('error', 'No pending payment found for this fee.');
@@ -207,13 +212,16 @@ class PaymentController extends Controller
             $payment->update($updates);
 
             // Side effect: registration fully paid -> mark registered
-            if ($type->code === 'registration') {
-                $progress = $student->paymentTypeProgress($type);
-                if ($progress['fully_paid'] && !$student->is_registered) {
-                    $student->update([
-                        'is_registered' => true,
-                        'registered_at' => now(),
-                    ]);
+            if (($payment->payment_type ?? $payment->paymentType?->code) === 'registration') {
+                $type = $payment->paymentType ?? PaymentType::where('code', 'registration')->first();
+                if ($type) {
+                    $progress = $student->paymentTypeProgress($type);
+                    if ($progress['fully_paid'] && !$student->is_registered) {
+                        $student->update([
+                            'is_registered' => true,
+                            'registered_at' => now(),
+                        ]);
+                    }
                 }
             }
 
@@ -225,21 +233,27 @@ class PaymentController extends Controller
     }
 
     /**
-     * Cancel/abandon a pending payment for a type so the student can retry with a fresh RRR.
+     * Cancel/abandon a pending payment so the student can retry with a fresh RRR.
      */
-    public function cancel(Request $request)
+    public function cancel(Request $request, Payment $payment = null)
     {
         $student = $this->student();
 
-        $request->validate([
-            'payment_type_id' => 'required|exists:payment_types,id',
-        ]);
-
-        $payment = $student->payments()
-            ->where('payment_type_id', $request->payment_type_id)
-            ->where('status', Payment::STATUS_PENDING)
-            ->latest()
-            ->first();
+        if ($payment === null) {
+            $request->validate([
+                'payment_type_id' => 'required|exists:payment_types,id',
+            ]);
+            $payment = $student->payments()
+                ->where('payment_type_id', $request->payment_type_id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->latest()
+                ->first();
+        } else {
+            $payment = $student->payments()
+                ->where('id', $payment->id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->first();
+        }
 
         if (!$payment) {
             return back()->with('error', 'No pending payment found for this fee.');

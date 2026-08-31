@@ -279,8 +279,8 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
     // Generic Payments (configurable payment types, split/required)
     Route::get('/payments', [StudentPaymentController::class, 'index'])->name('student.payments.index');
     Route::post('/payments/initiate', [StudentPaymentController::class, 'initiate'])->name('student.payments.initiate');
-    Route::get('/payments/verify', [StudentPaymentController::class, 'verify'])->name('student.payments.verify');
-    Route::post('/payments/cancel', [StudentPaymentController::class, 'cancel'])->name('student.payments.cancel');
+    Route::get('/payments/verify/{payment}', [StudentPaymentController::class, 'verify'])->name('student.payments.verify');
+    Route::post('/payments/cancel/{payment}', [StudentPaymentController::class, 'cancel'])->name('student.payments.cancel');
 
     // Results
     Route::get('/results', [StudentResultController::class, 'index'])->name('student.results.index');
