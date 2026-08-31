@@ -41,11 +41,32 @@ class PaymentController extends Controller
         // Build progress for each due type
         $items = $dueTypes->map(function ($type) use ($student) {
             $progress = $student->paymentTypeProgress($type);
+            $pending = $student->payments()
+                ->where('payment_type_id', $type->id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->latest()
+                ->first();
             return [
                 'type' => $type,
                 'progress' => $progress,
+                'pending' => $pending,
             ];
         });
+
+        // Pending payments (RRR generated but not yet verified) - shown first so
+        // the student can continue / complete / verify them before starting new ones.
+        $pendingPayments = $student->payments()
+            ->with('paymentType')
+            ->where('status', Payment::STATUS_PENDING)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($payment) {
+                $payment->payment_url = $this->remitaService->getPaymentUrl(
+                    $payment,
+                    route('student.payments.verify', ['payment_type_id' => $payment->payment_type_id])
+                );
+                return $payment;
+            });
 
         // Payment history
         $history = $student->payments()
@@ -56,7 +77,7 @@ class PaymentController extends Controller
 
         $hasRequiredDue = $dueTypes->contains(fn ($t) => $t->is_required);
 
-        return view('student.payments.index', compact('student', 'items', 'history', 'hasRequiredDue'));
+        return view('student.payments.index', compact('student', 'items', 'history', 'hasRequiredDue', 'pendingPayments'));
     }
 
     /**
@@ -208,5 +229,35 @@ class PaymentController extends Controller
         }
 
         return back()->with('info', $result['message'] ?? 'Payment not yet confirmed.');
+    }
+
+    /**
+     * Cancel/abandon a pending payment for a type so the student can retry with a fresh RRR.
+     */
+    public function cancel(Request $request)
+    {
+        $student = $this->student();
+
+        $request->validate([
+            'payment_type_id' => 'required|exists:payment_types,id',
+        ]);
+
+        $payment = $student->payments()
+            ->where('payment_type_id', $request->payment_type_id)
+            ->where('status', Payment::STATUS_PENDING)
+            ->latest()
+            ->first();
+
+        if (!$payment) {
+            return back()->with('error', 'No pending payment found for this fee.');
+        }
+
+        $payment->update([
+            'status' => Payment::STATUS_CANCELLED,
+            'rrr' => null,
+            'order_id' => null,
+        ]);
+
+        return back()->with('success', 'Pending payment cancelled. You can start a fresh payment for this fee.');
     }
 }
