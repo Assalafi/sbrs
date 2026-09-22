@@ -67,6 +67,27 @@ class PaymentType extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /**
+     * Map this (possibly admin-created) payment type code to the legacy
+     * payments.payment_type enum category.
+     *
+     * Codes such as "registration_fee" or "late_examination" are valid in
+     * payment_types.code (free string) but are NOT valid values for the
+     * legacy payments.payment_type enum, so we store the closest category.
+     */
+    public function legacyType(): string
+    {
+        $code = strtolower($this->code);
+
+        foreach (['application', 'admission', 'registration', 'examination', 'hostel'] as $type) {
+            if (str_contains($code, $type)) {
+                return $type;
+            }
+        }
+
+        return 'other';
+    }
+
     public function getFirstInstallmentAmountAttribute(): ?float
     {
         if (!$this->split_enabled || $this->installment_count <= 1) {

@@ -348,7 +348,7 @@ class PaymentController extends Controller
             $payment->fill([
                 'payable_type' => Applicant::class,
                 'payable_id' => $applicant->id,
-                'payment_type' => $type->code,
+                'payment_type' => $type->legacyType(),
                 'payment_type_id' => $type->id,
                 'installment' => $installment,
                 'installment_label' => $installmentLabel,

@@ -138,7 +138,7 @@ class PaymentController extends Controller
             $payment->fill([
                 'payable_type' => Student::class,
                 'payable_id' => $student->id,
-                'payment_type' => $type->code,
+                'payment_type' => $type->legacyType(),
                 'payment_type_id' => $type->id,
                 'installment' => $installment,
                 'installment_label' => $installmentLabel,
@@ -212,7 +212,9 @@ class PaymentController extends Controller
             $payment->update($updates);
 
             // Side effect: registration fully paid -> mark registered
-            if (($payment->payment_type ?? $payment->paymentType?->code) === 'registration') {
+            $isRegistration = $payment->payment_type === 'registration'
+                || $payment->paymentType?->legacyType() === 'registration';
+            if ($isRegistration) {
                 $type = $payment->paymentType ?? PaymentType::where('code', 'registration')->first();
                 if ($type) {
                     $progress = $student->paymentTypeProgress($type);
