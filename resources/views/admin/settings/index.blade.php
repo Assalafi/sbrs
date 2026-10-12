@@ -26,7 +26,7 @@
                         'remita' => 'payment',
                         'footer' => 'copyright',
                         'application' => 'description',
-                        'student' => 'campaign',
+                        'announcements' => 'campaign',
                     ];
                     $groupColors = [
                         'general' => 'primary',
@@ -36,7 +36,7 @@
                         'remita' => 'danger',
                         'footer' => 'secondary',
                         'application' => 'danger',
-                        'student' => 'info',
+                        'announcements' => 'info',
                     ];
                     $icon = $groupIcons[$group] ?? 'settings';
                     $color = $groupColors[$group] ?? 'primary';
