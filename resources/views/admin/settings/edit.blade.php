@@ -28,6 +28,20 @@
                     <input type="text" class="form-control" id="{{ $setting->key }}" name="{{ $setting->key }}" value="{{ $setting->value }}">
                 @elseif($setting->type === 'textarea')
                     <textarea class="form-control" id="{{ $setting->key }}" name="{{ $setting->key }}" rows="3">{{ $setting->value }}</textarea>
+                @elseif($setting->type === 'richtext')
+                    <div class="sbrs-rich-editor" data-rich-editor-wrapper>
+                        <div class="sbrs-rich-toolbar" role="toolbar" aria-label="Text formatting tools">
+                            <select class="sbrs-rich-format" data-rich-format aria-label="Text style">
+                                <option value="p">Paragraph</option><option value="h2">Heading</option><option value="h3">Small heading</option>
+                            </select><span class="sbrs-rich-divider"></span>
+                            <button type="button" data-command="bold" title="Bold"><i class="fas fa-bold"></i></button><button type="button" data-command="italic" title="Italic"><i class="fas fa-italic"></i></button><button type="button" data-command="underline" title="Underline"><i class="fas fa-underline"></i></button><button type="button" data-command="strikeThrough" title="Strikethrough"><i class="fas fa-strikethrough"></i></button><span class="sbrs-rich-divider"></span>
+                            <button type="button" data-command="justifyLeft" title="Align left"><i class="fas fa-align-left"></i></button><button type="button" data-command="justifyCenter" title="Align center"><i class="fas fa-align-center"></i></button><button type="button" data-command="justifyRight" title="Align right"><i class="fas fa-align-right"></i></button><button type="button" data-command="justifyFull" title="Justify"><i class="fas fa-align-justify"></i></button><span class="sbrs-rich-divider"></span>
+                            <button type="button" data-command="insertUnorderedList" title="Bulleted list"><i class="fas fa-list-ul"></i></button><button type="button" data-command="insertOrderedList" title="Numbered list"><i class="fas fa-list-ol"></i></button><button type="button" data-command="createLink" title="Insert link"><i class="fas fa-link"></i></button><button type="button" data-command="removeFormat" title="Clear formatting"><i class="fas fa-eraser"></i></button><span class="sbrs-rich-divider"></span><button type="button" data-command="undo" title="Undo"><i class="fas fa-undo"></i></button><button type="button" data-command="redo" title="Redo"><i class="fas fa-redo"></i></button>
+                        </div>
+                        <div class="sbrs-rich-surface" data-rich-surface contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true">{!! $setting->value !!}</div>
+                        <textarea class="d-none" name="{{ $setting->key }}" data-rich-source>{{ $setting->value }}</textarea>
+                    </div>
+                    <small class="text-muted d-block mt-2"><i class="fas fa-pen me-1"></i>Use headings, emphasis, lists, links and left, centre, right or justified alignment.</small>
                 @elseif($setting->type === 'boolean')
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="{{ $setting->key }}" name="{{ $setting->key }}" {{ $setting->value ? 'checked' : '' }}>
@@ -65,3 +79,14 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.sbrs-rich-editor{overflow:hidden;border:1px solid #d6e2eb;border-radius:.5rem;background:#fff}.sbrs-rich-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem;padding:.45rem;border-bottom:1px solid #d6e2eb;background:#f7fafc}.sbrs-rich-toolbar button,.sbrs-rich-format{display:inline-flex;align-items:center;justify-content:center;min-width:2.1rem;height:2rem;border:1px solid transparent;border-radius:.3rem;background:transparent;color:#39566b;cursor:pointer}.sbrs-rich-toolbar button:hover,.sbrs-rich-toolbar button:focus,.sbrs-rich-format:focus{border-color:#8fc5e3;background:#eaf6fd;color:#126d9f;outline:none}.sbrs-rich-format{min-width:8.5rem;justify-content:flex-start;padding:0 .45rem;background:#fff}.sbrs-rich-divider{width:1px;height:1.4rem;margin:0 .2rem;background:#d6e2eb}.sbrs-rich-surface{min-height:180px;padding:.85rem 1rem;color:#243b4d;line-height:1.6;outline:none}.sbrs-rich-surface:focus{box-shadow:inset 0 0 0 2px rgba(0,102,51,.15)}.sbrs-rich-surface p,.sbrs-rich-surface h2,.sbrs-rich-surface h3,.sbrs-rich-surface h4,.sbrs-rich-surface blockquote{margin:0 0 .55rem}.sbrs-rich-surface ul,.sbrs-rich-surface ol{margin:.25rem 0 .65rem;padding-left:1.4rem}.sbrs-rich-surface blockquote{border-left:3px solid #b7dec5;padding-left:.8rem;color:#587284}@media(max-width:576px){.sbrs-rich-toolbar{gap:.1rem}.sbrs-rich-toolbar button{min-width:1.95rem}}
+</style>
+@endpush
+@push('scripts')
+<script>
+(function(){function init(){document.querySelectorAll('[data-rich-editor-wrapper]').forEach(function(wrapper){var surface=wrapper.querySelector('[data-rich-surface]'),source=wrapper.querySelector('[data-rich-source]');if(!surface||!source)return;var sync=function(){source.value=surface.innerHTML;};wrapper.querySelectorAll('[data-command]').forEach(function(button){button.addEventListener('mousedown',function(e){e.preventDefault();});button.addEventListener('click',function(){var command=button.getAttribute('data-command');surface.focus();if(command==='createLink'){var url=window.prompt('Enter the link address','https://');if(url)document.execCommand(command,false,url.trim());}else{document.execCommand(command,false,null);}sync();});});var format=wrapper.querySelector('[data-rich-format]');if(format)format.addEventListener('change',function(){surface.focus();document.execCommand('formatBlock',false,'<'+format.value+'>');sync();});surface.addEventListener('input',sync);var form=wrapper.closest('form');if(form)form.addEventListener('submit',sync,true);sync();});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+</script>
+@endpush

@@ -158,6 +158,7 @@
 @endif
 
 <!-- Notice Board Modal -->
+@if(trim((string) ($dashboardNotice ?? '')) !== '')
 <div class="modal fade" id="noticeModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -166,15 +167,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-info mb-0">
-                    <h6 class="fw-bold mb-3"><i class="material-symbols-outlined align-middle me-1">notifications</i>All Newly Admitted IJMB Students (2026/2027 Academic Session)</h6>
-                    <p class="mb-3">This is to inform all newly admitted students into the Interim Joint Matriculation Board (IJMB) Programme for the 2026/2027 Academic Session that they are required to report to the School of Basic and Remedial Studies on <strong>Monday, 29th June, 2026, at 10:00 a.m. prompt</strong> for the commencement of registration and lectures.</p>
-                    <p class="mb-3">All admitted students are advised to come along with their admission documents and other relevant credentials necessary for registration.</p>
-                    <p class="mb-3">Attendance is mandatory as important information regarding the programme will be communicated during the session.</p>
-                    <p class="mb-0">Please be punctual and comply accordingly.</p>
-                    <hr class="my-3">
-                    <p class="mb-0 text-end fst-italic fw-medium">Signed<br>Management<br>School of Basic and Remedial Studies</p>
-                </div>
+                <div class="alert alert-info mb-0 sbrs-dashboard-notice">{!! $dashboardNotice !!}</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" style="background:#006633;border-color:#006633;" data-bs-dismiss="modal">Close</button>
@@ -182,6 +175,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -191,9 +185,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var requiredModal = new bootstrap.Modal(requiredModalEl);
         requiredModal.show();
     } else {
-        var noticeModal = new bootstrap.Modal(document.getElementById('noticeModal'));
-        noticeModal.show();
+        var noticeElement = document.getElementById('noticeModal');
+        if (noticeElement) new bootstrap.Modal(noticeElement).show();
     }
 });
 </script>
+<style>.sbrs-dashboard-notice{line-height:1.65}.sbrs-dashboard-notice h2,.sbrs-dashboard-notice h3,.sbrs-dashboard-notice h4,.sbrs-dashboard-notice p,.sbrs-dashboard-notice ul,.sbrs-dashboard-notice ol,.sbrs-dashboard-notice blockquote{margin-top:0;margin-bottom:.85rem}.sbrs-dashboard-notice ul,.sbrs-dashboard-notice ol{padding-left:1.35rem}.sbrs-dashboard-notice p:last-child,.sbrs-dashboard-notice ul:last-child,.sbrs-dashboard-notice ol:last-child{margin-bottom:0}.sbrs-dashboard-notice a{font-weight:600}</style>
 @endsection
