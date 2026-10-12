@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="{{ asset('assets/css/student-portal.css') }}?v=20261012">
 </head>
 <body class="student-login-page student-portal">
-    @include('partials.preloader')
     <div class="student-login-shell">
         <section class="student-login-visual" aria-label="Student portal introduction">
             <img class="student-login-logo" src="{{ setting_image('main_logo') ?? asset('assets/images/favicon.png') }}" alt="{{ setting('site_name', 'SBRS Portal') }}">
