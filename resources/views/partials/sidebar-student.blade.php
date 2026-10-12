@@ -54,7 +54,7 @@
             <span class="material-symbols-outlined">payments</span><span>Payments</span>
         </a>
         <a href="{{ route('student.hostel.index') }}" class="student-nav-link {{ request()->routeIs('student.hostel.*') ? 'active' : '' }}">
-            <span class="material-symbols-outlined">bed</span><span>Hostel</span>
+            <span class="material-symbols-outlined">bed</span><span>Hostel Application</span>
         </a>
         <a href="{{ route('student.biodata.index') }}" class="student-nav-link {{ request()->routeIs('student.biodata.*') ? 'active' : '' }}">
             <span class="material-symbols-outlined">badge</span><span>My bio-data</span>

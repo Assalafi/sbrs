@@ -134,6 +134,79 @@
 .student-action-link .leading { display: flex; align-items: center; gap: .55rem; }
 .student-action-link .material-symbols-outlined { color: var(--sp-primary); font-size: 20px; }
 
+/* Payments */
+.payment-page-heading { margin-bottom: .8rem; }
+.payment-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .75rem; margin-bottom: 1rem; }
+.payment-summary-card { display: flex; align-items: center; gap: .7rem; min-width: 0; padding: .9rem 1rem; border: 1px solid var(--sp-border); border-radius: 15px; background: #fff; box-shadow: 0 7px 18px rgba(28,61,48,.045); }
+.payment-summary-icon { width: 39px; height: 39px; display: grid; place-items: center; flex: 0 0 39px; border-radius: 12px; }
+.payment-summary-icon-warning { color: #9b6a04; background: #fff5d9; }
+.payment-summary-icon-danger { color: #a24040; background: #fff0ee; }
+.payment-summary-icon-success { color: var(--sp-primary); background: var(--sp-primary-soft); }
+.payment-summary-card strong { display: block; font-size: 1.2rem; line-height: 1.05; }
+.payment-summary-card small { display: block; margin-top: .2rem; color: var(--sp-muted); font-size: .68rem; }
+.payment-pending-panel { border-left: 4px solid #e5a526 !important; }
+.payment-pending-layout { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.payment-pending-item { border: 1px solid var(--sp-border) !important; border-radius: 13px !important; background: #fff; }
+.payment-pending-item h6 { font-size: .9rem; }
+.payment-pending-item code { word-break: break-all; }
+.payment-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .45rem; }
+.payment-actions form { display: inline-flex; }
+.payment-student-summary { background: linear-gradient(135deg,#fff,#f2faf5); }
+.payment-items-grid > [class*="col-"] { display: flex; }
+.payment-card { width: 100%; }
+.payment-card .card-header h5 { font-size: .92rem; }
+.payment-metric { min-height: 73px; display: flex; flex-direction: column; justify-content: center; padding: .55rem .35rem; border-radius: 11px; background: #f5f8f6; }
+.payment-metric .fs-4 { font-size: 1.02rem !important; line-height: 1.2; }
+.payment-metric small { font-size: .65rem; }
+.payment-metric-total { background: #edf8f1; }
+.payment-metric-paid { background: #eef1ff; }
+.payment-metric-remaining { background: #fff7e5; }
+.payment-history .card-body { padding-top: .85rem; }
+@media (max-width: 767.98px) {
+    .payment-summary-grid { grid-template-columns: 1fr; }
+    .payment-pending-layout { align-items: stretch; flex-direction: column; }
+    .payment-actions { justify-content: stretch; }
+    .payment-actions > *, .payment-actions form, .payment-actions button { flex: 1 1 100%; width: 100%; }
+    .payment-student-summary .text-md-end { text-align: left !important; }
+    .payment-card .card-header { align-items: flex-start !important; flex-direction: column; gap: .5rem; }
+    .payment-card .card-header > div { display: flex; flex-wrap: wrap; gap: .35rem; }
+}
+
+/* Hostel application */
+.hostel-hero { display: flex; align-items: center; gap: .8rem; padding: 1rem 1.1rem; border: 1px solid #cce5d5; border-radius: 17px; background: linear-gradient(120deg,#e9f8ef,#f8fcf9); }
+.hostel-hero-icon { width: 43px; height: 43px; display: grid; place-items: center; flex: 0 0 43px; border-radius: 13px; color: var(--sp-primary); background: #fff; }
+.hostel-hero strong { display: block; font-size: .9rem; }
+.hostel-hero p { margin: .2rem 0 0; color: var(--sp-muted); font-size: .74rem; line-height: 1.45; }
+.hostel-hero-status { margin-left: auto; padding: .35rem .6rem; border-radius: 999px; color: var(--sp-primary-dark); background: #d7f0df; font-size: .68rem; font-weight: 800; white-space: nowrap; }
+.hostel-reservation-banner { display: flex; align-items: center; gap: .65rem; margin-bottom: 1rem; padding: .75rem .85rem; border-radius: 12px; color: var(--sp-primary-dark); background: var(--sp-primary-soft); }
+.hostel-reservation-banner > .material-symbols-outlined { font-size: 22px; }
+.hostel-reservation-banner strong, .hostel-reservation-banner small { display: block; }
+.hostel-reservation-banner strong { font-size: .82rem; }
+.hostel-reservation-banner small { margin-top: .16rem; color: var(--sp-muted); font-size: .7rem; }
+.hostel-reservation-card .table-responsive { border: 0; }
+.hostel-reservation-card .table { min-width: 0; }
+.hostel-reservation-card .table td { padding: .7rem .4rem; border-color: #edf3ef; }
+.hostel-reservation-card .table td:first-child { width: 42%; }
+.hostel-selection-grid > [class*="col-"] { min-width: 0; }
+.hostel-selection-grid .form-label { color: var(--sp-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; }
+.hostel-stat-strip { border: 1px solid var(--sp-border); background: #f7faf8; }
+.hostel-stat-strip h4 { font-size: 1.1rem; font-weight: 850; }
+.hostel-stat-strip small { font-size: .67rem; }
+.hostel-pin-form { max-width: 650px; }
+.hostel-pin-form .input-group { align-items: stretch; }
+.hostel-pin-form .input-group .form-control { min-width: 0; }
+@media (max-width: 575.98px) {
+    .hostel-hero { align-items: flex-start; flex-wrap: wrap; }
+    .hostel-hero-status { width: 100%; margin-left: 3.25rem; text-align: center; }
+    .hostel-pin-form .input-group { flex-direction: column; gap: .55rem; }
+    .hostel-pin-form .input-group > * { width: 100%; border-radius: 10px !important; }
+    .hostel-selection-grid { margin-right: -.2rem; margin-left: -.2rem; }
+    .hostel-selection-grid > [class*="col-"] { width: 50%; padding-right: .2rem; padding-left: .2rem; }
+    .hostel-stat-strip .col-4 { padding-right: .2rem; padding-left: .2rem; }
+    .hostel-stat-strip h4 { font-size: .92rem; }
+    .hostel-stat-strip small { font-size: .61rem; }
+}
+
 /* Login */
 .student-login-page { min-height: 100vh; display: grid; place-items: center; padding: 1rem; background: radial-gradient(circle at top left, #e2f4ea 0, #f6faf8 45%, #edf4f1 100%); }
 .student-login-shell { width: min(1050px, 100%); min-height: min(650px, calc(100vh - 2rem)); display: grid; grid-template-columns: 1fr; overflow: hidden; border: 1px solid var(--sp-border); border-radius: 24px; background: #fff; box-shadow: 0 28px 70px rgba(27,74,52,.14); }

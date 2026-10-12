@@ -71,7 +71,7 @@
         <div class="student-panel-body"><div class="student-action-list">
             @if(!$student->is_registered)<a class="student-action-link" href="{{ route('student.registration.index') }}"><span class="leading"><span class="material-symbols-outlined">how_to_reg</span>Complete registration</span><span class="material-symbols-outlined">chevron_right</span></a>@endif
             <a class="student-action-link" href="{{ route('student.payments.index') }}"><span class="leading"><span class="material-symbols-outlined">payments</span>Make a payment</span><span class="material-symbols-outlined">chevron_right</span></a>
-            <a class="student-action-link" href="{{ route('student.hostel.index') }}"><span class="leading"><span class="material-symbols-outlined">bed</span>Hostel services</span><span class="material-symbols-outlined">chevron_right</span></a>
+            <a class="student-action-link" href="{{ route('student.hostel.index') }}"><span class="leading"><span class="material-symbols-outlined">bed</span>Hostel Application</span><span class="material-symbols-outlined">chevron_right</span></a>
             <a class="student-action-link" href="{{ route('student.password') }}"><span class="leading"><span class="material-symbols-outlined">lock</span>Change password</span><span class="material-symbols-outlined">chevron_right</span></a>
         </div></div>
     </section>

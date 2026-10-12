@@ -1,17 +1,24 @@
 @extends('layouts.student')
 @section('title', 'Hostel Application')
+@section('page-title', 'Hostel Application')
 
 @section('content')
 @php($pinVerified = $pinVerified ?? false)
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-    <h3 class="fw-semibold mb-0">Hostel Application</h3>
+<div class="student-page-heading">
+    <div><h1>Hostel Application</h1><p>Validate your PIN, choose an available bed and complete your allocation.</p></div>
     <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
 </div>
+
+<section class="hostel-hero mb-4">
+    <div class="hostel-hero-icon"><span class="material-symbols-outlined">bedroom_parent</span></div>
+    <div><strong>Apply for a hostel bed space</strong><p>One reservation is allowed per student. Keep your PIN and payment reference until your permit is ready.</p></div>
+    <span class="hostel-hero-status">{{ $reservation ? 'Reservation in progress' : ($pinVerified ? 'PIN validated' : 'PIN required') }}</span>
+</section>
 
 @if($overviewError)
 <div class="alert alert-danger">
     <i class="material-symbols-outlined align-middle">error</i>
-    <strong>Hostel service unavailable:</strong> {{ $overviewError }}
+    <strong>Hostel application is temporarily unavailable:</strong> {{ $overviewError }}
 </div>
 @endif
 @if(!empty($pinError))
@@ -23,11 +30,12 @@
 
 {{-- Current Reservation --}}
 @if($reservation)
-<div class="card border-0 rounded-3 mb-4">
+<div class="card hostel-reservation-card mb-4">
     <div class="card-header bg-transparent">
         <h5 class="mb-0"><i class="material-symbols-outlined me-2 align-middle">bed</i>Your Reservation</h5>
     </div>
     <div class="card-body p-4">
+        <div class="hostel-reservation-banner"><span class="material-symbols-outlined">check_circle</span><div><strong>Your bed space is reserved</strong><small>Review the allocation details below and complete payment if required.</small></div></div>
         <div class="table-responsive">
             <table class="table table-borderless mb-3">
                 <tbody>
@@ -130,7 +138,7 @@
 
 {{-- Availability + Booking --}}
 @if(!$reservation)
-<div class="card border-0 rounded-3">
+<div class="card hostel-booking-card">
     <div class="card-header bg-transparent">
         <h5 class="mb-0"><i class="material-symbols-outlined me-2 align-middle">bedroom_parent</i>Available Bed Spaces</h5>
     </div>
@@ -143,7 +151,7 @@
                     <div class="small mt-1">Enter the PIN issued by Student Affairs. You must validate it before you can choose a bed space.</div>
                 </div>
             </div>
-            <form action="{{ route('student.hostel.validate-pin') }}" method="POST" class="mt-4">
+            <form action="{{ route('student.hostel.validate-pin') }}" method="POST" class="mt-4 hostel-pin-form">
                 @csrf
                 <label for="hostel-pin" class="form-label fw-semibold">Hostel PIN</label>
                 <div class="input-group">
@@ -160,7 +168,7 @@
                 No bed spaces are available for your category right now. Please check again later.
             </div>
         @else
-        <div class="row mb-3 g-2">
+        <div class="hostel-selection-grid row mb-3 g-2">
             <div class="col-md-3">
                 <label class="form-label small fw-semibold">Hall</label>
                 <select class="form-select" id="hallSel" onchange="loadBlocks()">
@@ -190,7 +198,7 @@
             </div>
         </div>
 
-        <div class="bg-light p-3 rounded mb-3">
+        <div class="hostel-stat-strip p-3 rounded mb-3">
             <div class="row text-center">
                 <div class="col-4">
                     <h4 class="mb-0 text-primary">{{ $overview['available_beds'] ?? 0 }}</h4>
@@ -302,6 +310,8 @@
         const room = document.getElementById('roomSel').value;
         const bed = document.getElementById('bedSel').value;
         if (!hall || !block || !room || !bed) { alert('Please select a hall, block, room and bed.'); return; }
+        const reserveButton = document.querySelector('#bedInfo button');
+        if (reserveButton) { reserveButton.disabled = true; reserveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Reserving…'; }
 
         const res = await hostelFetch(hostelBase + '/reserve', {
             method: 'POST',
@@ -327,6 +337,18 @@
         if (res.success) { alert('Reservation released.'); window.location.reload(); }
         else { alert(res.message || 'Failed to release reservation.'); }
     }
+
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (!form.matches('form[action*="/student/hostel/"]')) return;
+        if (form.dataset.submitting === '1') { event.preventDefault(); return; }
+        form.dataset.submitting = '1';
+        const button = form.querySelector('button[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Please wait…';
+        }
+    });
 </script>
 @endpush
 

@@ -1,14 +1,26 @@
 @extends('layouts.student')
 @section('title', 'Payments')
+@section('page-title', 'Payments')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-    <h3 class="fw-semibold mb-0">Fee Payments</h3>
+@php
+    $pendingCount = $pendingPayments->count();
+    $outstandingCount = $items->count();
+    $historyCount = $history->count();
+@endphp
+<div class="student-page-heading payment-page-heading">
+    <div><h1>Payments</h1><p>View your fees, start a payment and download receipts.</p></div>
     <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
 </div>
 
+<div class="payment-summary-grid" aria-label="Payment summary">
+    <div class="payment-summary-card"><span class="payment-summary-icon payment-summary-icon-warning"><span class="material-symbols-outlined">pending_actions</span></span><div><strong>{{ $pendingCount }}</strong><small>Pending payments</small></div></div>
+    <div class="payment-summary-card"><span class="payment-summary-icon payment-summary-icon-danger"><span class="material-symbols-outlined">receipt_long</span></span><div><strong>{{ $outstandingCount }}</strong><small>Fees to review</small></div></div>
+    <div class="payment-summary-card"><span class="payment-summary-icon payment-summary-icon-success"><span class="material-symbols-outlined">history</span></span><div><strong>{{ $historyCount }}</strong><small>Payment records</small></div></div>
+</div>
+
 @if($pendingPayments->count())
-    <div class="card border-0 rounded-3 mb-4" style="border-left: 4px solid #f59e0b !important;">
+    <div class="card payment-pending-panel mb-4">
         <div class="card-header bg-transparent d-flex align-items-center">
             <i class="material-symbols-outlined me-2 text-warning">schedule</i>
             <h5 class="mb-0 fw-semibold">Pending Payment{{ $pendingPayments->count() > 1 ? 's' : '' }}</h5>
@@ -21,8 +33,8 @@
             <div class="list-group">
                 @foreach($pendingPayments as $payment)
                     @php $widgetKey = 'Pay' . str_replace('-', '', $payment->id); @endphp
-                    <div class="list-group-item border-0 rounded-3 shadow-sm mb-3">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="list-group-item payment-pending-item mb-3">
+                        <div class="payment-pending-layout">
                             <div>
                                 <h6 class="mb-1 fw-semibold">{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h6>
                                 <div class="text-muted small mb-1">
@@ -39,7 +51,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="d-flex flex-wrap gap-2">
+                            <div class="payment-actions">
                                 <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning btn-sm">
                                     <i class="material-symbols-outlined fs-16 align-middle me-1">credit_card</i> Pay Online Now
                                 </button>
@@ -71,7 +83,7 @@
 @endif
 
 {{-- Student summary card --}}
-<div class="card border-0 rounded-3 mb-4">
+<div class="card payment-student-summary mb-4">
     <div class="card-body p-4">
         <div class="row align-items-center g-3">
             <div class="col-md-8">
@@ -103,7 +115,7 @@
         </div>
     </div>
 @else
-    <div class="row">
+    <div class="row payment-items-grid">
         @foreach($items as $item)
             @php
                 $type = $item['type'];
@@ -111,7 +123,7 @@
                 $pending = $item['pending'] ?? null;
             @endphp
             <div class="col-md-6 mb-4">
-                <div class="card border-0 rounded-3 h-100 shadow-sm">
+                <div class="card payment-card h-100">
                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="material-symbols-outlined me-1 align-middle text-primary">receipt_long</i>
@@ -133,21 +145,21 @@
                             <p class="text-muted small mb-3">{{ $type->description }}</p>
                         @endif
 
-                        <div class="row text-center mb-3 g-2">
+                        <div class="row text-center mb-3 g-2 payment-metrics">
                             <div class="col-4">
-                                <div class="bg-light rounded py-2">
+                                <div class="payment-metric payment-metric-total">
                                     <div class="fs-4 fw-bold text-success">&#8358;{{ number_format($p['full_amount'], 2) }}</div>
                                     <small class="text-muted">Total Fee</small>
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="bg-light rounded py-2">
+                                <div class="payment-metric payment-metric-paid">
                                     <div class="fs-4 fw-bold text-primary">&#8358;{{ number_format($p['paid'], 2) }}</div>
                                     <small class="text-muted">Paid</small>
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="bg-light rounded py-2">
+                                <div class="payment-metric payment-metric-remaining">
                                     <div class="fs-4 fw-bold text-warning">&#8358;{{ number_format($p['remaining'], 2) }}</div>
                                     <small class="text-muted">Remaining</small>
                                 </div>
@@ -212,7 +224,7 @@
 @endif
 
 {{-- Payment history --}}
-<div class="card border-0 rounded-3 mt-2">
+<div class="card payment-history mt-2">
     <div class="card-header bg-transparent">
         <h5 class="mb-0"><i class="material-symbols-outlined me-2 align-middle">history</i>Payment History</h5>
     </div>
@@ -283,5 +295,17 @@
             alert('RRR copied: ' + text);
         }
     }
+
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (!form.matches('form[action*="/student/payments/"]')) return;
+        if (form.dataset.submitting === '1') { event.preventDefault(); return; }
+        form.dataset.submitting = '1';
+        const button = form.querySelector('button[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Please wait…';
+        }
+    });
 </script>
 @endpush
