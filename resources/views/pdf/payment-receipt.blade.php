@@ -12,6 +12,7 @@
         .header { border-bottom: 2px solid #0a6b46; padding-bottom: 12px; text-align: center; }
         .header img { width: 72px; height: 72px; object-fit: contain; margin-bottom: 5px; }
         .university { margin: 0; color: #0a6b46; font-size: 23px; font-weight: bold; letter-spacing: .3px; text-transform: uppercase; }
+        .unit { margin: 3px 0 0; color: #4e5c63; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .motto { margin: 2px 0 0; color: #c20707; font-size: 14px; font-style: italic; }
         .contact { margin: 5px 0 0; color: #68747b; font-size: 9px; }
         .heading { margin: 20px 0 4px; text-align: center; }
@@ -55,7 +56,8 @@
 <div class="container">
     <div class="header">
         @if($logoSrc)<img src="{{ $logoSrc }}" alt="University logo">@endif
-        <p class="university">{{ setting('site_name', 'University of Maiduguri') }}</p>
+        <p class="university">University of Maiduguri</p>
+        <p class="unit">School of Basic and Remedial Studies</p>
         <p class="motto">...Centre of Excellence</p>
         <p class="contact">School of Basic and Remedial Studies &nbsp;|&nbsp; P.M.B. 1069, Maiduguri, Borno State, Nigeria</p>
     </div>
