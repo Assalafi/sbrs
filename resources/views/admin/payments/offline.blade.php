@@ -99,17 +99,21 @@
             </div>
         </div>
         <div class="card border-0 rounded-4 shadow-sm">
-            <div class="card-header bg-white border-0 pt-4 px-4"><h6 class="fw-semibold mb-1">Bulk upload</h6><p class="small text-muted mb-0">Use the supplied workbook when recording many payments.</p></div>
+            <div class="card-header bg-white border-0 pt-4 px-4"><h6 class="fw-semibold mb-1">Bulk upload</h6><p class="small text-muted mb-0">Choose the common payment details once, then upload a simple student list.</p></div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ route('admin.payments.offline.upload') }}" enctype="multipart/form-data" id="uploadForm">
                     @csrf
+                    @php $uploadLegacyTypes = $paymentTypes->map(fn($type) => $type->legacyType())->all(); @endphp
+                    <div class="mb-3"><label class="form-label fw-semibold">Payment type <span class="text-danger">*</span></label><select name="payment_type" class="form-select" required><option value="">Select payment type</option>@foreach(['application'=>'Application fee','admission'=>'Admission fee','registration'=>'Registration fee','examination'=>'Examination fee','hostel'=>'Hostel fee','other'=>'Other'] as $value=>$label)@if(!in_array($value, $uploadLegacyTypes, true))<option value="{{ $value }}">{{ $label }}</option>@endif @endforeach @foreach($paymentTypes as $type)<option value="custom:{{ $type->id }}">{{ $type->name }}</option>@endforeach</select></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Academic session <span class="text-danger">*</span></label><select name="academic_session_id" class="form-select" required><option value="">Select session</option>@foreach($sessions as $session)<option value="{{ $session->id }}" @selected($session->is_current)>{{ $session->name }}{{ $session->is_current?' (current)':'' }}</option>@endforeach</select></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Sponsor <span class="text-danger">*</span></label><select name="sponsor" class="form-select" required><option value="Self">Self</option><option value="Scholarship">Scholarship</option></select></div>
                     <input type="file" name="payment_file" class="form-control mb-3" accept=".xlsx,.xls,.csv,.txt" required>
                     <button type="submit" class="btn btn-outline-success w-100"><i class="material-symbols-outlined align-middle fs-18">upload_file</i> Validate and import</button>
                 </form>
                 <hr>
                 <ul class="small text-muted mb-0 ps-3">
                     <li>Use registration number in <code>student_id</code>.</li>
-                    <li>Sponsor must be <strong>Self</strong> or <strong>Scholarship</strong>.</li>
+                    <li>Payment type, session and sponsor are selected above.</li>
                     <li>The upload is all-or-nothing: invalid rows are not saved.</li>
                 </ul>
             </div>

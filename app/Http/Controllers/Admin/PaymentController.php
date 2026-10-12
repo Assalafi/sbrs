@@ -100,12 +100,12 @@ class PaymentController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Payments');
-        $headers = ['student_id', 'amount', 'payment_type', 'reference', 'session', 'sponsor', 'description', 'notes'];
+        $headers = ['student_id', 'amount', 'reference', 'description', 'notes'];
         $sheet->fromArray([$headers], null, 'A1');
-        $sheet->fromArray([['SBRS/RS/26/000001', 150000, 'registration', 'BANK-REF-001', '2026/2027', 'Self', 'Registration fee', 'Offline payment']], null, 'A2');
-        $sheet->getStyle('A1:H1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A1:H1')->getFill()->setFillType('solid')->getStartColor()->setARGB('006633');
-        foreach (range('A', 'H') as $column) {
+        $sheet->fromArray([['SBRS/RS/26/000001', 150000, 'BANK-REF-001', 'Registration fee', 'Offline payment']], null, 'A2');
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:E1')->getFill()->setFillType('solid')->getStartColor()->setARGB('006633');
+        foreach (range('A', 'E') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
@@ -115,10 +115,8 @@ class PaymentController extends Controller
             ['SBRS OFFLINE PAYMENT UPLOAD'],
             ['student_id', 'Student registration number, for example SBRS/RS/26/000001'],
             ['amount', 'Positive amount in Naira'],
-            ['payment_type', 'application, admission, registration, examination, hostel, other, or an active payment type code'],
+            ['payment_type / session / sponsor', 'Select these once on the upload form. Do not add them to the spreadsheet.'],
             ['reference', 'Bank teller, transfer reference or official receipt number'],
-            ['session', 'Academic session name exactly as configured, for example 2026/2027'],
-            ['sponsor', 'Self or Scholarship'],
             ['description / notes', 'Optional payment details'],
         ], null, 'A1');
         $instructions->getStyle('A1:B1')->getFont()->setBold(true);
@@ -192,9 +190,20 @@ class PaymentController extends Controller
 
     public function uploadOffline(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'payment_file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'payment_type' => 'required|string|max:120',
+            'academic_session_id' => 'required|exists:academic_sessions,id',
+            'sponsor' => 'required|in:Self,Scholarship',
         ]);
+
+        try {
+            [$legacyType, $paymentType] = $this->resolvePaymentType($validated['payment_type']);
+            $sponsor = $this->normalizeSponsor($validated['sponsor']);
+            $session = AcademicSession::findOrFail($validated['academic_session_id']);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         try {
             $file = $request->file('payment_file');
@@ -218,7 +227,7 @@ class PaymentController extends Controller
             }
         }
 
-        $required = ['student_id', 'amount', 'payment_type', 'reference', 'session', 'sponsor'];
+        $required = ['student_id', 'amount', 'reference'];
         $missing = array_values(array_diff($required, array_keys($headerMap)));
         if ($missing) {
             return back()->with('error', 'Missing required spreadsheet columns: ' . implode(', ', $missing));
@@ -244,13 +253,6 @@ class PaymentController extends Controller
                     throw new \RuntimeException('Student registration number was not found.');
                 }
 
-                [$legacyType, $paymentType] = $this->resolvePaymentType($values['payment_type'] ?? null);
-                $session = AcademicSession::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $values['session']))])->first();
-                if (!$session) {
-                    throw new \RuntimeException('Academic session was not found.');
-                }
-
-                $sponsor = $this->normalizeSponsor($values['sponsor'] ?? null);
                 $reference = trim((string) ($values['reference'] ?? ''));
                 if ($reference === '') {
                     throw new \RuntimeException('Payment reference is required.');
