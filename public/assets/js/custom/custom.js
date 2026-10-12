@@ -1,6 +1,16 @@
 (function () {
     "use strict";
 
+    // Do not let a slow third-party widget or another page resource keep the
+    // portal hidden. The page is usable as soon as the DOM is ready; the load
+    // handler below remains as a fallback for the existing shell behaviour.
+    document.addEventListener("DOMContentLoaded", function () {
+        const preloader = document.getElementById("preloader");
+        if (preloader) {
+            preloader.style.display = "none";
+        }
+    });
+
     window.onload = function () {
         // Preloader JS
         const getPreloaderId = document.getElementById("preloader");
@@ -51,7 +61,9 @@
     })();
 
     // Feather Icons
-    feather.replace();
+    if (window.feather && typeof window.feather.replace === "function") {
+        window.feather.replace();
+    }
 
     // Header Burger Button
     const getHeaderBurgerMenuId = document.getElementById("header-burger-menu");
