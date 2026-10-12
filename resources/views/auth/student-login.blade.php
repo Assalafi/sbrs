@@ -31,7 +31,7 @@
                     <h2>Welcome back</h2>
                     <p>Sign in with your registration number or email address.</p>
                 </div>
-                @if($errors->any())
+                @if(isset($errors) && $errors->any())
                     <div class="student-login-alert mb-3" role="alert">
                         <span class="material-symbols-outlined align-middle me-1" style="font-size:18px">error</span>
                         {{ $errors->first() }}

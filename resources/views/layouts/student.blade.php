@@ -52,7 +52,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
-                @if ($errors->any())
+                @if (isset($errors) && $errors->any())
                     <div class="alert alert-danger alert-dismissible fade show student-flash" role="alert">
                         <span class="material-symbols-outlined">error</span>
                         <span>

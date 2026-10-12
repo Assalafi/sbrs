@@ -45,7 +45,7 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
+                @if (isset($errors) && $errors->any())
                     <div class="alert alert-danger alert-dismissible fade show admin-flash" role="alert">
                         <span class="material-symbols-outlined align-middle me-1">error</span>
                         <span>

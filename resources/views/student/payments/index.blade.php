@@ -4,6 +4,9 @@
 
 @section('content')
 @php
+    $pendingPayments = $pendingPayments ?? collect();
+    $items = $items ?? collect();
+    $history = $history ?? collect();
     $pendingCount = $pendingPayments->count();
     $outstandingCount = $items->count();
     $historyCount = $history->count();
