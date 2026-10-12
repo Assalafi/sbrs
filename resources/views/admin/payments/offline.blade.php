@@ -37,9 +37,9 @@
                             <label class="form-label fw-semibold">Payment type <span class="text-danger">*</span></label>
                             <select name="payment_type" class="form-select" required>
                                 <option value="">Select payment type</option>
-                                @php $configuredCodes = $paymentTypes->pluck('code')->map(fn($code) => strtolower((string) $code))->all(); @endphp
+                                @php $configuredLegacyTypes = $paymentTypes->map(fn($type) => $type->legacyType())->all(); @endphp
                                 @foreach(['application' => 'Application fee', 'admission' => 'Admission fee', 'registration' => 'Registration fee', 'examination' => 'Examination fee', 'hostel' => 'Hostel fee', 'other' => 'Other'] as $value => $label)
-                                    @if(!in_array($value, $configuredCodes, true))<option value="{{ $value }}" @selected(old('payment_type') === $value)>{{ $label }}</option>@endif
+                                    @if(!in_array($value, $configuredLegacyTypes, true))<option value="{{ $value }}" @selected(old('payment_type') === $value)>{{ $label }}</option>@endif
                                 @endforeach
                                 @foreach($paymentTypes as $type)
                                     <option value="custom:{{ $type->id }}" @selected(old('payment_type') === 'custom:' . $type->id)>{{ $type->name }}</option>
