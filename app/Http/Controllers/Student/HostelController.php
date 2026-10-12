@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Services\RemitaService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -113,7 +114,7 @@ class HostelController extends Controller
 
         $payment = $student->payments()
             ->where('payment_type', 'hostel')
-            ->where('status', Payment::STATUS_PENDING)
+            ->whereIn('status', [Payment::STATUS_PENDING, Payment::STATUS_SUCCESSFUL])
             ->latest()
             ->first();
 
@@ -252,6 +253,35 @@ class HostelController extends Controller
     }
 
     /**
+     * Download the SBRS hostel permit after the UG hostel service confirms
+     * payment. The layout follows the University's existing permit workflow,
+     * but uses the SBRS student's own record and photo.
+     */
+    public function permit()
+    {
+        $student = $this->authStudentOrFail();
+        $student->load(['programme', 'academicSession']);
+
+        $reservation = $this->apiCall('get', 'status', [
+            'registration_number' => $student->registration_number,
+        ]);
+        $reservationData = $reservation['data'] ?? null;
+
+        if (!$reservationData || (string) ($reservationData['hostel_payment'] ?? '0') !== '1') {
+            return redirect()->route('student.hostel.index')
+                ->with('error', 'Your hostel permit is available after the hostel payment has been confirmed.');
+        }
+
+        $pdf = Pdf::loadView('student.hostel.permit', [
+            'student' => $student,
+            'reservation' => $reservationData,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'hostel_permit_' . str_replace(['/', '\\'], '_', $student->registration_number) . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    /**
      * Generate a Remita RRR for the reserved hostel bed.
      */
     public function payInitiate()
@@ -338,7 +368,7 @@ class HostelController extends Controller
 
         $payment = $student->payments()
             ->where('payment_type', 'hostel')
-            ->where('status', Payment::STATUS_PENDING)
+            ->whereIn('status', [Payment::STATUS_PENDING, Payment::STATUS_SUCCESSFUL])
             ->latest()
             ->first();
 
@@ -346,10 +376,17 @@ class HostelController extends Controller
             return back()->with('error', 'No pending payment found.');
         }
 
-        $result = $this->remitaService->verifyPayment($payment);
+        // A successful Remita payment can remain locally successful while the
+        // UG hostel service is temporarily unavailable. In that case this
+        // same action retries only the synchronization step instead of
+        // creating a second payment or recharging the student.
+        $alreadyVerified = $payment->status === Payment::STATUS_SUCCESSFUL;
+        $result = $alreadyVerified
+            ? ['success' => true, 'status' => 'successful']
+            : $this->remitaService->verifyPayment($payment);
 
         if ($result['success'] && $result['status'] === 'successful') {
-            $payment->update(['verified_at' => now()]);
+            $payment->update(['verified_at' => $payment->verified_at ?? now()]);
 
             $confirm = $this->apiCall('post', 'confirm-payment', [
                 'registration_number' => $student->registration_number,

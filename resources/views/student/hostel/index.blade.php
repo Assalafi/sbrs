@@ -62,6 +62,9 @@
                 <i class="material-symbols-outlined align-middle me-1">check_circle</i>
                 Your hostel fee has been <strong>paid and confirmed</strong>. Your allocation is complete.
             </div>
+            <a href="{{ route('student.hostel.permit') }}" class="btn btn-success mb-3">
+                <i class="material-symbols-outlined fs-16 align-middle me-1">download</i> Download hostel permit
+            </a>
         @elseif(strtolower($reservation['payment_method'] ?? '') === 'bank')
             <div class="alert alert-info mb-3">
                 <i class="material-symbols-outlined align-middle me-1">account_balance</i>
@@ -79,22 +82,32 @@
                     <p class="text-muted mt-2 mb-0">Amount: &#8358;{{ number_format($payment->amount, 2) }}</p>
                 </div>
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <button type="button" onclick="makePayment()" class="btn btn-success btn-lg w-100">
-                            <i class="material-symbols-outlined me-2 align-middle">credit_card</i>Pay Online Now
-                        </button>
-                    </div>
+                    @if($payment->status !== 'successful')
+                        <div class="col-md-6">
+                            <button type="button" onclick="makePayment()" class="btn btn-success btn-lg w-100">
+                                <i class="material-symbols-outlined me-2 align-middle">credit_card</i>Pay Online Now
+                            </button>
+                        </div>
+                    @endif
                     <div class="col-md-6">
                         <form id="verify-form" action="{{ route('student.hostel.pay-verify') }}" method="GET">
                             <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="material-symbols-outlined me-2 align-middle">verified</i>Verify Payment
+                                <i class="material-symbols-outlined me-2 align-middle">sync</i>{{ $payment->status === 'successful' ? 'Complete allocation sync' : 'Verify Payment' }}
                             </button>
                         </form>
                     </div>
                 </div>
-                <div class="text-center mb-3">
-                    <small class="text-muted">Or pay at any bank with RRR: <strong>{{ $payment->rrr }}</strong></small>
-                </div>
+                @if($payment->status === 'successful')
+                    <div class="alert alert-warning mb-3">
+                        <i class="material-symbols-outlined align-middle me-1">info</i>
+                        Your payment is already recorded. Use <strong>Complete allocation sync</strong> to finish updating your hostel allocation.
+                    </div>
+                @endif
+                @if($payment->status !== 'successful')
+                    <div class="text-center mb-3">
+                        <small class="text-muted">Or pay at any bank with RRR: <strong>{{ $payment->rrr }}</strong></small>
+                    </div>
+                @endif
             @else
                 <form action="{{ route('student.hostel.pay-initiate') }}" method="POST">
                     @csrf

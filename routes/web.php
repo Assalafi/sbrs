@@ -297,4 +297,5 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
     Route::post('/hostel/release', [\App\Http\Controllers\Student\HostelController::class, 'release'])->name('student.hostel.release');
     Route::post('/hostel/pay-initiate', [\App\Http\Controllers\Student\HostelController::class, 'payInitiate'])->name('student.hostel.pay-initiate');
     Route::get('/hostel/pay-verify', [\App\Http\Controllers\Student\HostelController::class, 'payVerify'])->name('student.hostel.pay-verify');
+    Route::get('/hostel/permit', [\App\Http\Controllers\Student\HostelController::class, 'permit'])->name('student.hostel.permit');
 });
