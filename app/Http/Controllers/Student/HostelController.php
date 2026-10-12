@@ -33,20 +33,52 @@ class HostelController extends Controller
 
     private function apiCall(string $method, string $endpoint, array $data = [])
     {
-        $url = $this->getApiUrl() . '/' . $endpoint;
+        $url = rtrim($this->getApiUrl(), '/') . '/' . ltrim($endpoint, '/');
         $apiKey = $this->getApiKey();
 
-        $data['api_key'] = $apiKey;
+        if (!$apiKey) {
+            Log::error('USP Hostel API key is not configured.');
+            return [
+                'success' => false,
+                'message' => 'Hostel service is not configured. Please contact Student Affairs.',
+            ];
+        }
+
+        $method = strtolower($method);
+        $signedData = array_filter($data, static fn ($value) => $value !== null && $value !== '');
+        ksort($signedData);
+        $timestamp = (string) time();
+        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
+        $canonical = strtoupper($method) . "\n" . $path . "\n"
+            . http_build_query($signedData, '', '&', PHP_QUERY_RFC3986) . "\n" . $timestamp;
+        $signature = hash_hmac('sha256', $canonical, $apiKey);
 
         try {
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'X-API-Key' => $apiKey,
+                'X-API-Timestamp' => $timestamp,
+                'X-API-Signature' => $signature,
                 'Accept' => 'application/json',
-            ])->withoutVerifying()->timeout(30)->$method($url, $data);
+            ])->acceptJson()->connectTimeout(8)->timeout(20);
 
-            return $response->json();
+            $response = $method === 'get'
+                ? $http->get($url, $signedData)
+                : $http->asJson()->post($url, $signedData);
+
+            if (!$response->successful()) {
+                Log::warning('USP Hostel API returned an error', [
+                    'endpoint' => $endpoint,
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+            }
+
+            return $response->json() ?: [
+                'success' => false,
+                'message' => 'Hostel service returned an invalid response.',
+            ];
         } catch (\Exception $e) {
-            Log::error('USP Hostel API error', ['error' => $e->getMessage()]);
+            Log::error('USP Hostel API error', ['endpoint' => $endpoint, 'error' => $e->getMessage()]);
             return [
                 'success' => false,
                 'message' => 'Hostel service is temporarily unavailable. Please try again later.',
@@ -77,6 +109,7 @@ class HostelController extends Controller
 
         $overview = $this->apiCall('get', 'overview', ['gender' => $gender]);
         $reservation = $this->apiCall('get', 'status', ['registration_number' => $student->registration_number]);
+        $pinStatus = $this->apiCall('get', 'pin-status', ['registration_number' => $student->registration_number]);
 
         $payment = $student->payments()
             ->where('payment_type', 'hostel')
@@ -92,7 +125,34 @@ class HostelController extends Controller
             'overviewError' => isset($overview['success']) && !$overview['success'] ? ($overview['message'] ?? 'Unable to reach hostel service.') : null,
             'reservation' => $reservation['data'] ?? null,
             'reservationError' => isset($reservation['success']) && !$reservation['success'] ? ($reservation['message'] ?? '') : null,
+            'pinVerified' => (bool) ($pinStatus['data']['validated'] ?? false),
+            'pinError' => isset($pinStatus['success']) && !$pinStatus['success'] ? ($pinStatus['message'] ?? '') : null,
         ]);
+    }
+
+    /**
+     * Validate a one-time hostel PIN issued by Student Affairs. The PIN is
+     * assigned to this SBRS registration number in the UG hostel database,
+     * so the reservation API can enforce the same rule as UG students.
+     */
+    public function validatePin(Request $request)
+    {
+        $student = $this->authStudentOrFail();
+
+        $request->validate([
+            'pin' => 'required|string|max:64',
+        ]);
+
+        $result = $this->apiCall('post', 'validate-pin', [
+            'registration_number' => $student->registration_number,
+            'pin' => trim((string) $request->input('pin')),
+        ]);
+
+        if (!empty($result['success'])) {
+            return redirect()->route('student.hostel.index')->with('success', 'Hostel PIN validated. You can now reserve a bed space.');
+        }
+
+        return back()->withInput()->with('error', $result['message'] ?? 'The hostel PIN could not be validated.');
     }
 
     public function overview(Request $request)
@@ -154,6 +214,14 @@ class HostelController extends Controller
         ]);
 
         $gender = strtoupper($student->gender === 'Female' ? 'FEMALE' : 'MALE');
+
+        $pinStatus = $this->apiCall('get', 'pin-status', ['registration_number' => $student->registration_number]);
+        if (empty($pinStatus['data']['validated'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validate your hostel PIN before reserving a bed space.',
+            ], 422);
+        }
 
         return response()->json($this->apiCall('post', 'reserve', [
             'registration_number' => $student->registration_number,
@@ -285,7 +353,20 @@ class HostelController extends Controller
 
             $confirm = $this->apiCall('post', 'confirm-payment', [
                 'registration_number' => $student->registration_number,
+                'rrr' => $payment->rrr,
+                'amount' => (float) $payment->amount,
             ]);
+
+            if (empty($confirm['success'])) {
+                Log::error('SBRS hostel payment confirmation failed after successful Remita verification', [
+                    'registration_number' => $student->registration_number,
+                    'payment_id' => $payment->id,
+                    'rrr' => $payment->rrr,
+                    'response' => $confirm,
+                ]);
+
+                return redirect()->route('student.hostel.index')->with('error', 'Payment was received, but the hostel allocation could not be updated yet. Please try verification again or contact Student Affairs.');
+            }
 
             return redirect()->route('student.hostel.index')
                 ->with('success', 'Hostel fee verified and payment confirmed.');

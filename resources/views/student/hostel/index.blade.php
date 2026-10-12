@@ -2,6 +2,7 @@
 @section('title', 'Hostel Application')
 
 @section('content')
+@php($pinVerified = $pinVerified ?? false)
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Hostel Application</h3>
     <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
@@ -11,6 +12,12 @@
 <div class="alert alert-danger">
     <i class="material-symbols-outlined align-middle">error</i>
     <strong>Hostel service unavailable:</strong> {{ $overviewError }}
+</div>
+@endif
+@if(!empty($pinError))
+<div class="alert alert-warning">
+    <i class="material-symbols-outlined align-middle">info</i>
+    {{ $pinError }}
 </div>
 @endif
 
@@ -99,9 +106,11 @@
                 </form>
             @endif
         @endif
-        <button type="button" class="btn btn-outline-danger" onclick="releaseReservation()">
-            <i class="material-symbols-outlined fs-16 align-middle">undo</i> Release Reservation
-        </button>
+        @if(($reservation['hostel_payment'] ?? 0) != 1)
+            <button type="button" class="btn btn-outline-danger" onclick="releaseReservation()">
+                <i class="material-symbols-outlined fs-16 align-middle">undo</i> Release Reservation
+            </button>
+        @endif
     </div>
 </div>
 @endif
@@ -113,6 +122,31 @@
         <h5 class="mb-0"><i class="material-symbols-outlined me-2 align-middle">bedroom_parent</i>Available Bed Spaces</h5>
     </div>
     <div class="card-body p-4">
+        @if(!$pinVerified)
+            <div class="alert alert-info d-flex gap-2 align-items-start mb-0">
+                <i class="material-symbols-outlined">key</i>
+                <div>
+                    <strong>Hostel PIN required</strong>
+                    <div class="small mt-1">Enter the PIN issued by Student Affairs. You must validate it before you can choose a bed space.</div>
+                </div>
+            </div>
+            <form action="{{ route('student.hostel.validate-pin') }}" method="POST" class="mt-4">
+                @csrf
+                <label for="hostel-pin" class="form-label fw-semibold">Hostel PIN</label>
+                <div class="input-group">
+                    <input id="hostel-pin" name="pin" type="text" class="form-control" maxlength="64" autocomplete="one-time-code" required placeholder="Enter your hostel PIN">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="material-symbols-outlined align-middle fs-18 me-1">verified</i> Validate PIN
+                    </button>
+                </div>
+                @error('pin')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
+            </form>
+        @elseif(count($hall) === 0)
+            <div class="alert alert-info mb-0">
+                <i class="material-symbols-outlined align-middle me-1">info</i>
+                No bed spaces are available for your category right now. Please check again later.
+            </div>
+        @else
         <div class="row mb-3 g-2">
             <div class="col-md-3">
                 <label class="form-label small fw-semibold">Hall</label>
@@ -173,6 +207,7 @@
             <i class="material-symbols-outlined align-middle me-1">info</i>
             Select a hall, block, room and bed to reserve your space. You can only reserve one bed.
         </div>
+        @endif
     </div>
 </div>
 @endif

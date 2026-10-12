@@ -291,6 +291,7 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
     Route::get('/hostel/blocks', [\App\Http\Controllers\Student\HostelController::class, 'blocks'])->name('student.hostel.blocks');
     Route::get('/hostel/rooms', [\App\Http\Controllers\Student\HostelController::class, 'rooms'])->name('student.hostel.rooms');
     Route::get('/hostel/beds', [\App\Http\Controllers\Student\HostelController::class, 'beds'])->name('student.hostel.beds');
+    Route::post('/hostel/validate-pin', [\App\Http\Controllers\Student\HostelController::class, 'validatePin'])->middleware('throttle:10,1')->name('student.hostel.validate-pin');
     Route::post('/hostel/reserve', [\App\Http\Controllers\Student\HostelController::class, 'reserve'])->name('student.hostel.reserve');
     Route::get('/hostel/status', [\App\Http\Controllers\Student\HostelController::class, 'status'])->name('student.hostel.status');
     Route::post('/hostel/release', [\App\Http\Controllers\Student\HostelController::class, 'release'])->name('student.hostel.release');
