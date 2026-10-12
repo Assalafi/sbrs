@@ -507,16 +507,42 @@ class PaymentController extends Controller
 
     public function destroy(Payment $payment)
     {
-        $this->ensureOffline($payment);
-        if (!in_array($payment->status, [Payment::STATUS_CANCELLED, Payment::STATUS_PENDING], true)) {
-            return back()->with('error', 'Cancel the offline payment before deleting it.');
+        $isOffline = strtolower((string) $payment->payment_method) === 'offline' || !empty($payment->reference);
+        $isPending = $payment->status === Payment::STATUS_PENDING;
+        $isCancelledOffline = $isOffline && $payment->status === Payment::STATUS_CANCELLED;
+
+        if (!$isPending && !$isCancelledOffline) {
+            return back()->with('error', 'Only pending payments or cancelled offline payments can be deleted.');
         }
 
-        if ($payment->proof_path) {
-            Storage::disk('public')->delete($payment->proof_path);
+        try {
+            $proofPath = DB::transaction(function () use ($payment) {
+                $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->first();
+                if (!$lockedPayment) {
+                    throw new \RuntimeException('The payment no longer exists.');
+                }
+
+                $lockedIsOffline = strtolower((string) $lockedPayment->payment_method) === 'offline'
+                    || !empty($lockedPayment->reference);
+                if ($lockedPayment->status !== Payment::STATUS_PENDING
+                    && !($lockedIsOffline && $lockedPayment->status === Payment::STATUS_CANCELLED)) {
+                    throw new \RuntimeException('Only pending payments or cancelled offline payments can be deleted.');
+                }
+
+                $proofPath = $lockedPayment->proof_path;
+                $lockedPayment->delete();
+
+                return $proofPath;
+            });
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
-        $payment->delete();
-        return back()->with('success', 'Payment record deleted.');
+
+        if ($proofPath) {
+            Storage::disk('public')->delete($proofPath);
+        }
+
+        return back()->with('success', $isPending ? 'Pending payment deleted successfully.' : 'Payment record deleted.');
     }
 
     private function ensureOffline(Payment $payment): void

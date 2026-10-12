@@ -31,6 +31,9 @@
                 @if($payment->status === 'successful')
                     <a href="{{ route('admin.payments.receipt', $payment) }}" class="btn btn-success btn-sm w-100 mb-2"><i class="material-symbols-outlined fs-16 align-middle">download</i> Download receipt</a>
                 @endif
+                @if($payment->status === \App\Models\Payment::STATUS_PENDING)
+                    @can('payments.delete')<form action="{{ route('admin.payments.destroy', $payment) }}" method="POST" onsubmit="return confirm('Delete this pending payment permanently?');">@csrf @method('DELETE')<button class="btn btn-outline-danger btn-sm w-100 mb-2"><i class="material-symbols-outlined fs-16 align-middle">delete</i> Delete pending payment</button></form>@endcan
+                @endif
                 @if(strtolower((string)$payment->payment_method) === 'offline' || $payment->reference)
                     @can('payments.edit')<a href="{{ route('admin.payments.edit', $payment) }}" class="btn btn-outline-secondary btn-sm w-100 mb-2"><i class="material-symbols-outlined fs-16 align-middle">edit</i> Edit offline payment</a>@endcan
                     @if($payment->status !== 'cancelled') @can('payments.edit')<form action="{{ route('admin.payments.cancel', $payment) }}" method="POST" onsubmit="return confirm('Cancel this offline payment?');">@csrf<button class="btn btn-outline-warning btn-sm w-100 mb-2"><i class="material-symbols-outlined fs-16 align-middle">cancel</i> Cancel offline payment</button></form>@endcan
