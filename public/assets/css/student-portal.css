@@ -85,6 +85,18 @@
 .student-portal .btn-primary:hover, .student-portal .btn-success:hover { background: var(--sp-primary-dark); border-color: var(--sp-primary-dark); }
 .student-portal .btn-outline-primary { color: var(--sp-primary); border-color: #8bc3a4; }
 .student-portal .btn-outline-primary:hover { color: #fff; background: var(--sp-primary); border-color: var(--sp-primary); }
+.student-portal .btn { border-radius: 10px; font-weight: 700; }
+.student-portal .card { border: 1px solid var(--sp-border); border-radius: 17px; box-shadow: var(--sp-shadow); overflow: hidden; }
+.student-portal .card-header { padding: 1rem 1.15rem; border-bottom: 1px solid var(--sp-border); background: #fff; color: var(--sp-ink); font-weight: 800; }
+.student-portal .card-body { padding: 1.15rem; }
+.student-portal .card-footer { border-top: 1px solid var(--sp-border); background: #fbfdfc; }
+.student-portal .table-responsive { border: 1px solid var(--sp-border); border-radius: 13px; }
+.student-portal .table { margin-bottom: 0; font-size: .82rem; vertical-align: middle; }
+.student-portal .table thead th { padding: .75rem .8rem; border-bottom-color: var(--sp-border); background: #f4f8f6; color: var(--sp-muted); font-size: .69rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.student-portal .table tbody td { padding: .75rem .8rem; border-color: #edf3ef; }
+.student-portal .badge { border-radius: 999px; font-weight: 750; }
+.student-portal .modal-content { border: 1px solid var(--sp-border); border-radius: 18px; box-shadow: 0 24px 60px rgba(20, 56, 40, .16); overflow: hidden; }
+.student-portal .modal-header { border-bottom-color: var(--sp-border); }
 .student-portal .form-control, .student-portal .form-select { min-height: 46px; border-color: var(--sp-border); border-radius: 10px; font-size: .86rem; }
 .student-portal .form-control:focus, .student-portal .form-select:focus { border-color: #72b68d; box-shadow: 0 0 0 .2rem rgba(8,116,67,.12); }
 
