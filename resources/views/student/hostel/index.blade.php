@@ -162,7 +162,7 @@
                 </div>
                 @error('pin')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
             </form>
-        @elseif(count($hall) === 0)
+        @elseif(count($overview['halls'] ?? []) === 0)
             <div class="alert alert-info mb-0">
                 <i class="material-symbols-outlined align-middle me-1">info</i>
                 No bed spaces are available for your category right now. Please check again later.
