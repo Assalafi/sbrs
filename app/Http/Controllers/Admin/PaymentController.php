@@ -197,7 +197,13 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $sheet = IOFactory::load($request->file('payment_file')->getRealPath())->getActiveSheet();
+            $file = $request->file('payment_file');
+            $originalName = strtolower((string) $file->getClientOriginalName());
+            $reader = str_ends_with($originalName, '.csv') || str_ends_with($originalName, '.txt')
+                ? IOFactory::createReader('Csv')
+                : IOFactory::createReaderForFile($originalName);
+            $reader->setReadDataOnly(true);
+            $sheet = $reader->load($file->getRealPath())->getActiveSheet();
             $rows = $sheet->toArray(null, true, true, true);
         } catch (\Throwable $e) {
             return back()->with('error', 'The spreadsheet could not be read. Please use the supplied template.');
