@@ -86,9 +86,11 @@
         <div class="payment-clean-section-head"><div><h2>Fees and payment options</h2><p>Choose a fee to view its balance and payment options.</p></div><span class="material-symbols-outlined payment-clean-section-symbol">receipt_long</span></div>
         <div class="payment-clean-fee-list">
             @forelse($items as $item)
-                @php($type = $item['type'])
-                @php($p = $item['progress'])
-                @php($pending = $item['pending'] ?? null)
+                @php
+                    $type = $item['type'];
+                    $p = $item['progress'];
+                    $pending = $item['pending'] ?? null;
+                @endphp
                 <article class="payment-clean-fee-card">
                     <div class="payment-clean-fee-head"><div><h3>{{ $type->name }}</h3><p>{{ $type->description ?: ($type->is_required ? 'Required payment for your student record.' : 'Optional student payment.') }}</p></div><span class="payment-clean-badge {{ $type->is_required ? 'is-required' : 'is-optional' }}">{{ $type->is_required ? 'Required' : 'Optional' }}</span></div>
                     <div class="payment-clean-metrics"><div><small>Total</small><strong>&#8358;{{ number_format($p['full_amount'], 2) }}</strong></div><div><small>Paid</small><strong>&#8358;{{ number_format($p['paid'], 2) }}</strong></div><div><small>Balance</small><strong>&#8358;{{ number_format($p['remaining'], 2) }}</strong></div></div>
