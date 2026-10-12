@@ -1,9 +1,19 @@
 @extends('layouts.admin')
 @section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
 
 @section('content')
+<section class="admin-dashboard-hero mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <h1>Good day, {{ Auth::user()->name ?? 'Administrator' }}</h1>
+            <p>Monitor admissions, student services and payments from one place.</p>
+        </div>
+        <span class="badge bg-light text-success px-3 py-2">{{ $currentSession->name ?? 'No active session' }}</span>
+    </div>
+</section>
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-    <h3 class="fw-semibold mb-0">Dashboard</h3>
+    <h3 class="fw-semibold mb-0">At a glance</h3>
     <span class="badge bg-primary fs-13 px-3 py-2">{{ $currentSession->name ?? 'No Active Session' }}</span>
 </div>
 

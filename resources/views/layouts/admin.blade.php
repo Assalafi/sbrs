@@ -16,10 +16,11 @@
     @endif
     @include('partials.meta')
     @include('partials.styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-portal.css') }}?v=20261012">
     @stack('styles')
 </head>
 
-<body class="boxed-size">
+<body class="boxed-size admin-portal">
     @include('partials.preloader')
     @include('partials.sidebar')
 
@@ -27,34 +28,37 @@
         <div class="main-content d-flex flex-column">
             @include('partials.header')
 
-            <div class="main-content-container overflow-hidden">
+            <main class="main-content-container overflow-hidden" id="admin-main-content">
                 @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="alert alert-success alert-dismissible fade show admin-flash" role="alert">
+                        <span class="material-symbols-outlined align-middle me-1">check_circle</span>
                         {{ session('success') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="alert alert-danger alert-dismissible fade show admin-flash" role="alert">
+                        <span class="material-symbols-outlined align-middle me-1">error</span>
                         {{ session('error') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">
+                    <div class="alert alert-danger alert-dismissible fade show admin-flash" role="alert">
+                        <span class="material-symbols-outlined align-middle me-1">error</span>
+                        <span>
                             @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
+                                {{ $error }}@if(!$loop->last)<br>@endif
                             @endforeach
-                        </ul>
+                        </span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
                 @yield('content')
-            </div>
+            </main>
 
             <div class="flex-grow-1"></div>
             @include('partials.footer')

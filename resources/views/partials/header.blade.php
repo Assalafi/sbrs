@@ -8,6 +8,10 @@
                             <span class="material-symbols-outlined">menu</span>
                         </button>
                     </li>
+                    <li class="admin-header-title d-none d-md-block">
+                        <span class="fw-bold text-dark">{{ setting('site_name', 'SBRS Portal') }}</span>
+                        <small class="d-block text-muted">@yield('title', 'Administration')</small>
+                    </li>
                     <li>
                         <form class="src-form position-relative" action="{{ route('admin.dashboard') }}" method="GET">
                             <input type="text" name="search" class="form-control" placeholder="Search..." />

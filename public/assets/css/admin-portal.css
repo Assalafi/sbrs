@@ -1,0 +1,74 @@
+/* SBRS administration portal — responsive visual layer */
+.admin-portal {
+    --ap-ink: #172b26;
+    --ap-muted: #66756f;
+    --ap-border: #e0e9e4;
+    --ap-bg: #f4f8f6;
+    --ap-primary: #087443;
+    --ap-primary-dark: #045b34;
+    --ap-soft: #e8f5ee;
+    color: var(--ap-ink);
+    background: var(--ap-bg);
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.admin-portal .sidebar-area { width: 270px; background: #10372c; box-shadow: 8px 0 28px rgba(20,46,36,.12); z-index: 1050; }
+.admin-portal .sidebar-area .logo { min-height: 78px; padding: 17px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.admin-portal .sidebar-area .logo .logo-text { left: 68px; top: 25px; color: #fff !important; font-size: 16px; letter-spacing: -.02em; }
+.admin-portal .sidebar-area .logo img { border-radius: 12px !important; background: #fff; object-fit: contain; padding: 3px; }
+.admin-portal .sidebar-area .sidebar-burger-menu { color: #fff; }
+.admin-portal .sidebar-area .layout-menu { padding: 1.2rem .8rem 4rem; }
+.admin-portal .sidebar-area .menu-vertical .menu-title { margin: 1.25rem .55rem .45rem; color: #8ebca5; font-size: .64rem; letter-spacing: .12em; }
+.admin-portal .sidebar-area .menu-vertical .menu-title::before { display: none; }
+.admin-portal .sidebar-area .menu-vertical .menu-item { margin-bottom: .2rem; }
+.admin-portal .sidebar-area .menu-vertical .menu-item .menu-link { display: flex; align-items: center; gap: .65rem; padding: .7rem .75rem; border-radius: 10px; color: #cbe4d5; font-size: .8rem; font-weight: 650; }
+.admin-portal .sidebar-area .menu-vertical .menu-item .menu-link .menu-icon { margin: 0; color: #9dc9ad; font-size: 20px; }
+.admin-portal .sidebar-area .menu-vertical .menu-item .menu-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+.admin-portal .sidebar-area .menu-vertical .menu-item.open > .menu-link, .admin-portal .sidebar-area .menu-vertical .menu-item.active > .menu-link { color: #fff; background: #188554; box-shadow: 0 7px 14px rgba(0,0,0,.11); }
+.admin-portal .sidebar-area .menu-vertical .menu-item.open > .menu-link .menu-icon, .admin-portal .sidebar-area .menu-vertical .menu-item.active > .menu-link .menu-icon { color: #fff; }
+.admin-portal .main-content { min-height: 100vh; padding-top: 0; background: var(--ap-bg); }
+.admin-portal .main-content-container { width: 100%; max-width: 1600px; margin: 0 auto; padding: .2rem 1rem 2rem; }
+.admin-portal .main-content-container > .d-flex.justify-content-between { padding: .1rem 0 .25rem; }
+.admin-portal .main-content-container > .d-flex.justify-content-between > h3 { margin: 0; font-size: clamp(1.25rem, 2.7vw, 1.7rem); font-weight: 850; letter-spacing: -.025em; }
+.admin-portal .header-area { position: sticky; top: 0; z-index: 1030; margin: 0 0 1rem !important; padding: .75rem 1rem; border-bottom: 1px solid var(--ap-border); background: rgba(255,255,255,.95) !important; box-shadow: 0 4px 18px rgba(29,64,48,.05); backdrop-filter: blur(12px); }
+.admin-portal .header-area .left-header-content > ul, .admin-portal .header-area .right-header-content > ul { gap: .55rem; }
+.admin-portal .admin-header-title { min-width: 150px; line-height: 1.2; }
+.admin-portal .admin-header-title span { font-size: .82rem; }
+.admin-portal .admin-header-title small { margin-top: .15rem; font-size: .66rem; }
+.admin-portal .header-area .header-burger-menu, .admin-portal .header-area .fullscreen-btn, .admin-portal .header-area #switch-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--ap-border) !important; border-radius: 10px; color: var(--ap-ink); }
+.admin-portal .header-area .header-burger-menu:hover, .admin-portal .header-area .fullscreen-btn:hover, .admin-portal .header-area #switch-toggle:hover { color: var(--ap-primary); background: var(--ap-soft); }
+.admin-portal .header-area .src-form { width: min(330px, 40vw); }
+.admin-portal .header-area .src-form .form-control { min-height: 40px; padding-left: .85rem; border: 1px solid var(--ap-border); border-radius: 10px; font-size: .8rem; }
+.admin-portal .header-area .admin-profile > [data-bs-toggle="dropdown"] { display: flex; align-items: center; gap: .55rem; min-height: 40px; padding: .2rem .45rem .2rem .2rem !important; border: 1px solid var(--ap-border) !important; border-radius: 999px; background: #fff !important; }
+.admin-portal .header-area .admin-profile .administrator { width: 34px; height: 34px; object-fit: contain; padding: 2px; background: #fff; }
+.admin-portal .header-area .admin-profile h3 { margin: 0; color: var(--ap-ink); font-size: .77rem; }
+.admin-portal .header-area .dropdown-menu { min-width: 220px; padding: .45rem; border: 1px solid var(--ap-border) !important; border-radius: 14px; box-shadow: 0 14px 34px rgba(28,61,48,.1); }
+.admin-portal .header-area .dropdown-item { border-radius: 9px; padding: .6rem .7rem; font-size: .8rem; }
+.admin-portal .header-area .dropdown-item:hover { color: var(--ap-primary); background: var(--ap-soft); }
+.admin-portal .alert { border: 0; border-left: 4px solid currentColor; border-radius: 11px; font-size: .83rem; box-shadow: 0 6px 18px rgba(0,0,0,.04); }
+.admin-portal .card { border: 1px solid var(--ap-border) !important; border-radius: 17px !important; box-shadow: 0 10px 26px rgba(28,61,48,.055); overflow: hidden; }
+.admin-portal .card-header { border-bottom: 1px solid var(--ap-border) !important; background: #fff !important; color: var(--ap-ink); }
+.admin-portal .card-body { padding: 1.15rem; }
+.admin-portal .btn { border-radius: 10px; font-weight: 700; }
+.admin-portal .btn-primary, .admin-portal .btn-success { background: var(--ap-primary); border-color: var(--ap-primary); }
+.admin-portal .btn-primary:hover, .admin-portal .btn-success:hover { background: var(--ap-primary-dark); border-color: var(--ap-primary-dark); }
+.admin-portal .btn-outline-primary, .admin-portal .btn-outline-success { color: var(--ap-primary); border-color: #94c9a9; }
+.admin-portal .btn-outline-primary:hover, .admin-portal .btn-outline-success:hover { color: #fff; background: var(--ap-primary); border-color: var(--ap-primary); }
+.admin-portal .form-control, .admin-portal .form-select { min-height: 43px; border-color: var(--ap-border); border-radius: 9px; font-size: .82rem; }
+.admin-portal .form-control:focus, .admin-portal .form-select:focus { border-color: #72b68d; box-shadow: 0 0 0 .2rem rgba(8,116,67,.12); }
+.admin-portal .table-responsive { border: 1px solid var(--ap-border); border-radius: 13px; }
+.admin-portal .table { margin-bottom: 0; font-size: .8rem; vertical-align: middle; }
+.admin-portal .table thead th { padding: .75rem .8rem; background: #f4f8f6; border-bottom-color: var(--ap-border); color: var(--ap-muted); font-size: .67rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.admin-portal .table tbody td { padding: .75rem .8rem; border-color: #edf3ef; }
+.admin-portal .badge { border-radius: 999px; font-weight: 750; }
+.admin-portal .pagination { gap: .25rem; }
+.admin-portal .page-link { border: 1px solid var(--ap-border); border-radius: 8px !important; color: var(--ap-primary); }
+.admin-portal .page-item.active .page-link { border-color: var(--ap-primary); background: var(--ap-primary); }
+.admin-dashboard-hero { padding: 1.3rem; border-radius: 20px; color: #fff; background: linear-gradient(125deg,#0b6840,#15925b); box-shadow: 0 17px 34px rgba(8,116,67,.16); }
+.admin-dashboard-hero h1 { margin: 0; color: #fff; font-size: clamp(1.35rem, 3vw, 2rem); font-weight: 850; }
+.admin-dashboard-hero p { margin: .35rem 0 0; color: #d8f5e3; font-size: .82rem; }
+.admin-stat-card { height: 100%; padding: 1rem; border: 1px solid var(--ap-border); border-radius: 16px; background: #fff; box-shadow: 0 8px 20px rgba(28,61,48,.05); }
+.admin-stat-card .stat-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--ap-primary); background: var(--ap-soft); }
+@media (min-width: 1200px) { .admin-portal .main-content-container { padding: .2rem 1.6rem 2.5rem; } }
+@media (max-width: 1199px) { .admin-portal .header-area { padding: .7rem .8rem; } .admin-portal .main-content-container { padding: .2rem .8rem 1.5rem; } }
+@media (max-width: 575.98px) { .admin-portal .header-area .src-form { display: none; } .admin-portal .header-area .fullscreen-btn { display: none; } .admin-portal .header-area .admin-profile h3 { display: none; } .admin-portal .card-body { padding: .9rem; } .admin-portal .table { min-width: 640px; } }
