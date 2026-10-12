@@ -28,15 +28,20 @@ class Payment extends Model
         'academic_session_id',
         'fee_id',
         'amount',
+        'sponsor',
         'currency',
         'rrr',
+        'reference',
+        'proof_path',
         'order_id',
         'description',
+        'notes',
         'status',
         'payment_method',
         'gateway_response',
         'paid_at',
         'verified_at',
+        'recorded_by',
     ];
 
     protected $casts = [

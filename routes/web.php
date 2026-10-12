@@ -32,6 +32,7 @@ use App\Http\Controllers\Student\ExamController;
 use App\Http\Controllers\Student\ResultController as StudentResultController;
 use App\Http\Controllers\Student\PaymentController as StudentPaymentController;
 use App\Http\Controllers\Admin\PaymentTypeController;
+use App\Http\Controllers\PaymentReceiptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -167,6 +168,16 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::middleware('permission:payments.view')->group(function () {
         Route::get('payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
         Route::get('payments/export', [AdminPaymentController::class, 'export'])->middleware('permission:payments.export')->name('admin.payments.export');
+        Route::get('payments/offline', [AdminPaymentController::class, 'offlineForm'])->middleware('permission:payments.create')->name('admin.payments.offline');
+        Route::get('payments/offline/students/search', [AdminPaymentController::class, 'searchStudents'])->middleware('permission:payments.create')->name('admin.payments.offline.students.search');
+        Route::get('payments/offline/template', [AdminPaymentController::class, 'downloadTemplate'])->middleware('permission:payments.create')->name('admin.payments.offline.template');
+        Route::post('payments/offline', [AdminPaymentController::class, 'storeOffline'])->middleware('permission:payments.create')->name('admin.payments.offline.store');
+        Route::post('payments/offline/upload', [AdminPaymentController::class, 'uploadOffline'])->middleware('permission:payments.create')->name('admin.payments.offline.upload');
+        Route::get('payments/{payment}/edit', [AdminPaymentController::class, 'editOffline'])->middleware('permission:payments.edit')->name('admin.payments.edit');
+        Route::put('payments/{payment}', [AdminPaymentController::class, 'updateOffline'])->middleware('permission:payments.edit')->name('admin.payments.update');
+        Route::post('payments/{payment}/cancel', [AdminPaymentController::class, 'cancelOffline'])->middleware('permission:payments.edit')->name('admin.payments.cancel');
+        Route::delete('payments/{payment}', [AdminPaymentController::class, 'destroy'])->middleware('permission:payments.delete')->name('admin.payments.destroy');
+        Route::get('payments/{payment}/receipt', [PaymentReceiptController::class, 'admin'])->name('admin.payments.receipt');
         Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
         Route::post('payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->middleware('permission:payments.verify')->name('admin.payments.verify');
     });
@@ -281,6 +292,7 @@ Route::prefix('student')->middleware(['student.auth'])->group(function () {
     Route::post('/payments/initiate', [StudentPaymentController::class, 'initiate'])->name('student.payments.initiate');
     Route::get('/payments/verify/{payment}', [StudentPaymentController::class, 'verify'])->name('student.payments.verify');
     Route::post('/payments/cancel/{payment}', [StudentPaymentController::class, 'cancel'])->name('student.payments.cancel');
+    Route::get('/payments/{payment}/receipt', [PaymentReceiptController::class, 'student'])->name('student.payments.receipt');
 
     // Results
     Route::get('/results', [StudentResultController::class, 'index'])->name('student.results.index');

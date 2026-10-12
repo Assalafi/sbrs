@@ -79,6 +79,14 @@
                     <span class="title">Payment Records</span>
                 </a>
             </li>
+            @can('payments.create')
+            <li class="menu-item {{ request()->routeIs('admin.payments.offline*') ? 'open' : '' }}">
+                <a href="{{ route('admin.payments.offline') }}" class="menu-link">
+                    <i class="material-symbols-outlined menu-icon">add_card</i>
+                    <span class="title">Offline Payments</span>
+                </a>
+            </li>
+            @endcan
             @endcan
 
             {{-- Admissions --}}

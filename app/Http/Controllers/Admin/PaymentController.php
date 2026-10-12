@@ -5,8 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\AcademicSession;
+use App\Models\PaymentType;
+use App\Models\Student;
 use App\Services\RemitaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class PaymentController extends Controller
 {
@@ -31,26 +38,381 @@ class PaymentController extends Controller
             $query->where('academic_session_id', $request->academic_session_id);
         }
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('rrr', 'like', "%{$request->search}%")
-                  ->orWhere('order_id', 'like', "%{$request->search}%");
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('rrr', 'like', "%{$search}%")
+                  ->orWhere('reference', 'like', "%{$search}%")
+                  ->orWhere('order_id', 'like', "%{$search}%")
+                  ->orWhereHasMorph('payable', [Student::class], function ($payer) use ($search) {
+                      $payer->where('registration_number', 'like', "%{$search}%")
+                          ->orWhere('surname', 'like', "%{$search}%")
+                          ->orWhere('first_name', 'like', "%{$search}%");
+                  });
             });
         }
 
         $payments = $query->orderBy('created_at', 'desc')->paginate(25);
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
 
-        return view('admin.payments.index', compact('payments', 'sessions'));
+        return view('admin.payments.index', compact('payments', 'sessions', 'paymentTypes'));
+    }
+
+    public function offlineForm()
+    {
+        $sessions = AcademicSession::where('is_active', true)->orderByDesc('is_current')->orderByDesc('name')->get();
+        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $currentSession = AcademicSession::current();
+
+        return view('admin.payments.offline', compact('sessions', 'paymentTypes', 'currentSession'));
+    }
+
+    public function searchStudents(Request $request)
+    {
+        $term = trim((string) $request->input('q'));
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $students = Student::with(['programme', 'academicSession'])
+            ->where(function ($query) use ($term) {
+                $query->where('registration_number', 'like', "%{$term}%")
+                    ->orWhere('surname', 'like', "%{$term}%")
+                    ->orWhere('first_name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%");
+            })
+            ->orderBy('surname')
+            ->limit(25)
+            ->get()
+            ->map(fn (Student $student) => [
+                'id' => $student->id,
+                'registration_number' => $student->registration_number,
+                'name' => $student->full_name,
+                'programme' => $student->programme?->name ?: $student->programme_type,
+                'session' => $student->academicSession?->name,
+            ]);
+
+        return response()->json($students);
+    }
+
+    public function downloadTemplate()
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Payments');
+        $headers = ['student_id', 'amount', 'payment_type', 'reference', 'session', 'sponsor', 'description', 'notes'];
+        $sheet->fromArray([$headers], null, 'A1');
+        $sheet->fromArray([['SBRS/RS/26/000001', 150000, 'registration', 'BANK-REF-001', '2026/2027', 'Self', 'Registration fee', 'Offline payment']], null, 'A2');
+        $sheet->getStyle('A1:H1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:H1')->getFill()->setFillType('solid')->getStartColor()->setARGB('006633');
+        foreach (range('A', 'H') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $instructions = $spreadsheet->createSheet();
+        $instructions->setTitle('Instructions');
+        $instructions->fromArray([
+            ['SBRS OFFLINE PAYMENT UPLOAD'],
+            ['student_id', 'Student registration number, for example SBRS/RS/26/000001'],
+            ['amount', 'Positive amount in Naira'],
+            ['payment_type', 'application, admission, registration, examination, hostel, other, or an active payment type code'],
+            ['reference', 'Bank teller, transfer reference or official receipt number'],
+            ['session', 'Academic session name exactly as configured, for example 2026/2027'],
+            ['sponsor', 'Self or Scholarship'],
+            ['description / notes', 'Optional payment details'],
+        ], null, 'A1');
+        $instructions->getStyle('A1:B1')->getFont()->setBold(true);
+        $instructions->getColumnDimension('A')->setWidth(24);
+        $instructions->getColumnDimension('B')->setWidth(105);
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'sbrs-offline-payments-template.xlsx';
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function storeOffline(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'payment_type' => 'required|string|max:120',
+            'academic_session_id' => 'required|exists:academic_sessions,id',
+            'amount' => 'required|numeric|min:0.01',
+            'reference' => 'required|string|max:120',
+            'sponsor' => 'required|in:Self,Scholarship',
+            'description' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:2000',
+            'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $student = Student::findOrFail($validated['student_id']);
+        try {
+            [$legacyType, $paymentType] = $this->resolvePaymentType($validated['payment_type']);
+            $sponsor = $this->normalizeSponsor($validated['sponsor']);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($this->referenceExists($student, $validated['reference'])) {
+            return back()->withInput()->with('error', 'This reference has already been recorded for the selected student.');
+        }
+
+        $proofPath = null;
+        try {
+            if ($request->hasFile('proof_file')) {
+                $proofPath = $request->file('proof_file')->store('payment_proofs', 'public');
+            }
+
+            DB::transaction(function () use ($validated, $student, $legacyType, $paymentType, $sponsor, $proofPath) {
+                $this->createOfflinePayment($student, [
+                    'payment_type' => $legacyType,
+                    'payment_type_id' => $paymentType?->id,
+                    'academic_session_id' => $validated['academic_session_id'],
+                    'amount' => $validated['amount'],
+                    'reference' => trim($validated['reference']),
+                    'sponsor' => $sponsor,
+                    'description' => $validated['description'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'proof_path' => $proofPath,
+                ]);
+            });
+
+            return redirect()->route('admin.payments.index')->with('success', 'Offline payment recorded successfully.');
+        } catch (\Throwable $e) {
+            if ($proofPath) {
+                Storage::disk('public')->delete($proofPath);
+            }
+            report($e);
+            return back()->withInput()->with('error', 'The offline payment could not be recorded. Please try again.');
+        }
+    }
+
+    public function uploadOffline(Request $request)
+    {
+        $request->validate([
+            'payment_file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+        ]);
+
+        try {
+            $sheet = IOFactory::load($request->file('payment_file')->getRealPath())->getActiveSheet();
+            $rows = $sheet->toArray(null, true, true, true);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'The spreadsheet could not be read. Please use the supplied template.');
+        }
+
+        $header = array_shift($rows) ?: [];
+        $headerMap = [];
+        foreach ($header as $column => $value) {
+            $key = $this->normaliseHeader($value);
+            if ($key !== '') {
+                $headerMap[$key] = $column;
+            }
+        }
+
+        $required = ['student_id', 'amount', 'payment_type', 'reference', 'session', 'sponsor'];
+        $missing = array_values(array_diff($required, array_keys($headerMap)));
+        if ($missing) {
+            return back()->with('error', 'Missing required spreadsheet columns: ' . implode(', ', $missing));
+        }
+
+        $records = [];
+        $errors = [];
+        $seen = [];
+        foreach ($rows as $rowNumber => $row) {
+            $excelRow = $rowNumber + 2;
+            $values = [];
+            foreach ($headerMap as $key => $column) {
+                $values[$key] = is_string($row[$column] ?? null) ? trim($row[$column]) : ($row[$column] ?? null);
+            }
+
+            if (!array_filter($values, static fn ($value) => trim((string) $value) !== '')) {
+                continue;
+            }
+
+            try {
+                $student = Student::where('registration_number', trim((string) $values['student_id']))->first();
+                if (!$student) {
+                    throw new \RuntimeException('Student registration number was not found.');
+                }
+
+                [$legacyType, $paymentType] = $this->resolvePaymentType($values['payment_type'] ?? null);
+                $session = AcademicSession::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $values['session']))])->first();
+                if (!$session) {
+                    throw new \RuntimeException('Academic session was not found.');
+                }
+
+                $sponsor = $this->normalizeSponsor($values['sponsor'] ?? null);
+                $reference = trim((string) ($values['reference'] ?? ''));
+                if ($reference === '') {
+                    throw new \RuntimeException('Payment reference is required.');
+                }
+
+                $duplicateKey = $student->id . '|' . strtolower($reference);
+                if (isset($seen[$duplicateKey]) || $this->referenceExists($student, $reference)) {
+                    throw new \RuntimeException('This payment reference already exists for the student.');
+                }
+                $seen[$duplicateKey] = true;
+
+                $amount = (float) ($values['amount'] ?? 0);
+                if ($amount <= 0) {
+                    throw new \RuntimeException('Amount must be greater than zero.');
+                }
+
+                $records[] = [
+                    'student' => $student,
+                    'payment_type' => $legacyType,
+                    'payment_type_id' => $paymentType?->id,
+                    'academic_session_id' => $session->id,
+                    'amount' => $amount,
+                    'reference' => $reference,
+                    'sponsor' => $sponsor,
+                    'description' => trim((string) ($values['description'] ?? '')) ?: null,
+                    'notes' => trim((string) ($values['notes'] ?? '')) ?: null,
+                ];
+            } catch (\Throwable $e) {
+                $errors[] = 'Row ' . $excelRow . ': ' . $e->getMessage();
+            }
+        }
+
+        if ($errors) {
+            return back()->with('error', 'No records were imported because the upload contains errors. Correct the listed rows and upload again.')
+                ->with('import_errors', $errors);
+        }
+
+        if (!$records) {
+            return back()->with('error', 'The spreadsheet does not contain any payment rows.');
+        }
+
+        try {
+            DB::transaction(function () use ($records) {
+                foreach ($records as $record) {
+                    $this->createOfflinePayment($record['student'], $record);
+                }
+            });
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', 'The upload could not be completed. No rows were saved.');
+        }
+
+        return redirect()->route('admin.payments.index')->with('success', count($records) . ' offline payment(s) imported successfully.');
+    }
+
+    public function editOffline(Payment $payment)
+    {
+        $this->ensureOffline($payment);
+        $payment->load(['payable', 'academicSession', 'paymentType']);
+        $sessions = AcademicSession::where('is_active', true)->orderByDesc('is_current')->orderByDesc('name')->get();
+        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+
+        return view('admin.payments.offline-edit', compact('payment', 'sessions', 'paymentTypes'));
+    }
+
+    public function updateOffline(Request $request, Payment $payment)
+    {
+        $this->ensureOffline($payment);
+        if ($payment->status === Payment::STATUS_CANCELLED) {
+            return back()->with('error', 'Cancelled payments cannot be edited.');
+        }
+
+        $validated = $request->validate([
+            'payment_type' => 'required|string|max:120',
+            'academic_session_id' => 'required|exists:academic_sessions,id',
+            'amount' => 'required|numeric|min:0.01',
+            'reference' => 'required|string|max:120',
+            'sponsor' => 'required|in:Self,Scholarship',
+            'description' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:2000',
+            'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        try {
+            [$legacyType, $paymentType] = $this->resolvePaymentType($validated['payment_type']);
+            $sponsor = $this->normalizeSponsor($validated['sponsor']);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+        $student = $payment->payable;
+        if (!$student instanceof Student) {
+            return back()->with('error', 'Only student offline payments can be edited here.');
+        }
+
+        $duplicate = Payment::where('id', '!=', $payment->id)
+            ->where('payable_type', Student::class)
+            ->where('payable_id', $student->id)
+            ->where('reference', trim($validated['reference']))
+            ->where('status', '!=', Payment::STATUS_CANCELLED)
+            ->exists();
+        if ($duplicate) {
+            return back()->withInput()->with('error', 'This reference is already used for the selected student.');
+        }
+
+        $oldProof = $payment->proof_path;
+        $newProof = $oldProof;
+        try {
+            if ($request->hasFile('proof_file')) {
+                $newProof = $request->file('proof_file')->store('payment_proofs', 'public');
+            }
+
+            $payment->update([
+                'payment_type' => $legacyType,
+                'payment_type_id' => $paymentType?->id,
+                'academic_session_id' => $validated['academic_session_id'],
+                'amount' => $validated['amount'],
+                'reference' => trim($validated['reference']),
+                'sponsor' => $sponsor,
+                'description' => $validated['description'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'proof_path' => $newProof,
+                'payment_method' => 'Offline',
+            ]);
+
+            if ($newProof !== $oldProof && $oldProof) {
+                Storage::disk('public')->delete($oldProof);
+            }
+
+            return redirect()->route('admin.payments.show', $payment)->with('success', 'Offline payment updated successfully.');
+        } catch (\Throwable $e) {
+            if ($newProof !== $oldProof && $newProof) {
+                Storage::disk('public')->delete($newProof);
+            }
+            report($e);
+            return back()->withInput()->with('error', 'The offline payment could not be updated.');
+        }
+    }
+
+    public function cancelOffline(Payment $payment)
+    {
+        $this->ensureOffline($payment);
+        if ($payment->status === Payment::STATUS_CANCELLED) {
+            return back()->with('info', 'Payment is already cancelled.');
+        }
+
+        $gateway = (array) ($payment->gateway_response ?? []);
+        $gateway['cancelled_by'] = auth()->id();
+        $gateway['cancelled_at'] = now()->toIso8601String();
+        $payment->update([
+            'status' => Payment::STATUS_CANCELLED,
+            'gateway_response' => $gateway,
+        ]);
+
+        return back()->with('success', 'Offline payment cancelled.');
     }
 
     public function show(Payment $payment)
     {
-        $payment->load(['payable', 'academicSession', 'fee']);
+        $payment->load(['payable', 'academicSession', 'fee', 'paymentType']);
         return view('admin.payments.show', compact('payment'));
     }
 
     public function verify(Payment $payment)
     {
+        if (strtolower((string) $payment->payment_method) === 'offline' || $payment->reference) {
+            return response()->json(['type' => 'error', 'message' => 'Offline payments do not need Remita verification.']);
+        }
+
         if (!$payment->hasRrr()) {
             return response()->json(['type' => 'error', 'message' => 'No RRR found for this payment.']);
         }
@@ -111,18 +473,22 @@ class PaymentController extends Controller
 
         $callback = function() use ($payments) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'RRR', 'Order ID', 'Payer', 'Type', 'Amount', 'Status', 'Session']);
+            fputcsv($file, ['Date', 'Reference', 'RRR', 'Order ID', 'Payer', 'Type', 'Sponsor', 'Method', 'Amount', 'Status', 'Session', 'Description']);
             foreach ($payments as $payment) {
                 $payerName = $payment->payable ? ($payment->payable->surname ?? '') . ' ' . ($payment->payable->first_name ?? '') : 'N/A';
                 fputcsv($file, [
                     $payment->created_at->format('Y-m-d H:i'),
+                    $payment->reference ?? 'N/A',
                     $payment->rrr ?? 'N/A',
                     $payment->order_id ?? 'N/A',
                     trim($payerName),
                     ucfirst($payment->payment_type),
+                    $payment->sponsor ?? 'N/A',
+                    $payment->payment_method ?? 'Online',
                     number_format($payment->amount, 2),
                     ucfirst($payment->status),
                     $payment->academicSession->name ?? 'N/A',
+                    $payment->description ?? '',
                 ]);
             }
             fclose($file);
@@ -133,10 +499,111 @@ class PaymentController extends Controller
 
     public function destroy(Payment $payment)
     {
-        if ($payment->status === 'successful') {
-            return back()->with('error', 'Cannot delete a successful payment.');
+        $this->ensureOffline($payment);
+        if (!in_array($payment->status, [Payment::STATUS_CANCELLED, Payment::STATUS_PENDING], true)) {
+            return back()->with('error', 'Cancel the offline payment before deleting it.');
+        }
+
+        if ($payment->proof_path) {
+            Storage::disk('public')->delete($payment->proof_path);
         }
         $payment->delete();
         return back()->with('success', 'Payment record deleted.');
+    }
+
+    private function ensureOffline(Payment $payment): void
+    {
+        abort_unless(
+            strtolower((string) $payment->payment_method) === 'offline' || !empty($payment->reference),
+            403,
+            'Only offline payments can be changed here.'
+        );
+    }
+
+    private function referenceExists(Student $student, string $reference, ?string $exceptId = null): bool
+    {
+        return $student->payments()
+            ->whereRaw('LOWER(reference) = ?', [strtolower(trim($reference))])
+            ->where('status', '!=', Payment::STATUS_CANCELLED)
+            ->when($exceptId, fn ($query) => $query->where('id', '!=', $exceptId))
+            ->exists();
+    }
+
+    private function normaliseHeader($value): string
+    {
+        $value = strtolower(trim((string) $value));
+        $value = preg_replace('/[^a-z0-9]+/', '_', $value);
+        return trim((string) $value, '_');
+    }
+
+    private function normalizeSponsor(?string $value): string
+    {
+        $sponsor = strtolower(trim((string) $value));
+        return match ($sponsor) {
+            'self', 'self sponsor', 'self-sponsored', 'self_sponsored' => 'Self',
+            'scholarship', 'scholarship sponsor', 'scholar' => 'Scholarship',
+            default => throw new \RuntimeException('Sponsor must be Self or Scholarship.'),
+        };
+    }
+
+    private function resolvePaymentType(?string $value): array
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            throw new \RuntimeException('Payment type is required.');
+        }
+
+        if (str_starts_with(strtolower($value), 'custom:')) {
+            $id = trim(substr($value, 7));
+            $type = PaymentType::where('id', $id)->where('is_active', true)->first();
+            if (!$type) {
+                throw new \RuntimeException('The selected payment type is not active.');
+            }
+            return [$type->legacyType(), $type];
+        }
+
+        $type = PaymentType::where('is_active', true)
+            ->where(fn ($query) => $query->whereRaw('LOWER(code) = ?', [strtolower($value)]))
+            ->first();
+        if ($type) {
+            return [$type->legacyType(), $type];
+        }
+
+        $legacy = strtolower($value);
+        if (in_array($legacy, ['application', 'admission', 'registration', 'examination', 'hostel', 'other'], true)) {
+            return [$legacy, null];
+        }
+
+        throw new \RuntimeException('Payment type is invalid or inactive.');
+    }
+
+    private function createOfflinePayment(Student $student, array $values): Payment
+    {
+        return Payment::create([
+            'payable_type' => Student::class,
+            'payable_id' => $student->id,
+            'payment_type' => $values['payment_type'],
+            'payment_type_id' => $values['payment_type_id'] ?? null,
+            'academic_session_id' => $values['academic_session_id'],
+            'amount' => $values['amount'],
+            'sponsor' => $values['sponsor'],
+            'currency' => 'NGN',
+            'reference' => $values['reference'],
+            'proof_path' => $values['proof_path'] ?? null,
+            'description' => $values['description'] ?? null,
+            'notes' => $values['notes'] ?? null,
+            'status' => Payment::STATUS_SUCCESSFUL,
+            'payment_method' => 'Offline',
+            'paid_at' => now(),
+            'verified_at' => now(),
+            'recorded_by' => auth()->id(),
+            'is_full_payment' => true,
+            'full_payment_at' => now(),
+            'gateway_response' => [
+                'source' => 'admin_offline',
+                'recorded_at' => now()->toIso8601String(),
+                'recorded_by' => auth()->id(),
+            ],
+        ]);
     }
 }

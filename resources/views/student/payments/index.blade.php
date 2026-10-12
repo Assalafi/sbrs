@@ -220,7 +220,7 @@
         @if($history->count())
             <div class="table-responsive">
                 <table class="table align-middle">
-                    <thead><tr><th>Date</th><th>Fee</th><th>Amount</th><th>RRR</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Fee</th><th>Amount</th><th>Reference / RRR</th><th>Sponsor</th><th>Status</th><th></th></tr></thead>
                     <tbody>
                         @foreach($history as $h)
                         <tr>
@@ -232,13 +232,8 @@
                                 @endif
                             </td>
                             <td class="fw-medium">&#8358;{{ number_format($h->amount, 2) }}</td>
-                            <td>
-                                @if($h->rrr)
-                                    <code>{{ $h->rrr }}</code>
-                                @else
-                                    <span class="text-muted">N/A</span>
-                                @endif
-                            </td>
+                            <td><div>{{ $h->reference ?: 'N/A' }}</div><small class="text-muted">RRR: {{ $h->rrr ?: 'N/A' }}</small></td>
+                            <td>{{ $h->sponsor ?: '—' }}</td>
                             <td>
                                 @if($h->status === 'successful')
                                     <span class="badge bg-success"><i class="material-symbols-outlined fs-14 align-middle me-1">check_circle</i>Paid</span>
@@ -250,6 +245,7 @@
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 @endif
                             </td>
+                            <td>@if($h->status === 'successful')<a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success"><i class="material-symbols-outlined fs-16 align-middle">download</i><span class="d-none d-md-inline ms-1">Receipt</span></a>@endif</td>
                         </tr>
                         @endforeach
                     </tbody>
