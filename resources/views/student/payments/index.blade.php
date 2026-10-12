@@ -34,8 +34,44 @@
                 @foreach($pendingPayments as $payment)
                     @php $widgetKey = 'Pay' . str_replace('-', '', $payment->id); @endphp
                     <article class="payment-clean-pending-item">
-                        <div class="payment-clean-item-info"><span class="payment-clean-item-icon"><span class="material-symbols-outlined">schedule</span></span><div><h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3><p>&#8358;{{ number_format($payment->amount, 2) }}@if($payment->installment_label) · {{ $payment->installment_label }}@endif</p><div class="payment-clean-rrr"><span>RRR</span><code>{{ $payment->rrr ?: 'Not generated' }}</code><button type="button" onclick="copyRrr('{{ $payment->id }}')" aria-label="Copy RRR"><span class="material-symbols-outlined">content_copy</span></button></div></div></div>
-                        <div class="payment-clean-actions"><button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning"><span class="material-symbols-outlined">credit_card</span>Pay online</button><form action="{{ route('student.payments.verify', $payment) }}" method="GET"><button type="submit" class="btn btn-success"><span class="material-symbols-outlined">verified</span>Verify</button></form><form action="{{ route('student.payments.cancel', $payment) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">@csrf<button type="submit" class="btn btn-outline-danger"><span class="material-symbols-outlined">cancel</span>Cancel</button></form></div>
+                        <div class="payment-clean-item-info">
+                            <span class="payment-clean-item-icon"><span class="material-symbols-outlined">schedule</span></span>
+                            <div>
+                                <h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3>
+                                <p>
+                                    &#8358;{{ number_format($payment->amount, 2) }}
+                                    @if($payment->installment_label)
+                                        <span aria-hidden="true"> &middot; </span>{{ $payment->installment_label }}
+                                    @endif
+                                </p>
+                                <div class="payment-clean-rrr">
+                                    <span>RRR</span>
+                                    <code id="rrr-{{ $payment->id }}">{{ $payment->rrr ?: 'Not generated' }}</code>
+                                    <button type="button" onclick="copyRrr('{{ $payment->id }}')" aria-label="Copy RRR">
+                                        <span class="material-symbols-outlined">content_copy</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-clean-actions">
+                            <button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning">
+                                <span class="material-symbols-outlined">credit_card</span>
+                                Pay online
+                            </button>
+                            <form action="{{ route('student.payments.verify', $payment) }}" method="GET">
+                                <button type="submit" class="btn btn-success">
+                                    <span class="material-symbols-outlined">verified</span>
+                                    Verify
+                                </button>
+                            </form>
+                            <form action="{{ route('student.payments.cancel', $payment) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <span class="material-symbols-outlined">cancel</span>
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
                     </article>
                 @endforeach
             </div>
@@ -61,9 +97,48 @@
                     @elseif($pending && $pending->hasRrr())
                         @php $cardWidgetKey = 'Card' . str_replace('-', '', $pending->id); @endphp
                         <div class="payment-clean-inline-note"><span class="material-symbols-outlined">schedule</span>Payment pending with RRR <code>{{ $pending->rrr }}</code></div>
-                        <div class="payment-clean-actions"><button type="button" onclick="makePayment{{ $cardWidgetKey }}()" class="btn btn-warning"><span class="material-symbols-outlined">credit_card</span>Pay online</button><form action="{{ route('student.payments.verify', $pending) }}" method="GET"><button type="submit" class="btn btn-success"><span class="material-symbols-outlined">verified</span>Verify</button></form><form action="{{ route('student.payments.cancel', $pending) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">@csrf<button type="submit" class="btn btn-outline-danger"><span class="material-symbols-outlined">cancel</span>Cancel</button></form></div>
+                        <div class="payment-clean-actions">
+                            <button type="button" onclick="makePayment{{ $cardWidgetKey }}()" class="btn btn-warning">
+                                <span class="material-symbols-outlined">credit_card</span>
+                                Pay online
+                            </button>
+                            <form action="{{ route('student.payments.verify', $pending) }}" method="GET">
+                                <button type="submit" class="btn btn-success">
+                                    <span class="material-symbols-outlined">verified</span>
+                                    Verify
+                                </button>
+                            </form>
+                            <form action="{{ route('student.payments.cancel', $pending) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <span class="material-symbols-outlined">cancel</span>
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
                     @else
-                        <div class="payment-clean-actions payment-clean-start-actions"><form action="{{ route('student.payments.initiate') }}" method="POST">@csrf<input type="hidden" name="payment_type_id" value="{{ $type->id }}"><input type="hidden" name="mode" value="full"><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">payments</span>Pay full · &#8358;{{ number_format($p['remaining'], 2) }}</button></form>@if($p['installment'] !== null && $type->split_enabled)<form action="{{ route('student.payments.initiate') }}" method="POST">@csrf<input type="hidden" name="payment_type_id" value="{{ $type->id }}"><input type="hidden" name="mode" value="installment"><button type="submit" class="btn btn-outline-primary"><span class="material-symbols-outlined">call_split</span>{{ $p['installment_label'] }} · &#8358;{{ number_format($p['installment_amount'], 2) }}</button></form>@endif</div>
+                        <div class="payment-clean-actions payment-clean-start-actions">
+                            <form action="{{ route('student.payments.initiate') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="payment_type_id" value="{{ $type->id }}">
+                                <input type="hidden" name="mode" value="full">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="material-symbols-outlined">payments</span>
+                                    Pay full &middot; &#8358;{{ number_format($p['remaining'], 2) }}
+                                </button>
+                            </form>
+                            @if($p['installment'] !== null && $type->split_enabled)
+                                <form action="{{ route('student.payments.initiate') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="payment_type_id" value="{{ $type->id }}">
+                                    <input type="hidden" name="mode" value="installment">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <span class="material-symbols-outlined">call_split</span>
+                                        {{ $p['installment_label'] }} &middot; &#8358;{{ number_format($p['installment_amount'], 2) }}
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     @endif
                 </article>
             @empty
@@ -77,7 +152,27 @@
         @if($history->isNotEmpty())
             <div class="payment-clean-history">
                 @foreach($history as $h)
-                    <div class="payment-clean-history-row"><div class="payment-clean-history-icon"><span class="material-symbols-outlined">{{ $h->status === 'successful' ? 'check_circle' : 'receipt_long' }}</span></div><div class="payment-clean-history-main"><strong>{{ $h->paymentType->name ?? ucwords(str_replace('_', ' ', $h->payment_type)) }}</strong><small>{{ $h->created_at->format('M d, Y · H:i') }} · {{ $h->reference ?: 'No reference' }}</small></div><div class="payment-clean-history-amount"><strong>&#8358;{{ number_format($h->amount, 2) }}</strong><span class="payment-clean-status status-{{ $h->status }}">{{ ucfirst($h->status) }}</span></div><div class="payment-clean-history-action">@if($h->status === 'successful')<a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success"><span class="material-symbols-outlined">download</span><span>Receipt</span></a>@endif</div></div>
+                    <div class="payment-clean-history-row">
+                        <div class="payment-clean-history-icon">
+                            <span class="material-symbols-outlined">{{ $h->status === 'successful' ? 'check_circle' : 'receipt_long' }}</span>
+                        </div>
+                        <div class="payment-clean-history-main">
+                            <strong>{{ $h->paymentType->name ?? ucwords(str_replace('_', ' ', $h->payment_type)) }}</strong>
+                            <small>{{ $h->created_at->format('M d, Y &middot; H:i') }} &middot; {{ $h->reference ?: 'No reference' }}</small>
+                        </div>
+                        <div class="payment-clean-history-amount">
+                            <strong>&#8358;{{ number_format($h->amount, 2) }}</strong>
+                            <span class="payment-clean-status status-{{ $h->status }}">{{ ucfirst($h->status) }}</span>
+                        </div>
+                        <div class="payment-clean-history-action">
+                            @if($h->status === 'successful')
+                                <a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success">
+                                    <span class="material-symbols-outlined">download</span>
+                                    <span>Receipt</span>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endforeach
             </div>
         @else
@@ -344,7 +439,14 @@
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 @endif
                             </td>
-                            <td>@if($h->status === 'successful')<a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success"><i class="material-symbols-outlined fs-16 align-middle">download</i><span class="d-none d-md-inline ms-1">Receipt</span></a>@endif</td>
+                            <td>
+                                @if($h->status === 'successful')
+                                    <a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success">
+                                        <i class="material-symbols-outlined fs-16 align-middle">download</i>
+                                        <span class="d-none d-md-inline ms-1">Receipt</span>
+                                    </a>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
