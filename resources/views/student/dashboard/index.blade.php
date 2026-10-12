@@ -1,7 +1,84 @@
 @extends('layouts.student')
 @section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
 
 @section('content')
+<div class="student-page-heading">
+    <div>
+        <h1>Your student dashboard</h1>
+        <p>Keep track of your registration, payments and academic progress.</p>
+    </div>
+</div>
+
+@php
+    $studentName = trim(($student->first_name ?? '') . ' ' . ($student->surname ?? '')) ?: 'Student';
+    $initials = strtoupper(substr($student->first_name ?? 'S', 0, 1) . substr($student->surname ?? '', 0, 1));
+    $paidPayments = $student->payments->where('status', 'successful')->count();
+    $registeredCourses = $student->courseRegistrations->count();
+    $resultCount = $student->results->count();
+@endphp
+
+<section class="student-dashboard-hero">
+    <div class="student-dashboard-identity">
+        <div class="student-dashboard-avatar">
+            @if($student->passport_photo)
+                <img src="{{ asset('storage/' . $student->passport_photo) }}" alt="Profile photo">
+            @else
+                {{ $initials }}
+            @endif
+        </div>
+        <div class="student-dashboard-copy">
+            <p class="kicker">Welcome back</p>
+            <h1>{{ $studentName }}</h1>
+            <p>{{ $student->registration_number }} · {{ $student->programme->name ?? 'Programme not assigned' }}</p>
+            <div class="student-dashboard-meta">
+                <span>{{ $student->programme_type ?? 'Student' }}</span>
+                <span>{{ $student->academicSession->name ?? 'Current session' }}</span>
+                <span>{{ $student->is_registered ? 'Registration complete' : 'Registration pending' }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="student-dashboard-hero-action">
+        <a href="{{ route('student.courses.index') }}" class="btn d-inline-flex align-items-center gap-2"><span class="material-symbols-outlined">menu_book</span>Course registration</a>
+    </div>
+</section>
+
+<section class="student-stat-grid" aria-label="Student summary">
+    <div class="student-stat-card"><span class="student-stat-icon"><span class="material-symbols-outlined">menu_book</span></span><span><span class="student-stat-value">{{ $registeredCourses }}</span><span class="student-stat-label">Courses registered</span></span></div>
+    <div class="student-stat-card"><span class="student-stat-icon"><span class="material-symbols-outlined">payments</span></span><span><span class="student-stat-value">{{ $paidPayments }}</span><span class="student-stat-label">Successful payments</span></span></div>
+    <div class="student-stat-card"><span class="student-stat-icon"><span class="material-symbols-outlined">grade</span></span><span><span class="student-stat-value">{{ $resultCount }}</span><span class="student-stat-label">Results available</span></span></div>
+    <div class="student-stat-card"><span class="student-stat-icon"><span class="material-symbols-outlined">event</span></span><span><span class="student-stat-value" style="font-size:.9rem">{{ $student->academicSession->name ?? '—' }}</span><span class="student-stat-label">Academic session</span></span></div>
+</section>
+
+<div class="student-dashboard-grid">
+    <section class="student-panel">
+        <div class="student-panel-header"><div><h2>Academic profile</h2><p>Your current student record at a glance.</p></div><span class="material-symbols-outlined" style="color:var(--sp-primary)">school</span></div>
+        <div class="student-panel-body">
+            <div class="student-detail-grid">
+                <div class="student-detail-item"><small>Registration number</small><strong>{{ $student->registration_number ?: 'Not provided' }}</strong></div>
+                <div class="student-detail-item"><small>Programme</small><strong>{{ $student->programme->name ?? 'Not assigned' }}</strong></div>
+                <div class="student-detail-item"><small>Subject combination</small><strong>{{ $student->subjectCombination->name ?? 'Not assigned' }}</strong></div>
+                <div class="student-detail-item"><small>Screening status</small><strong>{{ ucfirst($student->screening_status ?? 'pending') }}</strong></div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a href="{{ route('student.biodata.index') }}" class="btn btn-sm btn-outline-primary"><span class="material-symbols-outlined align-middle" style="font-size:18px">badge</span> View bio-data</a>
+                <a href="{{ route('student.results.index') }}" class="btn btn-sm btn-outline-primary"><span class="material-symbols-outlined align-middle" style="font-size:18px">grade</span> View results</a>
+            </div>
+        </div>
+    </section>
+    <section class="student-panel">
+        <div class="student-panel-header"><div><h2>Quick actions</h2><p>Common tasks are one tap away.</p></div><span class="material-symbols-outlined" style="color:var(--sp-primary)">bolt</span></div>
+        <div class="student-panel-body"><div class="student-action-list">
+            @if(!$student->is_registered)<a class="student-action-link" href="{{ route('student.registration.index') }}"><span class="leading"><span class="material-symbols-outlined">how_to_reg</span>Complete registration</span><span class="material-symbols-outlined">chevron_right</span></a>@endif
+            <a class="student-action-link" href="{{ route('student.payments.index') }}"><span class="leading"><span class="material-symbols-outlined">payments</span>Make a payment</span><span class="material-symbols-outlined">chevron_right</span></a>
+            <a class="student-action-link" href="{{ route('student.hostel.index') }}"><span class="leading"><span class="material-symbols-outlined">bed</span>Hostel services</span><span class="material-symbols-outlined">chevron_right</span></a>
+            <a class="student-action-link" href="{{ route('student.password') }}"><span class="leading"><span class="material-symbols-outlined">lock</span>Change password</span><span class="material-symbols-outlined">chevron_right</span></a>
+        </div></div>
+    </section>
+</div>
+
+{{-- The legacy dashboard markup remains below for compatibility with existing modal hooks. --}}
+@if(false)
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Welcome, {{ $student->first_name }}!</h3>
     <span class="badge bg-primary fs-13 px-3 py-2">{{ $student->registration_number }}</span>
@@ -121,6 +198,8 @@
         </div>
     </div>
 </div>
+
+@endif
 
 <!-- Required Payment Modal -->
 @if($requiredDue->count() > 0)
