@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Payment extends Model
 {
-    use HasUuid;
+    use HasUuid, SoftDeletes;
 
     const STATUS_PENDING = 'pending';
     const STATUS_PROCESSING = 'processing';
@@ -42,6 +43,8 @@ class Payment extends Model
         'paid_at',
         'verified_at',
         'recorded_by',
+        'deleted_by',
+        'deletion_reason',
     ];
 
     protected $casts = [
@@ -73,6 +76,11 @@ class Payment extends Model
     public function paymentType()
     {
         return $this->belongsTo(PaymentType::class);
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     public function hasRrr(): bool

@@ -82,12 +82,12 @@
                                 <a href="{{ route('admin.payments.receipt', $payment) }}" class="btn btn-sm btn-outline-success me-1" title="Download receipt"><i class="material-symbols-outlined fs-16">receipt_long</i></a>
                             @endif
                             @if($payment->status === \App\Models\Payment::STATUS_PENDING)
-                                @can('payments.delete')<form class="d-inline" method="POST" action="{{ route('admin.payments.destroy', $payment) }}" onsubmit="return confirm('Delete this pending payment permanently?');">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger me-1" title="Delete pending payment"><i class="material-symbols-outlined fs-16">delete</i></button></form>@endcan
+                                @can('payments.delete')<button type="button" class="btn btn-sm btn-outline-danger me-1" title="Delete pending payment" data-bs-toggle="modal" data-bs-target="#deletePaymentModal-{{ $payment->id }}"><i class="material-symbols-outlined fs-16">delete</i></button>@endcan
                             @endif
                             @if(strtolower((string)$payment->payment_method) === 'offline' || $payment->reference)
                                 @can('payments.edit')<a href="{{ route('admin.payments.edit', $payment) }}" class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="material-symbols-outlined fs-16">edit</i></a>@endcan
                                 @if($payment->status !== 'cancelled') @can('payments.edit')<form class="d-inline" method="POST" action="{{ route('admin.payments.cancel', $payment) }}" onsubmit="return confirm('Cancel this offline payment?');">@csrf<button class="btn btn-sm btn-outline-warning me-1" title="Cancel"><i class="material-symbols-outlined fs-16">cancel</i></button></form>@endcan
-                                @else @can('payments.delete')<form class="d-inline" method="POST" action="{{ route('admin.payments.destroy', $payment) }}" onsubmit="return confirm('Delete this cancelled offline payment permanently?');">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" title="Delete"><i class="material-symbols-outlined fs-16">delete</i></button></form>@endcan @endif
+                                @else @can('payments.delete')<button type="button" class="btn btn-sm btn-outline-danger" title="Delete cancelled payment" data-bs-toggle="modal" data-bs-target="#deletePaymentModal-{{ $payment->id }}"><i class="material-symbols-outlined fs-16">delete</i></button>@endcan @endif
                             @endif
                             @if($payment->hasRrr() && $payment->status !== 'successful' && strtolower((string)$payment->payment_method) !== 'offline')
                             <button class="btn btn-sm btn-outline-info verify-btn" data-id="{{ $payment->id }}"><i class="material-symbols-outlined fs-16">sync</i></button>
@@ -103,6 +103,42 @@
         <div class="mt-3">{{ $payments->withQueryString()->links() }}</div>
     </div>
 </div>
+
+@foreach($payments as $payment)
+    @php
+        $isOfflinePayment = strtolower((string) $payment->payment_method) === 'offline' || !empty($payment->reference);
+        $canDeletePayment = $payment->status === \App\Models\Payment::STATUS_PENDING
+            || ($isOfflinePayment && $payment->status === \App\Models\Payment::STATUS_CANCELLED);
+    @endphp
+    @if($canDeletePayment)
+        @can('payments.delete')
+            <div class="modal fade" id="deletePaymentModal-{{ $payment->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form action="{{ route('admin.payments.destroy', $payment) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title"><i class="material-symbols-outlined me-2 align-middle">delete</i>{{ $payment->status === \App\Models\Payment::STATUS_PENDING ? 'Delete pending payment' : 'Delete cancelled payment' }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="mb-3">{{ $payment->status === \App\Models\Payment::STATUS_PENDING ? 'This removes the pending payment so a new payment can be started. Successful payments cannot be deleted.' : 'This permanently removes the cancelled offline payment record.' }}</p>
+                                <label class="form-label fw-semibold">Reason for deletion <span class="text-danger">*</span></label>
+                                <textarea name="deletion_reason" class="form-control" rows="3" minlength="5" maxlength="500" required placeholder="Explain why this payment is being removed"></textarea>
+                                <small class="text-muted">Enter at least 5 characters for the audit record.</small>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger"><i class="material-symbols-outlined align-middle me-1">delete</i>Delete payment</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endcan
+    @endif
+@endforeach
 @endsection
 
 @push('scripts')

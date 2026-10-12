@@ -505,7 +505,7 @@ class PaymentController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function destroy(Payment $payment)
+    public function destroy(Request $request, Payment $payment)
     {
         $isOffline = strtolower((string) $payment->payment_method) === 'offline' || !empty($payment->reference);
         $isPending = $payment->status === Payment::STATUS_PENDING;
@@ -515,8 +515,12 @@ class PaymentController extends Controller
             return back()->with('error', 'Only pending payments or cancelled offline payments can be deleted.');
         }
 
+        $request->validate([
+            'deletion_reason' => 'required|string|min:5|max:500',
+        ]);
+
         try {
-            $proofPath = DB::transaction(function () use ($payment) {
+            $proofPath = DB::transaction(function () use ($payment, $request) {
                 $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->first();
                 if (!$lockedPayment) {
                     throw new \RuntimeException('The payment no longer exists.');
@@ -530,6 +534,10 @@ class PaymentController extends Controller
                 }
 
                 $proofPath = $lockedPayment->proof_path;
+                $lockedPayment->update([
+                    'deleted_by' => auth()->id(),
+                    'deletion_reason' => $request->input('deletion_reason'),
+                ]);
                 $lockedPayment->delete();
 
                 return $proofPath;
