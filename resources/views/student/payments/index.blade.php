@@ -7,6 +7,90 @@
     $pendingPayments = $pendingPayments ?? collect();
     $items = $items ?? collect();
     $history = $history ?? collect();
+    $outstandingTotal = $items->sum(fn ($item) => (float) ($item['progress']['remaining'] ?? 0));
+    $successfulCount = $history->where('status', 'successful')->count();
+@endphp
+
+<div class="payment-page payment-page-clean">
+    <div class="payment-clean-heading">
+        <div>
+            <span class="payment-eyebrow">Student finance</span>
+            <h1>Payments</h1>
+            <p>Review your fees, complete a payment and download your receipts.</p>
+        </div>
+        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary"><span class="material-symbols-outlined">arrow_back</span>Dashboard</a>
+    </div>
+
+    <div class="payment-clean-summary">
+        <div class="payment-clean-summary-card"><span class="payment-clean-icon is-warning"><span class="material-symbols-outlined">pending_actions</span></span><div><strong>{{ $pendingPayments->count() }}</strong><small>Pending payments</small></div></div>
+        <div class="payment-clean-summary-card"><span class="payment-clean-icon is-danger"><span class="material-symbols-outlined">account_balance_wallet</span></span><div><strong>&#8358;{{ number_format($outstandingTotal, 2) }}</strong><small>Outstanding balance</small></div></div>
+        <div class="payment-clean-summary-card"><span class="payment-clean-icon is-success"><span class="material-symbols-outlined">check_circle</span></span><div><strong>{{ $successfulCount }}</strong><small>Successful payments</small></div></div>
+    </div>
+
+    @if($pendingPayments->isNotEmpty())
+        <section class="payment-clean-section payment-clean-pending">
+            <div class="payment-clean-section-head"><div><h2>Payments waiting for action</h2><p>Complete, verify or cancel a payment you already started.</p></div><span class="payment-clean-count">{{ $pendingPayments->count() }}</span></div>
+            <div class="payment-clean-pending-list">
+                @foreach($pendingPayments as $payment)
+                    @php $widgetKey = 'Pay' . str_replace('-', '', $payment->id); @endphp
+                    <article class="payment-clean-pending-item">
+                        <div class="payment-clean-item-info"><span class="payment-clean-item-icon"><span class="material-symbols-outlined">schedule</span></span><div><h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3><p>&#8358;{{ number_format($payment->amount, 2) }}@if($payment->installment_label) · {{ $payment->installment_label }}@endif</p><div class="payment-clean-rrr"><span>RRR</span><code>{{ $payment->rrr ?: 'Not generated' }}</code><button type="button" onclick="copyRrr('{{ $payment->id }}')" aria-label="Copy RRR"><span class="material-symbols-outlined">content_copy</span></button></div></div></div>
+                        <div class="payment-clean-actions"><button type="button" onclick="makePayment{{ $widgetKey }}()" class="btn btn-warning"><span class="material-symbols-outlined">credit_card</span>Pay online</button><form action="{{ route('student.payments.verify', $payment) }}" method="GET"><button type="submit" class="btn btn-success"><span class="material-symbols-outlined">verified</span>Verify</button></form><form action="{{ route('student.payments.cancel', $payment) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">@csrf<button type="submit" class="btn btn-outline-danger"><span class="material-symbols-outlined">cancel</span>Cancel</button></form></div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    @if($hasRequiredDue)
+        <div class="payment-clean-alert"><span class="material-symbols-outlined">info</span><span><strong>Required payment outstanding.</strong> Select the fee below to continue. You can still access other student services.</span></div>
+    @endif
+
+    <section class="payment-clean-section">
+        <div class="payment-clean-section-head"><div><h2>Fees and payment options</h2><p>Choose a fee to view its balance and payment options.</p></div><span class="material-symbols-outlined payment-clean-section-symbol">receipt_long</span></div>
+        <div class="payment-clean-fee-list">
+            @forelse($items as $item)
+                @php($type = $item['type'])
+                @php($p = $item['progress'])
+                @php($pending = $item['pending'] ?? null)
+                <article class="payment-clean-fee-card">
+                    <div class="payment-clean-fee-head"><div><h3>{{ $type->name }}</h3><p>{{ $type->description ?: ($type->is_required ? 'Required payment for your student record.' : 'Optional student payment.') }}</p></div><span class="payment-clean-badge {{ $type->is_required ? 'is-required' : 'is-optional' }}">{{ $type->is_required ? 'Required' : 'Optional' }}</span></div>
+                    <div class="payment-clean-metrics"><div><small>Total</small><strong>&#8358;{{ number_format($p['full_amount'], 2) }}</strong></div><div><small>Paid</small><strong>&#8358;{{ number_format($p['paid'], 2) }}</strong></div><div><small>Balance</small><strong>&#8358;{{ number_format($p['remaining'], 2) }}</strong></div></div>
+                    @if($p['fully_paid'])
+                        <div class="payment-clean-paid"><span class="material-symbols-outlined">check_circle</span>Fully paid</div>
+                    @elseif($pending && $pending->hasRrr())
+                        @php $cardWidgetKey = 'Card' . str_replace('-', '', $pending->id); @endphp
+                        <div class="payment-clean-inline-note"><span class="material-symbols-outlined">schedule</span>Payment pending with RRR <code>{{ $pending->rrr }}</code></div>
+                        <div class="payment-clean-actions"><button type="button" onclick="makePayment{{ $cardWidgetKey }}()" class="btn btn-warning"><span class="material-symbols-outlined">credit_card</span>Pay online</button><form action="{{ route('student.payments.verify', $pending) }}" method="GET"><button type="submit" class="btn btn-success"><span class="material-symbols-outlined">verified</span>Verify</button></form><form action="{{ route('student.payments.cancel', $pending) }}" method="POST" onsubmit="return confirm('Cancel this pending payment?');">@csrf<button type="submit" class="btn btn-outline-danger"><span class="material-symbols-outlined">cancel</span>Cancel</button></form></div>
+                    @else
+                        <div class="payment-clean-actions payment-clean-start-actions"><form action="{{ route('student.payments.initiate') }}" method="POST">@csrf<input type="hidden" name="payment_type_id" value="{{ $type->id }}"><input type="hidden" name="mode" value="full"><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">payments</span>Pay full · &#8358;{{ number_format($p['remaining'], 2) }}</button></form>@if($p['installment'] !== null && $type->split_enabled)<form action="{{ route('student.payments.initiate') }}" method="POST">@csrf<input type="hidden" name="payment_type_id" value="{{ $type->id }}"><input type="hidden" name="mode" value="installment"><button type="submit" class="btn btn-outline-primary"><span class="material-symbols-outlined">call_split</span>{{ $p['installment_label'] }} · &#8358;{{ number_format($p['installment_amount'], 2) }}</button></form>@endif</div>
+                    @endif
+                </article>
+            @empty
+                <div class="payment-clean-empty"><span class="material-symbols-outlined">task_alt</span><h3>No outstanding fees</h3><p>Your current payment obligations are settled.</p></div>
+            @endforelse
+        </div>
+    </section>
+
+    <section class="payment-clean-section">
+        <div class="payment-clean-section-head"><div><h2>Payment history</h2><p>Your latest payment records and receipts.</p></div><span class="material-symbols-outlined payment-clean-section-symbol">history</span></div>
+        @if($history->isNotEmpty())
+            <div class="payment-clean-history">
+                @foreach($history as $h)
+                    <div class="payment-clean-history-row"><div class="payment-clean-history-icon"><span class="material-symbols-outlined">{{ $h->status === 'successful' ? 'check_circle' : 'receipt_long' }}</span></div><div class="payment-clean-history-main"><strong>{{ $h->paymentType->name ?? ucwords(str_replace('_', ' ', $h->payment_type)) }}</strong><small>{{ $h->created_at->format('M d, Y · H:i') }} · {{ $h->reference ?: 'No reference' }}</small></div><div class="payment-clean-history-amount"><strong>&#8358;{{ number_format($h->amount, 2) }}</strong><span class="payment-clean-status status-{{ $h->status }}">{{ ucfirst($h->status) }}</span></div><div class="payment-clean-history-action">@if($h->status === 'successful')<a href="{{ route('student.payments.receipt', $h) }}" class="btn btn-sm btn-outline-success"><span class="material-symbols-outlined">download</span><span>Receipt</span></a>@endif</div></div>
+                @endforeach
+            </div>
+        @else
+            <div class="payment-clean-empty payment-clean-empty-small"><span class="material-symbols-outlined">history</span><p>No payment records yet.</p></div>
+        @endif
+    </section>
+</div>
+
+@if(false)
+@php
+    $pendingPayments = $pendingPayments ?? collect();
+    $items = $items ?? collect();
+    $history = $history ?? collect();
     $pendingCount = $pendingPayments->count();
     $outstandingCount = $items->count();
     $historyCount = $history->count();
@@ -271,6 +355,7 @@
         @endif
     </div>
 </div>
+@endif
 @endsection
 
 @foreach($pendingPayments as $payment)
