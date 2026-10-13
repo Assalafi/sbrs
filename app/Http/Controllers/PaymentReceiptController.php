@@ -36,7 +36,11 @@ class PaymentReceiptController extends Controller
         }
 
         $amountInWords = $this->amountInWords((float) $payment->amount);
-        $pdf = Pdf::loadView('pdf.payment-receipt', compact('payment', 'payer', 'amountInWords'))
+        $logoBase64 = $this->localImageDataUri(setting_image('main_logo'))
+            ?: $this->localImageDataUri(setting_image('logo'))
+            ?: $this->localImageDataUri(asset('assets/images/favicon.png'));
+
+        $pdf = Pdf::loadView('pdf.payment-receipt', compact('payment', 'payer', 'amountInWords', 'logoBase64'))
             ->setPaper('a4', 'portrait');
 
         $reference = $payment->reference ?: ($payment->rrr ?: $payment->id);
@@ -57,5 +61,35 @@ class PaymentReceiptController extends Controller
         }
 
         return number_format($amount, 2) . ' Naira';
+    }
+
+    private function localImageDataUri(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        $pathPart = parse_url($url, PHP_URL_PATH) ?: $url;
+        $relative = ltrim((string) $pathPart, '/');
+        if (str_starts_with($relative, 'storage/')) {
+            $relative = substr($relative, strlen('storage/'));
+        }
+
+        $candidates = [
+            storage_path('app/public/' . $relative),
+            public_path($relative),
+        ];
+
+        foreach ($candidates as $path) {
+            if (! is_file($path)) {
+                continue;
+            }
+
+            $mime = mime_content_type($path) ?: 'image/png';
+
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+        }
+
+        return null;
     }
 }
