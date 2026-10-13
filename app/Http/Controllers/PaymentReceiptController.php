@@ -36,9 +36,13 @@ class PaymentReceiptController extends Controller
         }
 
         $amountInWords = $this->amountInWords((float) $payment->amount);
+        // Prefer the configured logo, but never fall back to the tiny favicon
+        // for a PDF. The bundled crest is deliberately high resolution and
+        // keeps receipts sharp when a setting is missing or points to a low
+        // quality thumbnail.
         $logoBase64 = $this->localImageDataUri(setting_image('main_logo'))
             ?: $this->localImageDataUri(setting_image('logo'))
-            ?: $this->localImageDataUri(asset('assets/images/favicon.png'));
+            ?: $this->localImageDataUri(asset('assets/images/unimaid-logo.png'));
 
         $pdf = Pdf::loadView('pdf.payment-receipt', compact('payment', 'payer', 'amountInWords', 'logoBase64'))
             ->setPaper('a4', 'portrait');
@@ -82,6 +86,11 @@ class PaymentReceiptController extends Controller
 
         foreach ($candidates as $path) {
             if (! is_file($path)) {
+                continue;
+            }
+
+            $dimensions = @getimagesize($path);
+            if ($dimensions && (($dimensions[0] ?? 0) < 96 || ($dimensions[1] ?? 0) < 96)) {
                 continue;
             }
 
