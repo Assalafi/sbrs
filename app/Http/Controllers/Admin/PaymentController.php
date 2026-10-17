@@ -722,11 +722,18 @@ class PaymentController extends Controller
 
     private function allowedPayerType(string $legacyType, ?PaymentType $paymentType): string
     {
+        // These categories are always created before a student account exists.
+        // Do not let a misconfigured custom record accidentally attach an
+        // application/admission payment to a student.
+        if (in_array($legacyType, ['application', 'admission'], true)) {
+            return 'applicant';
+        }
+
         if ($paymentType && in_array($paymentType->payer_type, ['applicant', 'student', 'both'], true)) {
             return $paymentType->payer_type;
         }
 
-        return in_array($legacyType, ['application', 'admission'], true) ? 'applicant' : 'student';
+        return 'student';
     }
 
     private function assertPayerAllowed(Model $payer, string $legacyType, ?PaymentType $paymentType): void
