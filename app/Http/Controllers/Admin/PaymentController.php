@@ -69,30 +69,49 @@ class PaymentController extends Controller
 
     public function searchStudents(Request $request)
     {
-        $term = trim((string) $request->input('q'));
+        // Keep this endpoint deliberately small: the offline-payment form should
+        // never load the entire student table into the browser.  Normalising the
+        // term also lets staff find an ID whether they type the slashes or not.
+        $term = trim(preg_replace('/\s+/', ' ', (string) $request->input('q')));
         if (mb_strlen($term) < 2) {
             return response()->json([]);
         }
 
+        $registrationTerm = strtolower(preg_replace('/[^a-z0-9]/i', '', $term));
+        $likeTerm = "%{$term}%";
+        $registrationLike = "%{$registrationTerm}%";
+
         $students = Student::with(['programme', 'academicSession'])
             ->where(function ($query) use ($term) {
-                $query->where('registration_number', 'like', "%{$term}%")
-                    ->orWhere('surname', 'like', "%{$term}%")
-                    ->orWhere('first_name', 'like', "%{$term}%")
-                    ->orWhere('email', 'like', "%{$term}%");
+                $likeTerm = "%{$term}%";
+                $query->where('registration_number', 'like', $likeTerm)
+                    ->orWhere('surname', 'like', $likeTerm)
+                    ->orWhere('first_name', 'like', $likeTerm)
+                    ->orWhere('middle_name', 'like', $likeTerm)
+                    ->orWhere('email', 'like', $likeTerm)
+                    ->orWhere('phone', 'like', $likeTerm)
+                    ->orWhereRaw(
+                        "TRIM(CONCAT_WS(' ', surname, first_name, middle_name)) LIKE ?",
+                        [$likeTerm]
+                    );
             })
+            ->orWhereRaw(
+                "REPLACE(REPLACE(REPLACE(LOWER(registration_number), '/', ''), '-', ''), ' ', '') LIKE ?",
+                [$registrationLike]
+            )
             ->orderBy('surname')
+            ->orderBy('first_name')
             ->limit(25)
             ->get()
             ->map(fn (Student $student) => [
                 'id' => $student->id,
                 'registration_number' => $student->registration_number,
-                'name' => $student->full_name,
+                'name' => $student->full_name ?: 'Unnamed student',
                 'programme' => $student->programme?->name ?: $student->programme_type,
                 'session' => $student->academicSession?->name,
             ]);
 
-        return response()->json($students);
+        return response()->json($students->values());
     }
 
     public function downloadTemplate()

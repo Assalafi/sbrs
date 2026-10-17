@@ -131,10 +131,73 @@
 @push('scripts')
 <script>
 (function(){
- const search=document.getElementById('studentSearch'), results=document.getElementById('studentResults'), hidden=document.getElementById('student_id'), selected=document.getElementById('selectedStudent'); let timer;
- function choose(s){hidden.value=s.id; search.value=s.registration_number; results.innerHTML=''; selected.innerHTML='<div class="selected-student d-flex justify-content-between gap-2"><span><strong>'+escapeHtml(s.registration_number)+'</strong> · '+escapeHtml(s.name)+'<br><small class="text-muted">'+escapeHtml(s.programme || 'Programme not set')+'</small></span><button type="button" class="btn btn-sm btn-link text-danger p-0" id="clearStudent">Clear</button></div>'; document.getElementById('clearStudent').onclick=function(){hidden.value='';search.value='';selected.innerHTML='';search.focus();};}
- function escapeHtml(v){return String(v||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
- search.addEventListener('input',function(){clearTimeout(timer); hidden.value='';selected.innerHTML=''; const q=this.value.trim(); if(q.length<2){results.innerHTML='';return;} timer=setTimeout(()=>fetch('{{ route('admin.payments.offline.students.search') }}?q='+encodeURIComponent(q),{headers:{Accept:'application/json'}}).then(r=>r.json()).then(list=>{results.innerHTML=list.length?list.map(s=>'<button type="button" class="list-group-item list-group-item-action student-result" data-student="'+encodeURIComponent(JSON.stringify(s))+'"><strong>'+escapeHtml(s.registration_number)+'</strong> · '+escapeHtml(s.name)+'<small class="d-block text-muted">'+escapeHtml(s.programme||'')+'</small></button>').join(''):'<div class="list-group-item text-muted">No matching student found.</div>'; results.querySelectorAll('[data-student]').forEach(b=>b.onclick=()=>choose(JSON.parse(decodeURIComponent(b.dataset.student))));}).catch(()=>{results.innerHTML='<div class="list-group-item text-danger">Student search failed. Try again.</div>';});},250);});
+ const search=document.getElementById('studentSearch');
+ const results=document.getElementById('studentResults');
+ const hidden=document.getElementById('student_id');
+ const selected=document.getElementById('selectedStudent');
+ const searchUrl=@json(route('admin.payments.offline.students.search'));
+ let timer=null;
+ let requestController=null;
+
+ function escapeHtml(value){
+     return String(value ?? '').replace(/[&<>'"]/g, character => ({
+         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+     }[character]));
+ }
+
+ function showMessage(message, className='text-muted'){
+     results.innerHTML='<div class="list-group-item '+className+'">'+escapeHtml(message)+'</div>';
+ }
+
+ function choose(student){
+     hidden.value=student.id || '';
+     search.value=student.registration_number || '';
+     results.innerHTML='';
+     selected.innerHTML='<div class="selected-student d-flex justify-content-between gap-2"><span><strong>'+escapeHtml(student.registration_number || 'No registration number')+'</strong> · '+escapeHtml(student.name || 'Unnamed student')+'<br><small class="text-muted">'+escapeHtml(student.programme || 'Programme not set')+'</small></span><button type="button" class="btn btn-sm btn-link text-danger p-0" id="clearStudent">Clear</button></div>';
+     document.getElementById('clearStudent').onclick=function(){
+         hidden.value=''; search.value=''; selected.innerHTML=''; search.focus();
+     };
+ }
+
+ async function findStudents(query){
+     if(requestController) requestController.abort();
+     requestController=new AbortController();
+     showMessage('Searching…', 'text-muted');
+     try {
+         const response=await fetch(searchUrl+'?q='+encodeURIComponent(query), {
+             method:'GET',
+             credentials:'same-origin',
+             headers:{Accept:'application/json', 'X-Requested-With':'XMLHttpRequest'},
+             signal:requestController.signal
+         });
+         if(!response.ok){
+             if(response.status===401 || response.status===419){
+                 showMessage('Your session has expired. Refresh this page and sign in again.', 'text-danger');
+             } else if(response.status===403){
+                 showMessage('You do not have permission to search students.', 'text-danger');
+             } else {
+                 showMessage('Student search is temporarily unavailable. Please try again.', 'text-danger');
+             }
+             return;
+         }
+         const payload=await response.json();
+         const list=Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
+         if(!list.length){showMessage('No matching student found. Try the registration number or name.'); return;}
+         results.innerHTML=list.map(student=>'<button type="button" class="list-group-item list-group-item-action student-result" data-student="'+encodeURIComponent(JSON.stringify(student))+'"><strong>'+escapeHtml(student.registration_number || '')+'</strong> · '+escapeHtml(student.name || 'Unnamed student')+'<small class="d-block text-muted">'+escapeHtml(student.programme || '')+'</small></button>').join('');
+         results.querySelectorAll('[data-student]').forEach(button=>button.addEventListener('click',()=>choose(JSON.parse(decodeURIComponent(button.dataset.student)))));
+     } catch(error){
+         if(error.name!=='AbortError') showMessage('Student search failed. Check your connection and try again.', 'text-danger');
+     }
+ }
+
+ search.addEventListener('input',function(){
+     clearTimeout(timer);
+     hidden.value='';
+     selected.innerHTML='';
+     const query=this.value.trim();
+     if(query.length<2){results.innerHTML=''; if(requestController) requestController.abort(); return;}
+     timer=setTimeout(()=>findStudents(query),250);
+ });
  document.getElementById('offlinePaymentForm').addEventListener('submit',function(e){if(!hidden.value){e.preventDefault();alert('Select a student before saving the payment.');return;}const b=document.getElementById('savePayment');b.disabled=true;b.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> Saving...';});
  document.getElementById('uploadForm').addEventListener('submit',function(){this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> Validating...';});
  @if(session('import_errors')) new bootstrap.Modal(document.getElementById('importErrors')).show(); @endif
