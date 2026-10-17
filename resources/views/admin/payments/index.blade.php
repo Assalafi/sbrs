@@ -67,7 +67,8 @@
                         <td><div class="fw-medium">{{ $payment->reference ?? 'N/A' }}</div><small class="text-muted">RRR: {{ $payment->rrr ?? 'N/A' }}</small></td>
                         <td>
                             @if($payment->payable)
-                                {{ $payment->payable->surname ?? '' }} {{ $payment->payable->first_name ?? '' }}
+                                {{ $payment->payable->full_name ?: trim(($payment->payable->surname ?? '') . ' ' . ($payment->payable->first_name ?? '') . ' ' . ($payment->payable->other_names ?? '')) }}
+                                <small class="d-block text-muted">{{ $payment->payable->application_number ?? $payment->payable->registration_number ?? 'No identifier' }}</small>
                             @else
                                 N/A
                             @endif

@@ -25,12 +25,13 @@
                 <form method="POST" action="{{ route('admin.payments.offline.store') }}" enctype="multipart/form-data" id="offlinePaymentForm">
                     @csrf
                     <div class="mb-3 position-relative">
-                        <label class="form-label fw-semibold">Student <span class="text-danger">*</span></label>
-                        <input type="hidden" name="student_id" id="student_id" value="{{ old('student_id') }}">
-                        <input type="search" class="form-control" id="studentSearch" autocomplete="off" placeholder="Search registration number or student name" required>
+                        <label class="form-label fw-semibold" id="payerLabel">Student <span class="text-danger">*</span></label>
+                        <input type="hidden" name="payer_id" id="payer_id" value="{{ old('payer_id', old('student_id')) }}">
+                        <input type="hidden" name="payer_type" id="payer_type" value="{{ old('payer_type') }}">
+                        <input type="search" class="form-control" id="studentSearch" autocomplete="off" placeholder="Search student registration number" required>
                         <div id="studentResults" class="list-group position-absolute w-100 shadow-sm" style="z-index:20; top:100%;"></div>
                         <div id="selectedStudent" class="mt-2"></div>
-                        <div class="form-text">Search is limited to matching records; all students are not loaded at once.</div>
+                        <div class="form-text" id="payerHelp">Search is limited to matching records; all students are not loaded at once.</div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -39,10 +40,10 @@
                                 <option value="">Select payment type</option>
                                 @php $configuredLegacyTypes = $paymentTypes->map(fn($type) => $type->legacyType())->all(); @endphp
                                 @foreach(['application' => 'Application fee', 'admission' => 'Admission fee', 'registration' => 'Registration fee', 'examination' => 'Examination fee', 'hostel' => 'Hostel fee', 'other' => 'Other'] as $value => $label)
-                                    @if(!in_array($value, $configuredLegacyTypes, true))<option value="{{ $value }}" @selected(old('payment_type') === $value)>{{ $label }}</option>@endif
+                                    @if(!in_array($value, $configuredLegacyTypes, true))<option value="{{ $value }}" data-payer-type="{{ in_array($value, ['application', 'admission'], true) ? 'applicant' : 'student' }}" @selected(old('payment_type') === $value)>{{ $label }}</option>@endif
                                 @endforeach
                                 @foreach($paymentTypes as $type)
-                                    <option value="custom:{{ $type->id }}" @selected(old('payment_type') === 'custom:' . $type->id)>{{ $type->name }}</option>
+                                    <option value="custom:{{ $type->id }}" data-payer-type="{{ $type->payer_type }}" @selected(old('payment_type') === 'custom:' . $type->id)>{{ $type->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -112,7 +113,8 @@
                 </form>
                 <hr>
                 <ul class="small text-muted mb-0 ps-3">
-                    <li>Use registration number in <code>student_id</code>.</li>
+                    <li>Use <code>payer_id</code>: student registration number or applicant number.</li>
+                    <li>Application/admission use applicant numbers; other payments use student registration numbers.</li>
                     <li>Payment type, session and sponsor are selected above.</li>
                     <li>The upload is all-or-nothing: invalid rows are not saved.</li>
                 </ul>
@@ -133,7 +135,11 @@
 (function(){
  const search=document.getElementById('studentSearch');
  const results=document.getElementById('studentResults');
- const hidden=document.getElementById('student_id');
+ const hidden=document.getElementById('payer_id');
+ const payerType=document.getElementById('payer_type');
+ const paymentType=document.querySelector('select[name="payment_type"]');
+ const payerLabel=document.getElementById('payerLabel');
+ const payerHelp=document.getElementById('payerHelp');
  const selected=document.getElementById('selectedStudent');
  const searchUrl=@json(route('admin.payments.offline.students.search'));
  let timer=null;
@@ -149,11 +155,27 @@
      results.innerHTML='<div class="list-group-item '+className+'">'+escapeHtml(message)+'</div>';
  }
 
+ function currentPayerType(){
+     const option=paymentType && paymentType.options[paymentType.selectedIndex];
+     return option ? (option.dataset.payerType || 'student') : 'student';
+ }
+
+ function updatePayerUi(clearSelection=true){
+     const type=currentPayerType();
+     const both=type==='both';
+     payerLabel.innerHTML=(both ? 'Applicant or student' : (type==='applicant' ? 'Applicant' : 'Student'))+' <span class="text-danger">*</span>';
+     search.placeholder=both ? 'Search application number, registration number or name' : (type==='applicant' ? 'Search application number or applicant name' : 'Search student registration number or name');
+     payerHelp.textContent=both ? 'This payment type accepts either an applicant number or a student registration number.' : (type==='applicant' ? 'Application and admission payments use the applicant application number.' : 'Registration, examination and hostel payments use the student registration number.');
+     if(clearSelection){hidden.value=''; payerType.value=''; search.value=''; selected.innerHTML=''; results.innerHTML='';}
+ }
+
  function choose(student){
      hidden.value=student.id || '';
-     search.value=student.registration_number || '';
+     payerType.value=student.payer_type || currentPayerType();
+     search.value=student.identifier || student.registration_number || student.application_number || '';
      results.innerHTML='';
-     selected.innerHTML='<div class="selected-student d-flex justify-content-between gap-2"><span><strong>'+escapeHtml(student.registration_number || 'No registration number')+'</strong> · '+escapeHtml(student.name || 'Unnamed student')+'<br><small class="text-muted">'+escapeHtml(student.programme || 'Programme not set')+'</small></span><button type="button" class="btn btn-sm btn-link text-danger p-0" id="clearStudent">Clear</button></div>';
+     const kind=student.payer_type==='applicant' ? 'Applicant' : 'Student';
+     selected.innerHTML='<div class="selected-student d-flex justify-content-between gap-2"><span><strong>'+escapeHtml(student.identifier || 'No identifier')+'</strong> · '+escapeHtml(student.name || 'Unnamed payer')+'<br><small class="text-muted">'+escapeHtml(kind+' · '+(student.programme || 'Programme not set'))+'</small></span><button type="button" class="btn btn-sm btn-link text-danger p-0" id="clearStudent">Clear</button></div>';
      document.getElementById('clearStudent').onclick=function(){
          hidden.value=''; search.value=''; selected.innerHTML=''; search.focus();
      };
@@ -164,7 +186,7 @@
      requestController=new AbortController();
      showMessage('Searching…', 'text-muted');
      try {
-         const response=await fetch(searchUrl+'?q='+encodeURIComponent(query), {
+         const response=await fetch(searchUrl+'?q='+encodeURIComponent(query)+'&type='+encodeURIComponent(currentPayerType()), {
              method:'GET',
              credentials:'same-origin',
              headers:{Accept:'application/json', 'X-Requested-With':'XMLHttpRequest'},
@@ -183,7 +205,7 @@
          const payload=await response.json();
          const list=Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
          if(!list.length){showMessage('No matching student found. Try the registration number or name.'); return;}
-         results.innerHTML=list.map(student=>'<button type="button" class="list-group-item list-group-item-action student-result" data-student="'+encodeURIComponent(JSON.stringify(student))+'"><strong>'+escapeHtml(student.registration_number || '')+'</strong> · '+escapeHtml(student.name || 'Unnamed student')+'<small class="d-block text-muted">'+escapeHtml(student.programme || '')+'</small></button>').join('');
+         results.innerHTML=list.map(student=>'<button type="button" class="list-group-item list-group-item-action student-result" data-student="'+encodeURIComponent(JSON.stringify(student))+'"><strong>'+escapeHtml(student.identifier || student.registration_number || student.application_number || '')+'</strong> · '+escapeHtml(student.name || 'Unnamed payer')+'<small class="d-block text-muted">'+escapeHtml((student.payer_type==='applicant' ? 'Applicant' : 'Student')+' · '+(student.programme || ''))+'</small></button>').join('');
          results.querySelectorAll('[data-student]').forEach(button=>button.addEventListener('click',()=>choose(JSON.parse(decodeURIComponent(button.dataset.student)))));
      } catch(error){
          if(error.name!=='AbortError') showMessage('Student search failed. Check your connection and try again.', 'text-danger');
@@ -198,7 +220,9 @@
      if(query.length<2){results.innerHTML=''; if(requestController) requestController.abort(); return;}
      timer=setTimeout(()=>findStudents(query),250);
  });
- document.getElementById('offlinePaymentForm').addEventListener('submit',function(e){if(!hidden.value){e.preventDefault();alert('Select a student before saving the payment.');return;}const b=document.getElementById('savePayment');b.disabled=true;b.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> Saving...';});
+ paymentType.addEventListener('change',()=>updatePayerUi(true));
+ updatePayerUi(false);
+ document.getElementById('offlinePaymentForm').addEventListener('submit',function(e){if(!hidden.value || !payerType.value){e.preventDefault();alert('Search for and select the correct applicant or student before saving the payment.');return;}const b=document.getElementById('savePayment');b.disabled=true;b.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> Saving...';});
  document.getElementById('uploadForm').addEventListener('submit',function(){this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> Validating...';});
  @if(session('import_errors')) new bootstrap.Modal(document.getElementById('importErrors')).show(); @endif
 })();

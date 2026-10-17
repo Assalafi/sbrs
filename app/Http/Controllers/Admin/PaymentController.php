@@ -7,7 +7,9 @@ use App\Models\Payment;
 use App\Models\AcademicSession;
 use App\Models\PaymentType;
 use App\Models\Student;
+use App\Models\Applicant;
 use App\Services\RemitaService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -47,6 +49,11 @@ class PaymentController extends Controller
                       $payer->where('registration_number', 'like', "%{$search}%")
                           ->orWhere('surname', 'like', "%{$search}%")
                           ->orWhere('first_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHasMorph('payable', [Applicant::class], function ($payer) use ($search) {
+                      $payer->where('application_number', 'like', "%{$search}%")
+                          ->orWhere('surname', 'like', "%{$search}%")
+                          ->orWhere('first_name', 'like', "%{$search}%");
                   });
             });
         }
@@ -77,41 +84,85 @@ class PaymentController extends Controller
             return response()->json([]);
         }
 
+        $payerType = strtolower((string) $request->input('type', 'both'));
+        if (!in_array($payerType, ['student', 'applicant', 'both'], true)) {
+            $payerType = 'both';
+        }
+
         $registrationTerm = strtolower(preg_replace('/[^a-z0-9]/i', '', $term));
         $likeTerm = "%{$term}%";
         $registrationLike = "%{$registrationTerm}%";
+        $payers = collect();
 
-        $students = Student::with(['programme', 'academicSession'])
-            ->where(function ($query) use ($term) {
-                $likeTerm = "%{$term}%";
-                $query->where('registration_number', 'like', $likeTerm)
-                    ->orWhere('surname', 'like', $likeTerm)
-                    ->orWhere('first_name', 'like', $likeTerm)
-                    ->orWhere('middle_name', 'like', $likeTerm)
-                    ->orWhere('email', 'like', $likeTerm)
-                    ->orWhere('phone', 'like', $likeTerm)
-                    ->orWhereRaw(
-                        "TRIM(CONCAT_WS(' ', surname, first_name, middle_name)) LIKE ?",
-                        [$likeTerm]
-                    );
-            })
-            ->orWhereRaw(
-                "REPLACE(REPLACE(REPLACE(LOWER(registration_number), '/', ''), '-', ''), ' ', '') LIKE ?",
-                [$registrationLike]
-            )
-            ->orderBy('surname')
-            ->orderBy('first_name')
-            ->limit(25)
-            ->get()
-            ->map(fn (Student $student) => [
-                'id' => $student->id,
-                'registration_number' => $student->registration_number,
-                'name' => $student->full_name ?: 'Unnamed student',
-                'programme' => $student->programme?->name ?: $student->programme_type,
-                'session' => $student->academicSession?->name,
-            ]);
+        if (in_array($payerType, ['student', 'both'], true)) {
+            $students = Student::with(['programme', 'academicSession'])
+                ->where(function ($query) use ($likeTerm, $registrationLike) {
+                    $query->where('registration_number', 'like', $likeTerm)
+                        ->orWhere('surname', 'like', $likeTerm)
+                        ->orWhere('first_name', 'like', $likeTerm)
+                        ->orWhere('middle_name', 'like', $likeTerm)
+                        ->orWhere('email', 'like', $likeTerm)
+                        ->orWhere('phone', 'like', $likeTerm)
+                        ->orWhereRaw("TRIM(CONCAT_WS(' ', surname, first_name, middle_name)) LIKE ?", [$likeTerm]);
+                    if ($registrationLike !== '%%') {
+                        $query->orWhereRaw(
+                            "REPLACE(REPLACE(REPLACE(LOWER(registration_number), '/', ''), '-', ''), ' ', '') LIKE ?",
+                            [$registrationLike]
+                        );
+                    }
+                })
+                ->orderBy('surname')
+                ->orderBy('first_name')
+                ->limit(25)
+                ->get()
+                ->map(fn (Student $student) => [
+                    'id' => $student->id,
+                    'payer_type' => 'student',
+                    'identifier' => $student->registration_number,
+                    'registration_number' => $student->registration_number,
+                    'application_number' => null,
+                    'name' => $student->full_name ?: 'Unnamed student',
+                    'programme' => $student->programme?->name ?: $student->programme_type,
+                    'session' => $student->academicSession?->name,
+                ]);
+            $payers = $payers->concat($students);
+        }
 
-        return response()->json($students->values());
+        if (in_array($payerType, ['applicant', 'both'], true)) {
+            $applicants = Applicant::with(['programme', 'academicSession'])
+                ->where(function ($query) use ($likeTerm, $registrationLike) {
+                    $query->where('application_number', 'like', $likeTerm)
+                        ->orWhere('surname', 'like', $likeTerm)
+                        ->orWhere('first_name', 'like', $likeTerm)
+                        ->orWhere('other_names', 'like', $likeTerm)
+                        ->orWhere('email', 'like', $likeTerm)
+                        ->orWhere('phone', 'like', $likeTerm)
+                        ->orWhereRaw("TRIM(CONCAT_WS(' ', surname, first_name, other_names)) LIKE ?", [$likeTerm]);
+                    if ($registrationLike !== '%%') {
+                        $query->orWhereRaw(
+                            "REPLACE(REPLACE(REPLACE(LOWER(application_number), '/', ''), '-', ''), ' ', '') LIKE ?",
+                            [$registrationLike]
+                        );
+                    }
+                })
+                ->orderBy('surname')
+                ->orderBy('first_name')
+                ->limit(25)
+                ->get()
+                ->map(fn (Applicant $applicant) => [
+                    'id' => $applicant->id,
+                    'payer_type' => 'applicant',
+                    'identifier' => $applicant->application_number,
+                    'registration_number' => null,
+                    'application_number' => $applicant->application_number,
+                    'name' => $applicant->full_name ?: 'Unnamed applicant',
+                    'programme' => $applicant->programme?->name ?: $applicant->programme_type,
+                    'session' => $applicant->academicSession?->name,
+                ]);
+            $payers = $payers->concat($applicants);
+        }
+
+        return response()->json($payers->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->take(25)->values());
     }
 
     public function downloadTemplate()
@@ -119,7 +170,7 @@ class PaymentController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Payments');
-        $headers = ['student_id', 'amount', 'reference', 'description', 'notes'];
+        $headers = ['payer_id', 'amount', 'reference', 'description', 'notes'];
         $sheet->fromArray([$headers], null, 'A1');
         $sheet->fromArray([['SBRS/RS/26/000001', 150000, 'BANK-REF-001', 'Registration fee', 'Offline payment']], null, 'A2');
         $sheet->getStyle('A1:E1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
@@ -132,7 +183,8 @@ class PaymentController extends Controller
         $instructions->setTitle('Instructions');
         $instructions->fromArray([
             ['SBRS OFFLINE PAYMENT UPLOAD'],
-            ['student_id', 'Student registration number, for example SBRS/RS/26/000001'],
+            ['payer_id', 'Student registration number (SBRS/...) or applicant number (application fee/admission fee)'],
+            ['student_id / application_id', 'Older templates are also accepted. Use the column that matches the selected payment type.'],
             ['amount', 'Positive amount in Naira'],
             ['payment_type / session / sponsor', 'Select these once on the upload form. Do not add them to the spreadsheet.'],
             ['reference', 'Bank teller, transfer reference or official receipt number'],
@@ -154,7 +206,12 @@ class PaymentController extends Controller
     public function storeOffline(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'payer_id' => 'nullable|string|max:120',
+            // Keep accepting student_id for old bookmarked/forms, but all new
+            // forms submit payer_id so applicant and student payments share one
+            // safe workflow.
+            'student_id' => 'nullable|string|max:120',
+            'payer_type' => 'nullable|in:student,applicant',
             'payment_type' => 'required|string|max:120',
             'academic_session_id' => 'required|exists:academic_sessions,id',
             'amount' => 'required|numeric|min:0.01',
@@ -165,16 +222,21 @@ class PaymentController extends Controller
             'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $student = Student::findOrFail($validated['student_id']);
         try {
             [$legacyType, $paymentType] = $this->resolvePaymentType($validated['payment_type']);
             $sponsor = $this->normalizeSponsor($validated['sponsor']);
+            $payer = $this->resolveOfflinePayer(
+                $validated['payer_id'] ?? $validated['student_id'] ?? null,
+                $validated['payer_type'] ?? null,
+                $legacyType,
+                $paymentType
+            );
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        if ($this->referenceExists($student, $validated['reference'])) {
-            return back()->withInput()->with('error', 'This reference has already been recorded for the selected student.');
+        if ($this->referenceExists($payer, $validated['reference'])) {
+            return back()->withInput()->with('error', 'This reference has already been recorded for the selected payer.');
         }
 
         $proofPath = null;
@@ -183,8 +245,8 @@ class PaymentController extends Controller
                 $proofPath = $request->file('proof_file')->store('payment_proofs', 'public');
             }
 
-            DB::transaction(function () use ($validated, $student, $legacyType, $paymentType, $sponsor, $proofPath) {
-                $this->createOfflinePayment($student, [
+            DB::transaction(function () use ($validated, $payer, $legacyType, $paymentType, $sponsor, $proofPath) {
+                $this->createOfflinePayment($payer, [
                     'payment_type' => $legacyType,
                     'payment_type_id' => $paymentType?->id,
                     'academic_session_id' => $validated['academic_session_id'],
@@ -246,8 +308,13 @@ class PaymentController extends Controller
             }
         }
 
-        $required = ['student_id', 'amount', 'reference'];
+        $identifierColumn = collect(['payer_id', 'student_id', 'application_id'])
+            ->first(fn (string $column) => array_key_exists($column, $headerMap));
+        $required = ['amount', 'reference'];
         $missing = array_values(array_diff($required, array_keys($headerMap)));
+        if (!$identifierColumn) {
+            $missing[] = 'payer_id (or student_id / application_id)';
+        }
         if ($missing) {
             return back()->with('error', 'Missing required spreadsheet columns: ' . implode(', ', $missing));
         }
@@ -267,9 +334,10 @@ class PaymentController extends Controller
             }
 
             try {
-                $student = Student::where('registration_number', trim((string) $values['student_id']))->first();
-                if (!$student) {
-                    throw new \RuntimeException('Student registration number was not found.');
+                $identifier = trim((string) ($values[$identifierColumn] ?? ''));
+                $payer = $this->findPayerByIdentifier($identifier, $legacyType, $paymentType);
+                if (!$payer) {
+                    throw new \RuntimeException('The selected payer number was not found for this payment type.');
                 }
 
                 $reference = trim((string) ($values['reference'] ?? ''));
@@ -277,9 +345,9 @@ class PaymentController extends Controller
                     throw new \RuntimeException('Payment reference is required.');
                 }
 
-                $duplicateKey = $student->id . '|' . strtolower($reference);
-                if (isset($seen[$duplicateKey]) || $this->referenceExists($student, $reference)) {
-                    throw new \RuntimeException('This payment reference already exists for the student.');
+                $duplicateKey = $payer::class . '|' . $payer->id . '|' . strtolower($reference);
+                if (isset($seen[$duplicateKey]) || $this->referenceExists($payer, $reference)) {
+                    throw new \RuntimeException('This payment reference already exists for the selected payer.');
                 }
                 $seen[$duplicateKey] = true;
 
@@ -289,7 +357,7 @@ class PaymentController extends Controller
                 }
 
                 $records[] = [
-                    'student' => $student,
+                    'payer' => $payer,
                     'payment_type' => $legacyType,
                     'payment_type_id' => $paymentType?->id,
                     'academic_session_id' => $session->id,
@@ -316,7 +384,7 @@ class PaymentController extends Controller
         try {
             DB::transaction(function () use ($records) {
                 foreach ($records as $record) {
-                    $this->createOfflinePayment($record['student'], $record);
+                    $this->createOfflinePayment($record['payer'], $record);
                 }
             });
         } catch (\Throwable $e) {
@@ -361,19 +429,25 @@ class PaymentController extends Controller
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
-        $student = $payment->payable;
-        if (!$student instanceof Student) {
-            return back()->with('error', 'Only student offline payments can be edited here.');
+        $payer = $payment->payable;
+        if (!$payer instanceof Student && !$payer instanceof Applicant) {
+            return back()->with('error', 'This payment is not linked to a valid applicant or student.');
+        }
+
+        try {
+            $this->assertPayerAllowed($payer, $legacyType, $paymentType);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
 
         $duplicate = Payment::where('id', '!=', $payment->id)
-            ->where('payable_type', Student::class)
-            ->where('payable_id', $student->id)
+            ->where('payable_type', $payer::class)
+            ->where('payable_id', $payer->id)
             ->where('reference', trim($validated['reference']))
             ->where('status', '!=', Payment::STATUS_CANCELLED)
             ->exists();
         if ($duplicate) {
-            return back()->withInput()->with('error', 'This reference is already used for the selected student.');
+            return back()->withInput()->with('error', 'This reference is already used for the selected payer.');
         }
 
         $oldProof = $payment->proof_path;
@@ -581,9 +655,96 @@ class PaymentController extends Controller
         );
     }
 
-    private function referenceExists(Student $student, string $reference, ?string $exceptId = null): bool
+    /**
+     * Return the payer model expected by a payment type. Application and
+     * admission belong to Applicants; registration, examination, hostel and
+     * other student services belong to Students unless a custom type explicitly
+     * allows applicants as well.
+     */
+    private function resolveOfflinePayer(?string $payerId, ?string $requestedType, string $legacyType, ?PaymentType $paymentType): Model
     {
-        return $student->payments()
+        $payerId = trim((string) $payerId);
+        if ($payerId === '') {
+            throw new \RuntimeException('Select an applicant or student before saving the payment.');
+        }
+
+        $allowedType = $this->allowedPayerType($legacyType, $paymentType);
+        if ($allowedType !== 'both') {
+            $requestedType = $allowedType;
+        } elseif (!$requestedType) {
+            throw new \RuntimeException('Choose whether this payment belongs to an applicant or a student.');
+        }
+
+        if (!in_array($requestedType, ['student', 'applicant'], true)) {
+            throw new \RuntimeException('The selected payer type is invalid.');
+        }
+        if ($allowedType !== 'both' && $requestedType !== $allowedType) {
+            throw new \RuntimeException('This payment type must be recorded for an ' . $allowedType . '.');
+        }
+
+        $payer = $requestedType === 'applicant'
+            ? Applicant::find($payerId)
+            : Student::find($payerId);
+        if (!$payer) {
+            throw new \RuntimeException('The selected ' . $requestedType . ' could not be found. Search again and select a record.');
+        }
+
+        return $payer;
+    }
+
+    private function findPayerByIdentifier(string $identifier, string $legacyType, ?PaymentType $paymentType): ?Model
+    {
+        $identifier = trim($identifier);
+        if ($identifier === '') {
+            return null;
+        }
+
+        $compactIdentifier = strtolower(preg_replace('/[^a-z0-9]/i', '', $identifier));
+        $allowedType = $this->allowedPayerType($legacyType, $paymentType);
+        if (in_array($allowedType, ['student', 'both'], true)) {
+            $student = Student::where(function ($query) use ($identifier, $compactIdentifier) {
+                $query->whereRaw('LOWER(registration_number) = ?', [strtolower($identifier)])
+                    ->orWhereRaw("REPLACE(REPLACE(REPLACE(LOWER(registration_number), '/', ''), '-', ''), ' ', '') = ?", [$compactIdentifier]);
+            })->first();
+            if ($student) {
+                return $student;
+            }
+        }
+        if (in_array($allowedType, ['applicant', 'both'], true)) {
+            return Applicant::where(function ($query) use ($identifier, $compactIdentifier) {
+                $query->whereRaw('LOWER(application_number) = ?', [strtolower($identifier)])
+                    ->orWhereRaw("REPLACE(REPLACE(REPLACE(LOWER(application_number), '/', ''), '-', ''), ' ', '') = ?", [$compactIdentifier]);
+            })->first();
+        }
+
+        return null;
+    }
+
+    private function allowedPayerType(string $legacyType, ?PaymentType $paymentType): string
+    {
+        if ($paymentType && in_array($paymentType->payer_type, ['applicant', 'student', 'both'], true)) {
+            return $paymentType->payer_type;
+        }
+
+        return in_array($legacyType, ['application', 'admission'], true) ? 'applicant' : 'student';
+    }
+
+    private function assertPayerAllowed(Model $payer, string $legacyType, ?PaymentType $paymentType): void
+    {
+        $payerType = $payer instanceof Applicant ? 'applicant' : ($payer instanceof Student ? 'student' : null);
+        if (!$payerType) {
+            throw new \RuntimeException('This payment is not linked to a valid applicant or student.');
+        }
+
+        $allowedType = $this->allowedPayerType($legacyType, $paymentType);
+        if ($allowedType !== 'both' && $payerType !== $allowedType) {
+            throw new \RuntimeException('This payment type can only be recorded for an ' . $allowedType . '.');
+        }
+    }
+
+    private function referenceExists(Model $payer, string $reference, ?string $exceptId = null): bool
+    {
+        return $payer->payments()
             ->whereRaw('LOWER(reference) = ?', [strtolower(trim($reference))])
             ->where('status', '!=', Payment::STATUS_CANCELLED)
             ->when($exceptId, fn ($query) => $query->where('id', '!=', $exceptId))
@@ -638,11 +799,11 @@ class PaymentController extends Controller
         throw new \RuntimeException('Payment type is invalid or inactive.');
     }
 
-    private function createOfflinePayment(Student $student, array $values): Payment
+    private function createOfflinePayment(Model $payer, array $values): Payment
     {
         return Payment::create([
-            'payable_type' => Student::class,
-            'payable_id' => $student->id,
+            'payable_type' => $payer::class,
+            'payable_id' => $payer->id,
             'payment_type' => $values['payment_type'],
             'payment_type_id' => $values['payment_type_id'] ?? null,
             'academic_session_id' => $values['academic_session_id'],

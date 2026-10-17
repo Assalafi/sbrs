@@ -54,7 +54,7 @@
             <div class="card-body p-4">
                 @if($payment->payable)
                 <table class="table table-borderless">
-                    <tr><td class="text-muted">Name:</td><td class="fw-medium">{{ $payment->payable->surname ?? '' }} {{ $payment->payable->first_name ?? '' }}</td></tr>
+                    <tr><td class="text-muted">Name:</td><td class="fw-medium">{{ $payment->payable->full_name ?: trim(($payment->payable->surname ?? '') . ' ' . ($payment->payable->first_name ?? '') . ' ' . ($payment->payable->other_names ?? '')) }}</td></tr>
                     <tr><td class="text-muted">Email:</td><td>{{ $payment->payable->email ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Phone:</td><td>{{ $payment->payable->phone ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Type:</td><td>{{ class_basename($payment->payable_type) }}</td></tr>

@@ -7,7 +7,7 @@
 </div>
 <div class="card border-0 rounded-4 shadow-sm">
     <div class="card-body p-4 p-lg-5">
-        <div class="rounded-3 p-3 mb-4" style="background:#f1f8f4;"><div class="small text-muted">Student</div><div class="fw-semibold">{{ $payment->payable?->registration_number }} · {{ $payment->payable?->full_name }}</div></div>
+        <div class="rounded-3 p-3 mb-4" style="background:#f1f8f4;"><div class="small text-muted">{{ $payment->payable_type === \App\Models\Applicant::class ? 'Applicant' : 'Student' }}</div><div class="fw-semibold">{{ $payment->payable?->application_number ?? $payment->payable?->registration_number }} · {{ $payment->payable?->full_name }}</div></div>
         <form method="POST" action="{{ route('admin.payments.update', $payment) }}" enctype="multipart/form-data" id="editPaymentForm">
             @csrf @method('PUT')
             <div class="row g-3">
