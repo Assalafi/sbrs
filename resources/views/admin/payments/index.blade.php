@@ -44,6 +44,15 @@
                 </select>
             </div>
             <div class="col-md-3">
+                <label class="form-label small">Programme</label>
+                <select class="form-select form-select-sm" name="programme_id">
+                    <option value="">All programmes</option>
+                    @foreach($programmes as $programme)
+                        <option value="{{ $programme->id }}" {{ request('programme_id') == $programme->id ? 'selected' : '' }}>{{ $programme->name }}{{ $programme->type ? ' (' . $programme->type . ')' : '' }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label small">Search student / reference</label>
                 <input type="text" class="form-control form-control-sm" name="search" value="{{ request('search') }}" placeholder="Registration, name, reference...">
             </div>

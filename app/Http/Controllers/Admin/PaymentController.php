@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\AcademicSession;
 use App\Models\PaymentType;
+use App\Models\Programme;
 use App\Models\Student;
 use App\Models\Applicant;
 use App\Services\RemitaService;
@@ -39,6 +40,12 @@ class PaymentController extends Controller
         if ($request->filled('academic_session_id')) {
             $query->where('academic_session_id', $request->academic_session_id);
         }
+        if ($request->filled('programme_id')) {
+            $programmeId = $request->input('programme_id');
+            $query->whereHasMorph('payable', [Student::class, Applicant::class], function ($payer) use ($programmeId) {
+                $payer->where('programme_id', $programmeId);
+            });
+        }
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
             $query->where(function ($q) use ($search) {
@@ -61,8 +68,9 @@ class PaymentController extends Controller
         $payments = $query->orderBy('created_at', 'desc')->paginate(25);
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
         $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $programmes = Programme::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.payments.index', compact('payments', 'sessions', 'paymentTypes'));
+        return view('admin.payments.index', compact('payments', 'sessions', 'paymentTypes', 'programmes'));
     }
 
     public function offlineForm()
@@ -563,6 +571,12 @@ class PaymentController extends Controller
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('payment_type')) $query->where('payment_type', $request->payment_type);
         if ($request->filled('academic_session_id')) $query->where('academic_session_id', $request->academic_session_id);
+        if ($request->filled('programme_id')) {
+            $programmeId = $request->input('programme_id');
+            $query->whereHasMorph('payable', [Student::class, Applicant::class], function ($payer) use ($programmeId) {
+                $payer->where('programme_id', $programmeId);
+            });
+        }
 
         $payments = $query->orderBy('created_at', 'desc')->get();
 
