@@ -54,17 +54,6 @@
     $orderId = trim((string) ($payment->order_id ?: ''));
     $paymentReference = $reference ?: ($rrr ?: ($orderId ?: 'System-generated receipt'));
     $transactionReference = $orderId && !in_array($orderId, [$reference, $rrr], true) ? $orderId : null;
-    $isOffline = !empty($payment->proof_path) || strtolower((string) $payment->payment_method) === 'offline';
-    $rawMethod = strtolower(trim((string) $payment->payment_method));
-    $methodLabels = [
-        'offline' => 'Offline payment',
-        'card' => 'Remita card payment',
-        'bank' => 'Remita bank payment',
-        'remita' => 'Remita payment',
-        'transfer' => 'Bank transfer',
-        'cash' => 'Cash payment',
-    ];
-    $paymentMethod = $methodLabels[$rawMethod] ?? ($rawMethod ? ucfirst(str_replace('_', ' ', $rawMethod)) : ($isOffline ? 'Offline payment' : 'Portal payment'));
     $paymentType = $payment->paymentType?->name ?: ucfirst(str_replace('_', ' ', (string) $payment->payment_type));
     $paymentType = trim($paymentType) ?: 'Payment';
     $description = trim((string) ($payment->description ?: $paymentType)) ?: $paymentType;
@@ -103,7 +92,6 @@
             <tr><td class="label">Payment reference</td><td class="value">{{ $paymentReference }}</td></tr>
             @if ($rrr)<tr><td class="label">Remita RRR</td><td class="value">{{ $rrr }}</td></tr>@endif
             @if ($transactionReference)<tr><td class="label">Transaction / order ID</td><td class="value">{{ $transactionReference }}</td></tr>@endif
-            <tr><td class="label">Payment method</td><td class="value">{{ $paymentMethod }}</td></tr>
         </table>
     </div>
 
