@@ -25,6 +25,7 @@ class PaymentType extends Model
         'is_active',
         'sort_order',
         'remita_service_type_id',
+        'remita_split_enabled', 'remita_surcharge',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class PaymentType extends Model
         'is_active' => 'boolean',
         'sort_order' => 'integer',
         'installment_count' => 'integer',
+        'remita_split_enabled' => 'boolean', 'remita_surcharge' => 'decimal:2',
     ];
 
     /**

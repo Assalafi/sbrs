@@ -65,6 +65,8 @@
                             <option value="{{ $val }}" {{ old('remita_service_type_id') == $val ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" name="remita_split_enabled" value="1" id="remita_split_enabled" {{ old('remita_split_enabled') ? 'checked' : '' }}><label class="form-check-label" for="remita_split_enabled">Use Remita split for this service</label></div>
+                    <div class="mt-2"><label class="form-label">Additional Remita charge</label><input type="number" min="0" step="0.01" class="form-control" name="remita_surcharge" value="{{ old('remita_surcharge', 0) }}"><small class="text-muted">This charge is added only when global split payments are enabled.</small></div>
                     <small class="text-muted">Only unique service type IDs from settings are shown.</small>
                 </div>
                 <div class="col-md-6 mb-3">

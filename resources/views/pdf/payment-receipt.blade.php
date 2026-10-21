@@ -97,8 +97,8 @@
 
     <table class="items">
         <thead><tr><th>Description</th><th class="right">Amount</th></tr></thead>
-        <tbody><tr><td>{{ $description }}</td><td class="right">NGN {{ number_format((float) $payment->amount, 2) }}</td></tr></tbody>
-        <tfoot><tr class="total"><td>Total paid</td><td class="right">NGN {{ number_format((float) $payment->amount, 2) }}</td></tr></tfoot>
+        <tbody><tr><td>{{ $description }}</td><td class="right">NGN {{ number_format((float) ($receiptAmount ?? $payment->amount), 2) }}</td></tr></tbody>
+        <tfoot><tr class="total"><td>Total paid</td><td class="right">NGN {{ number_format((float) ($receiptAmount ?? $payment->amount), 2) }}</td></tr></tfoot>
     </table>
 
     <div class="words"><strong>Amount in words:</strong> <em>{{ $amountInWords }}</em></div>

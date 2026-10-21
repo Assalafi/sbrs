@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\PaymentType;
+use App\Services\RemitaSplitService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -56,17 +58,12 @@ class RemitaService
         try {
             $serviceTypeId = $serviceTypeId ?? $this->getServiceTypeId($programmeType, $feeType);
             $orderId = $this->generateOrderId();
-            $hash = $this->generateHash($orderId, $payment->amount, $serviceTypeId);
-
-            $payload = [
-                'serviceTypeId' => $serviceTypeId,
-                'amount' => $payment->amount,
-                'orderId' => $orderId,
-                'payerName' => $payerDetails['name'],
-                'payerEmail' => $payerDetails['email'],
-                'payerPhone' => $payerDetails['phone'] ?? '',
-                'description' => $payment->description ?? 'SBRS Fee Payment',
-            ];
+            if (! $payment->relationLoaded('paymentType')) {
+                $payment->setRelation('paymentType', PaymentType::where('code', (string) $payment->payment_type)->first());
+            }
+            $prepared = RemitaSplitService::prepare($payment, $orderId, $payerDetails, $serviceTypeId);
+            $hash = $prepared['hash'];
+            $payload = $prepared['payload'];
 
             $apiUrl = $this->isLive
                 ? 'https://login.remita.net/remita/exapp/api/v1/send/api/echannelsvc/merchant/api/paymentinit'
@@ -96,6 +93,7 @@ class RemitaService
             ]);
 
             if (isset($result['statuscode']) && $result['statuscode'] == '025') {
+                RemitaSplitService::apply($payment, $prepared);
                 $payment->update([
                     'rrr' => $result['RRR'],
                     'order_id' => $orderId,
@@ -164,7 +162,12 @@ class RemitaService
             if (isset($result['status'])) {
                 $statusCode = $result['status'];
 
-                if ($statusCode == '00' || $statusCode == '01') {
+                if ($statusCode == '00') {
+                    $reported = isset($result['amount']) ? (float) str_replace(',', '', (string) $result['amount']) : null;
+                    $expected = (float) ($payment->total_amount ?? $payment->base_amount ?? $payment->amount);
+                    if ($reported !== null && abs($reported - $expected) > 0.01) {
+                        return ['success'=>false,'status'=>'failed','message'=>'The amount reported by Remita does not match this payment.'];
+                    }
                     $payment->markAsSuccessful($result, $result['paymentMethod'] ?? null);
                     return [
                         'success' => true,
@@ -172,7 +175,7 @@ class RemitaService
                         'message' => 'Payment verified successfully',
                         'data' => $result,
                     ];
-                } elseif ($statusCode == '021' || $statusCode == '025') {
+                } elseif ($statusCode == '01' || $statusCode == '021' || $statusCode == '025') {
                     return [
                         'success' => true,
                         'status' => 'pending',

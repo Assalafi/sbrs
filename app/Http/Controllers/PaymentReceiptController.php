@@ -35,7 +35,8 @@ class PaymentReceiptController extends Controller
             return back()->with('error', 'A receipt is available only for successful payments.');
         }
 
-        $amountInWords = $this->amountInWords((float) $payment->amount);
+        $receiptAmount = (float) ($payment->base_amount ?? $payment->amount);
+        $amountInWords = $this->amountInWords($receiptAmount);
         // Prefer the configured logo, but never fall back to the tiny favicon
         // for a PDF. The bundled crest is deliberately high resolution and
         // keeps receipts sharp when a setting is missing or points to a low
@@ -44,7 +45,7 @@ class PaymentReceiptController extends Controller
             ?: $this->localImageDataUri(setting_image('logo'))
             ?: $this->localImageDataUri(asset('assets/images/unimaid-logo.png'));
 
-        $pdf = Pdf::loadView('pdf.payment-receipt', compact('payment', 'payer', 'amountInWords', 'logoBase64'))
+        $pdf = Pdf::loadView('pdf.payment-receipt', compact('payment', 'payer', 'amountInWords', 'logoBase64', 'receiptAmount'))
             ->setPaper('a4', 'portrait');
 
         $reference = $payment->reference ?: ($payment->rrr ?: $payment->id);

@@ -29,6 +29,7 @@ class Payment extends Model
         'academic_session_id',
         'fee_id',
         'amount',
+        'base_amount', 'surcharge_amount', 'total_amount', 'split_enabled', 'split_details',
         'sponsor',
         'currency',
         'rrr',
@@ -49,6 +50,7 @@ class Payment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'base_amount' => 'decimal:2', 'surcharge_amount' => 'decimal:2', 'total_amount' => 'decimal:2', 'split_enabled' => 'boolean',
         'installment' => 'integer',
         'installment_total' => 'integer',
         'is_full_payment' => 'boolean',
@@ -76,6 +78,11 @@ class Payment extends Model
     public function paymentType()
     {
         return $this->belongsTo(PaymentType::class);
+    }
+
+    public function splitItems()
+    {
+        return $this->hasMany(PaymentSplitItem::class);
     }
 
     public function deletedBy()

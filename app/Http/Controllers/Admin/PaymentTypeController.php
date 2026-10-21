@@ -39,6 +39,8 @@ class PaymentTypeController extends Controller
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
             'remita_service_type_id' => 'nullable|string|max:50',
+            'remita_split_enabled' => 'boolean',
+            'remita_surcharge' => 'nullable|numeric|min:0',
         ]);
 
         PaymentType::create($validated);
@@ -71,6 +73,8 @@ class PaymentTypeController extends Controller
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
             'remita_service_type_id' => 'nullable|string|max:50',
+            'remita_split_enabled' => 'boolean',
+            'remita_surcharge' => 'nullable|numeric|min:0',
         ]);
 
         $paymentType->update($validated);

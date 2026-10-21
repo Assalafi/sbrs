@@ -15,6 +15,17 @@
             @csrf
             @method('PUT')
 
+            @if($group === 'remita')
+            <div class="card border-success-subtle bg-light mb-4"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-3"><div><h5 class="mb-1">Remita split payments</h5><p class="text-muted small mb-3">When enabled, the configured additional charge is added to the Remita amount and allocated to the three beneficiary accounts. Student receipts continue to show only the base fee.</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="remita_split_enabled" value="1" @checked($remitaSplitSettings['enabled'] ?? false)><label class="form-check-label">Enable</label></div></div>
+                <div class="row g-3">
+                @foreach(($remitaSplitSettings['beneficiaries'] ?? []) as $i => $b)
+                    <div class="col-lg-4"><div class="border rounded-3 p-3 bg-white h-100"><h6>{{ $i === 0 ? 'Primary account' : 'Additional account '.$i }}</h6><input class="form-control form-control-sm mb-2" name="remita_beneficiaries[{{ $i }}][label]" placeholder="Account name" value="{{ old('remita_beneficiaries.'.$i.'.label',$b['label']??'') }}"><input class="form-control form-control-sm mb-2" name="remita_beneficiaries[{{ $i }}][account_number]" placeholder="Account number" inputmode="numeric" value="{{ old('remita_beneficiaries.'.$i.'.account_number',$b['account_number']??'') }}"><input class="form-control form-control-sm mb-2" name="remita_beneficiaries[{{ $i }}][bank_code]" placeholder="Bank code" inputmode="numeric" value="{{ old('remita_beneficiaries.'.$i.'.bank_code',$b['bank_code']??'') }}"><div class="input-group input-group-sm"><input class="form-control" type="number" min="0" max="100" step="0.01" name="remita_beneficiaries[{{ $i }}][percentage]" value="{{ old('remita_beneficiaries.'.$i.'.percentage',$b['percentage']??0) }}"><span class="input-group-text">%</span></div></div></div>
+                @endforeach
+                </div>
+            </div></div>
+            @endif
+
             @foreach($settings as $setting)
             <div class="mb-4">
                 <label for="{{ $setting->key }}" class="form-label fw-medium">
