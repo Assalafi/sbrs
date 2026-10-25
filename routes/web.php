@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Applicant\AuthController as ApplicantAuthController;
 use App\Http\Controllers\Student\AuthController as StudentAuthController;
@@ -42,6 +43,41 @@ use App\Http\Controllers\PaymentReceiptController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Read-only, server-to-server lookup used by the UG admin hostel permit
+// generator. It returns only the fields needed for a permit and never exposes
+// passwords, payment history, or other private student data.
+Route::get('/internal/hostel/student', function (Request $request) {
+    $configuredKey = (string) env('USP_HOSTEL_API_KEY');
+    $providedKey = (string) $request->header('X-API-Key');
+    if ($configuredKey === '' || $providedKey === '' || !hash_equals($configuredKey, $providedKey)) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized.'], 401);
+    }
+
+    $registration = trim((string) $request->query('registration'));
+    if ($registration === '' || strlen($registration) > 80) {
+        return response()->json(['success' => false, 'message' => 'A valid registration number is required.'], 422);
+    }
+
+    $student = \App\Models\Student::with(['programme', 'academicSession'])
+        ->where('registration_number', $registration)
+        ->first();
+    if (!$student) {
+        return response()->json(['success' => false, 'message' => 'Student record not found.'], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'registration_number' => $student->registration_number,
+            'name' => $student->full_name,
+            'gender' => $student->gender,
+            'programme_name' => optional($student->programme)->name,
+            'programme_type' => $student->programme_type,
+            'academic_session' => optional($student->academicSession)->title,
+        ],
+    ]);
+})->middleware('throttle:60,1');
 
 /*
 |--------------------------------------------------------------------------
