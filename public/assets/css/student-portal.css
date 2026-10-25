@@ -195,6 +195,7 @@
 .payment-clean-history-main strong, .payment-clean-history-main small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .payment-clean-history-main strong { font-size: .78rem; }
 .payment-clean-history-main small { margin-top: .18rem; color: var(--sp-muted); font-size: .67rem; }
+.payment-clean-history-source { display: inline-block; margin-top: .32rem; padding: .16rem .42rem; border-radius: 999px; color: var(--sp-primary-dark); background: var(--sp-primary-soft); font-size: .58rem; font-weight: 800; letter-spacing: .02em; }
 .payment-clean-history-amount { text-align: right; }
 .payment-clean-history-amount strong { display: block; font-size: .78rem; }
 .payment-clean-status { display: inline-block; margin-top: .2rem; padding: .18rem .4rem; border-radius: 999px; font-size: .61rem; font-weight: 800; }

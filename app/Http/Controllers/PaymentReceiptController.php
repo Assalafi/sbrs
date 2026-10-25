@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Applicant;
 use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,13 @@ class PaymentReceiptController extends Controller
         $student = Auth::guard('student')->user();
         abort_unless($student, 401, 'Unauthorized');
 
-        if ($payment->payable_type !== Student::class || (string) $payment->payable_id !== (string) $student->id) {
+        $belongsToStudent = $payment->payable_type === Student::class
+            && (string) $payment->payable_id === (string) $student->id;
+        $belongsToApplication = $student->applicant_id
+            && $payment->payable_type === Applicant::class
+            && (string) $payment->payable_id === (string) $student->applicant_id;
+
+        if (!$belongsToStudent && !$belongsToApplication) {
             abort(403, 'This receipt does not belong to your account.');
         }
 

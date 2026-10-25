@@ -9,6 +9,7 @@
     $history = $history ?? collect();
     $outstandingTotal = $items->sum(fn ($item) => (float) ($item['progress']['remaining'] ?? 0));
     $successfulCount = $history->where('status', 'successful')->count();
+    $applicationHistoryCount = $history->where('payment_source', 'Application account')->count();
 @endphp
 
 <div class="payment-page payment-page-clean">
@@ -150,7 +151,10 @@
     </section>
 
     <section class="payment-clean-section">
-        <div class="payment-clean-section-head"><div><h2>Payment history</h2><p>Your latest payment records and receipts.</p></div><span class="material-symbols-outlined payment-clean-section-symbol">history</span></div>
+        <div class="payment-clean-section-head"><div><h2>Complete payment history</h2><p>Application, admission and student payments in one place. Download a receipt for every successful payment.</p></div><span class="material-symbols-outlined payment-clean-section-symbol">history</span></div>
+        @if($applicationHistoryCount > 0)
+            <div class="payment-clean-inline-note mb-3"><span class="material-symbols-outlined">account_balance</span> Application and admission payments are included in this history.</div>
+        @endif
         @if($history->isNotEmpty())
             <div class="payment-clean-history">
                 @foreach($history as $h)
@@ -160,7 +164,10 @@
                         </div>
                         <div class="payment-clean-history-main">
                             <strong>{{ $h->paymentType->name ?? ucwords(str_replace('_', ' ', $h->payment_type)) }}</strong>
-                            <small>{{ $h->created_at->format('M d, Y &middot; H:i') }} &middot; {{ $h->reference ?: 'No reference' }}</small>
+                            <small>{{ ($h->paid_at ?: $h->created_at)?->format('M d, Y &middot; H:i') }} &middot; {{ $h->reference ?: ($h->rrr ?: 'No reference') }}</small>
+                            @if($h->payment_source)
+                                <span class="payment-clean-history-source">{{ $h->payment_source }}</span>
+                            @endif
                         </div>
                         <div class="payment-clean-history-amount">
                             <strong>&#8358;{{ number_format($h->amount, 2) }}</strong>

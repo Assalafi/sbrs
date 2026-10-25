@@ -34,7 +34,16 @@ class PaymentController extends Controller
     public function index()
     {
         $student = $this->student();
-        $student->load(['programme', 'academicSession', 'payments']);
+        // Application and admission payments are owned by the applicant record,
+        // while registration, examination, hostel and other student payments
+        // are owned by the student record. Load both sides so the student sees
+        // one complete, chronological payment history after admission.
+        $student->load([
+            'programme',
+            'academicSession',
+            'payments.paymentType',
+            'applicant.payments.paymentType',
+        ]);
 
         $dueTypes = $student->duePaymentTypes();
 
@@ -61,12 +70,28 @@ class PaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Payment history
-        $history = $student->payments()
-            ->with('paymentType')
-            ->orderBy('created_at', 'desc')
-            ->take(50)
-            ->get();
+        // Payment history: combine the student's own payments with payments
+        // made during the application/admission stage. Keeping this as one
+        // collection makes the page useful as a complete financial record.
+        $studentHistory = $student->payments
+            ->map(function (Payment $payment) {
+                $payment->setAttribute('payment_source', 'Student account');
+                return $payment;
+            });
+
+        $applicationHistory = $student->applicant
+            ? $student->applicant->payments
+                ->map(function (Payment $payment) {
+                    $payment->setAttribute('payment_source', 'Application account');
+                    return $payment;
+                })
+            : collect();
+
+        $history = $studentHistory
+            ->concat($applicationHistory)
+            ->unique(fn (Payment $payment) => (string) $payment->getKey())
+            ->sortByDesc(fn (Payment $payment) => optional($payment->paid_at ?: $payment->created_at)->getTimestamp() ?: 0)
+            ->values();
 
         $hasRequiredDue = $dueTypes->contains(fn ($t) => $t->is_required);
 
