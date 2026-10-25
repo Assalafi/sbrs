@@ -66,6 +66,30 @@ Route::get('/internal/hostel/student', function (Request $request) {
         return response()->json(['success' => false, 'message' => 'Student record not found.'], 404);
     }
 
+    $photoBase64 = null;
+    $photoMime = null;
+    $relativePhoto = trim((string) $student->passport_photo);
+    if ($relativePhoto !== '') {
+        $publicStorageRoot = realpath(storage_path('app/public'));
+        $photoPath = realpath(storage_path('app/public/' . ltrim(str_replace('\\', '/', $relativePhoto), '/')));
+        if (
+            $publicStorageRoot
+            && $photoPath
+            && str_starts_with($photoPath, $publicStorageRoot . DIRECTORY_SEPARATOR)
+            && is_file($photoPath)
+            && filesize($photoPath) <= 1024 * 1024
+        ) {
+            $detectedMime = function_exists('mime_content_type') ? mime_content_type($photoPath) : null;
+            if (in_array($detectedMime, ['image/jpeg', 'image/png'], true)) {
+                $photoData = file_get_contents($photoPath);
+                if ($photoData !== false) {
+                    $photoBase64 = base64_encode($photoData);
+                    $photoMime = $detectedMime;
+                }
+            }
+        }
+    }
+
     return response()->json([
         'success' => true,
         'data' => [
@@ -75,6 +99,8 @@ Route::get('/internal/hostel/student', function (Request $request) {
             'programme_name' => optional($student->programme)->name,
             'programme_type' => $student->programme_type,
             'academic_session' => optional($student->academicSession)->title,
+            'photo_base64' => $photoBase64,
+            'photo_mime' => $photoMime,
         ],
     ]);
 })->middleware('throttle:60,1');
