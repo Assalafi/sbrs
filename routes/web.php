@@ -90,6 +90,16 @@ Route::get('/internal/hostel/student', function (Request $request) {
         }
     }
 
+    // The shared UG permit needs the single hostel payment reference, but it
+    // must not receive the student's payment history. Return only the latest
+    // successful hostel payment summary for this permit lookup.
+    $hostelPayment = $student->payments()
+        ->where('payment_type', 'hostel')
+        ->where('status', \App\Models\Payment::STATUS_SUCCESSFUL)
+        ->orderByDesc('paid_at')
+        ->orderByDesc('id')
+        ->first(['amount', 'base_amount', 'rrr', 'reference', 'order_id', 'description']);
+
     return response()->json([
         'success' => true,
         'data' => [
@@ -101,6 +111,9 @@ Route::get('/internal/hostel/student', function (Request $request) {
             'academic_session' => optional($student->academicSession)->title,
             'photo_base64' => $photoBase64,
             'photo_mime' => $photoMime,
+            'payment_amount' => $hostelPayment ? (float) ($hostelPayment->base_amount ?? $hostelPayment->amount ?? 0) : null,
+            'payment_rrr' => $hostelPayment?->rrr ?: ($hostelPayment?->reference ?: ($hostelPayment?->order_id ?: null)),
+            'payment_description' => $hostelPayment?->description ?: 'Hostel Fee - ' . $student->programme_type,
         ],
     ]);
 })->middleware('throttle:60,1');
