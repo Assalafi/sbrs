@@ -14,7 +14,7 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Admission Letter</h3>
     <div>
-        <a href="{{ route('applicant.admission.download') }}" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;">
+        <a href="{{ route('applicant.admission.download') }}" class="btn btn-primary btn-sm" style="background:#006633;border-color:#006633;color:#fff !important;">
             <i class="material-symbols-outlined fs-16 align-middle">download</i> Download PDF
         </a>
         <a href="{{ route('applicant.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>

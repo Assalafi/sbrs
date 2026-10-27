@@ -16,7 +16,7 @@
         <p class="text-muted mb-0">Download the official SBRS letter for your records and registration.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('student.admission.download') }}" class="btn btn-primary"><span class="material-symbols-outlined align-middle me-1">download</span>Download PDF</a>
+        <a href="{{ route('student.admission.download') }}" class="btn btn-primary" style="color:#fff !important;"><span class="material-symbols-outlined align-middle me-1">download</span>Download PDF</a>
         <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary"><span class="material-symbols-outlined align-middle me-1">arrow_back</span>Dashboard</a>
     </div>
 </div>
