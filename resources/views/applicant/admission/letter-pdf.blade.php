@@ -53,8 +53,8 @@
         <p class="pmb">P.M.B. 1069</p>
         <p class="director"><strong>{{ setting('director_name', 'PROFESSOR ABDULKARIM ISHAQ') }}</strong>, {{ setting('director_title', 'B.A Ed, M.Ed (Curriculum & Instruction), Ph.D (Curriculum & Instruction).') }}</p>
         <p class="contacts">
-            &#9993; {{ setting('director_email', 'sbrs@unimaid.edu.ng') }} &nbsp;&nbsp;
-            &#9742; {{ setting('director_phone', '+2348035837228') }}
+            Email: {{ setting('director_email', 'sbrs@unimaid.edu.ng') }} &nbsp;&nbsp;
+            Phone: {{ setting('director_phone', '+2348035837228') }}
         </p>
     </div>
 
