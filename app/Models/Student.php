@@ -116,10 +116,21 @@ class Student extends Authenticatable
 
     public function hasPaidRegistrationFee(): bool
     {
-        return $this->payments()
+        $paidOnStudent = $this->payments()
             ->where('payment_type', 'registration')
             ->where('status', 'successful')
             ->exists();
+
+        if ($paidOnStudent) {
+            return true;
+        }
+
+        return $this->applicant_id
+            ? $this->applicant()->whereHas('payments', function ($query) {
+                $query->where('payment_type', 'registration')
+                    ->where('status', 'successful');
+            })->exists()
+            : false;
     }
 
     public function hasPaidExamFee(): bool
@@ -143,13 +154,33 @@ class Student extends Authenticatable
      */
     public function paymentsForType($paymentType)
     {
-        return $this->payments()
+        $payments = $this->payments()
             ->where(function ($q) use ($paymentType) {
                 $q->where('payment_type', $paymentType->code)
                     ->orWhere('payment_type_id', $paymentType->id);
             })
             ->where('status', 'successful')
             ->get();
+
+        // Registration is paid while the person is still an applicant. Keep
+        // that payment in the student's progress after the account is created
+        // so it is not shown again as an outstanding fee.
+        if ($this->applicant_id) {
+            $applicant = $this->applicant()->first();
+            $applicantPayments = $applicant
+                ? $applicant->payments()
+                    ->where(function ($q) use ($paymentType) {
+                        $q->where('payment_type', $paymentType->code)
+                            ->orWhere('payment_type_id', $paymentType->id);
+                    })
+                    ->where('status', 'successful')
+                    ->get()
+                : collect();
+
+            $payments = $payments->concat($applicantPayments)->unique(fn ($payment) => (string) $payment->getKey())->values();
+        }
+
+        return $payments;
     }
 
     /**

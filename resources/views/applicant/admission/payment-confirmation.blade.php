@@ -22,6 +22,12 @@
     <p class="mb-1"><strong>Password:</strong> Same as your applicant login password</p>
     <p class="mb-0 text-muted small">Use these to log in at the <a href="{{ route('student.login') }}">Student Portal</a>.</p>
 </div>
+@else
+<div class="alert alert-warning mb-4">
+    <h6 class="fw-bold mb-2"><i class="material-symbols-outlined align-middle me-1">how_to_reg</i> Registration payment required</h6>
+    <p class="mb-2">Your admission has been confirmed. Your student account and registration number will be created after you successfully pay and verify the registration fee.</p>
+    <a href="{{ route('applicant.payments.index') }}" class="btn btn-warning btn-sm"><i class="material-symbols-outlined fs-16 align-middle me-1">payments</i> Pay Registration Fee</a>
+</div>
 @endif
 
 <div class="card border-0 rounded-3">

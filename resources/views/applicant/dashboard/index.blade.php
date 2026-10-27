@@ -109,6 +109,13 @@
                             <i class="material-symbols-outlined fs-16 align-middle">download</i> Download Admission PDF
                         </a>
                     </div>
+                    @if(!$applicant->student)
+                    <div class="col-md-6">
+                        <a href="{{ route('applicant.payments.index') }}" class="btn btn-warning w-100">
+                            <i class="material-symbols-outlined fs-16 align-middle">how_to_reg</i> Pay Registration Fee
+                        </a>
+                    </div>
+                    @endif
                     @endif
 
                     <div class="col-md-6">
@@ -125,6 +132,12 @@
                     <p class="mb-1"><strong>Email:</strong> <code class="fs-14">{{ $applicant->student->email }}</code></p>
                     <p class="mb-1"><strong>Password:</strong> Same as your applicant login password</p>
                     <p class="mb-0 text-muted small">Use these credentials to log in at the <a href="{{ route('student.login') }}">Student Portal</a>.</p>
+                </div>
+                @elseif($applicant->status === 'admitted')
+                <div class="alert alert-warning mt-4">
+                    <h6 class="fw-bold mb-2"><i class="material-symbols-outlined align-middle me-1">how_to_reg</i> Complete registration to receive your student ID</h6>
+                    <p class="mb-2">Your admission is confirmed. Pay the registration fee from the payments page; your student account and registration number will be created automatically after successful verification.</p>
+                    <a href="{{ route('applicant.payments.index') }}" class="btn btn-warning btn-sm"><i class="material-symbols-outlined fs-16 align-middle me-1">payments</i> Open Fee Payments</a>
                 </div>
                 @endif
             </div>

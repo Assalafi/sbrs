@@ -22,8 +22,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $student = Student::where('registration_number', $credentials['login'])
-            ->orWhere('email', $credentials['login'])
+        $login = trim($credentials['login']);
+        $student = Student::where('registration_number', $login)
+            ->orWhere('email', $login)
             ->first();
 
         if ($student && \Illuminate\Support\Facades\Hash::check($credentials['password'], $student->password)) {

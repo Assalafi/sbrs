@@ -7,7 +7,6 @@ use App\Models\Applicant;
 use App\Models\AcademicSession;
 use App\Models\Programme;
 use App\Models\SubjectCombination;
-use App\Models\Student;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
@@ -116,11 +115,6 @@ class ApplicationController extends Controller
                 'subject_combination_id' => $application->subject_combination_id,
                 'academic_session_id' => $application->academic_session_id,
             ]);
-        }
-
-        // If set to admitted and no student record yet, create one (matches the admission-fee flow)
-        if ($application->status === 'admitted' && !$student) {
-            Student::createFromApplicant($application, $application->password);
         }
 
         return redirect()->route('admin.applications.show', $application)

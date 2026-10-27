@@ -117,11 +117,14 @@ class Applicant extends Authenticatable
 
     /**
      * Payment types due for this applicant (active, matching programme + session,
-     * payer type applicant/both, not fully paid).
+     * payer type applicant/both, not fully paid). An admitted applicant who does
+     * not have a student record may also pay the registration fee; that payment
+     * is the point at which the student record and registration number are issued.
      */
     public function duePaymentTypes()
     {
         $sessionId = $this->academic_session_id;
+        $registrationBeforeStudent = $this->status === 'admitted' && !$this->student()->exists();
 
         $types = PaymentType::query()
             ->where('is_active', true)
@@ -133,7 +136,12 @@ class Applicant extends Authenticatable
                 $q->where('programme_type', $this->programme_type)
                     ->orWhere('programme_type', 'all');
             })
-            ->whereIn('payer_type', ['applicant', 'both'])
+            ->where(function ($q) use ($registrationBeforeStudent) {
+                $q->whereIn('payer_type', ['applicant', 'both']);
+                if ($registrationBeforeStudent) {
+                    $q->orWhere('code', 'like', '%registration%');
+                }
+            })
             ->orderBy('sort_order')
             ->get();
 

@@ -211,12 +211,10 @@ class PaymentController extends Controller
                 $payment->update(['verified_at' => now()]);
                 $applicant->update(['status' => 'admitted']);
 
-                $student = Student::createFromApplicant($applicant, $applicant->password);
-
                 DB::commit();
 
-                return redirect()->route('applicant.admission.payment-confirmation')
-                    ->with('success', 'Admission fee verified! Your student account has been created. Use your applicant password to log in as a student.');
+                return redirect()->route('applicant.payments.index')
+                    ->with('success', 'Admission fee verified! Complete the registration fee to receive your student ID and access the student portal.');
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Admission Processing Failed', ['error' => $e->getMessage()]);
@@ -300,6 +298,10 @@ class PaymentController extends Controller
         ]);
 
         $type = PaymentType::findOrFail($request->payment_type_id);
+
+        if (!$applicant->duePaymentTypes()->contains(fn ($due) => (string) $due->id === (string) $type->id)) {
+            return back()->with('error', 'This payment is not currently available for your application.');
+        }
 
         if (!$type->is_active) {
             return back()->with('error', 'This payment type is not active.');
@@ -416,16 +418,28 @@ class PaymentController extends Controller
             }
             $payment->update($updates);
 
-            // Side effects: application fee -> form_filling; admission fee -> admitted + create student
-            if ($type->code === 'application' && $applicant->status === 'registered') {
+            // Side effects: application -> form_filling; admission -> admitted;
+            // registration -> create the student and issue the registration number.
+            if ($type->legacyType() === 'application' && $applicant->status === 'registered') {
                 $applicant->update(['status' => 'form_filling']);
-            } elseif ($type->code === 'admission') {
+            } elseif ($type->legacyType() === 'admission') {
                 $progress = $applicant->paymentTypeProgress($type);
                 if ($progress['fully_paid']) {
                     $applicant->update(['status' => 'admitted']);
-                    if (!$applicant->student) {
-                        Student::createFromApplicant($applicant, $applicant->password);
-                    }
+                }
+            } elseif ($type->legacyType() === 'registration') {
+                $progress = $applicant->paymentTypeProgress($type);
+                if ($applicant->status !== 'admitted') {
+                    return back()->with('error', 'Registration payment is available only after admission has been confirmed.');
+                }
+
+                if ($progress['fully_paid'] && !$applicant->student()->exists()) {
+                    DB::transaction(function () use ($applicant) {
+                        $lockedApplicant = Applicant::query()->whereKey($applicant->id)->lockForUpdate()->firstOrFail();
+                        if (!$lockedApplicant->student()->exists()) {
+                            Student::createFromApplicant($lockedApplicant, $lockedApplicant->password);
+                        }
+                    });
                 }
             }
 
