@@ -26,6 +26,7 @@ use App\Http\Controllers\Applicant\PaymentController as ApplicantPaymentControll
 use App\Http\Controllers\Applicant\ApplicationFormController;
 use App\Http\Controllers\Applicant\AdmissionController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\AdmissionController as StudentAdmissionController;
 use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\Student\BiodataController;
 use App\Http\Controllers\Student\CourseRegistrationController;
@@ -339,6 +340,8 @@ Route::prefix('applicant')->middleware(['applicant.auth'])->group(function () {
 */
 Route::prefix('student')->middleware(['student.auth'])->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('student.dashboard');
+    Route::get('/admission/letter', [StudentAdmissionController::class, 'letter'])->name('student.admission.letter');
+    Route::get('/admission/download', [StudentAdmissionController::class, 'downloadLetter'])->name('student.admission.download');
     Route::get('/password', [StudentDashboardController::class, 'showPasswordForm'])->name('student.password');
     Route::post('/password', [StudentDashboardController::class, 'updatePassword'])->name('student.password.update');
 

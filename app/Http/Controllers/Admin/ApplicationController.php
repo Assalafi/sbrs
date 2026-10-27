@@ -15,7 +15,7 @@ class ApplicationController extends Controller
     public function index(Request $request)
     {
         $query = Applicant::with(['programme', 'academicSession'])
-            ->whereIn('status', ['submitted', 'under_review', 'approved', 'rejected']);
+            ->whereIn('status', ['submitted', 'under_review', 'approved', 'rejected', 'admitted']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -166,7 +166,7 @@ class ApplicationController extends Controller
     public function export(Request $request)
     {
         $query = Applicant::with(['programme', 'academicSession'])
-            ->whereIn('status', ['submitted', 'under_review', 'approved', 'rejected']);
+            ->whereIn('status', ['submitted', 'under_review', 'approved', 'rejected', 'admitted']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);

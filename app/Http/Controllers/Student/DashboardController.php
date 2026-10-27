@@ -12,7 +12,7 @@ class DashboardController extends Controller
     public function index()
     {
         $student = Auth::guard('student')->user();
-        $student->load(['programme', 'subjectCombination', 'academicSession', 'payments', 'courseRegistrations.course', 'results.course']);
+        $student->load(['applicant', 'programme', 'subjectCombination', 'academicSession', 'payments', 'courseRegistrations.course', 'results.course']);
 
         $dueTypes = $student->duePaymentTypes();
         $requiredDue = $dueTypes->filter(fn ($t) => $t->is_required)->values();

@@ -63,6 +63,9 @@
             <div class="d-flex flex-wrap gap-2 mt-3">
                 <a href="{{ route('student.biodata.index') }}" class="btn btn-sm btn-outline-primary"><span class="material-symbols-outlined align-middle" style="font-size:18px">badge</span> View bio-data</a>
                 <a href="{{ route('student.results.index') }}" class="btn btn-sm btn-outline-primary"><span class="material-symbols-outlined align-middle" style="font-size:18px">grade</span> View results</a>
+                @if($student->applicant && $student->applicant->status === 'admitted')
+                    <a href="{{ route('student.admission.letter') }}" class="btn btn-sm btn-outline-success"><span class="material-symbols-outlined align-middle" style="font-size:18px">school</span> Admission letter</a>
+                @endif
             </div>
         </div>
     </section>
@@ -72,6 +75,9 @@
             @if(!$student->is_registered)<a class="student-action-link" href="{{ route('student.registration.index') }}"><span class="leading"><span class="material-symbols-outlined">how_to_reg</span>Complete registration</span><span class="material-symbols-outlined">chevron_right</span></a>@endif
             <a class="student-action-link" href="{{ route('student.payments.index') }}"><span class="leading"><span class="material-symbols-outlined">payments</span>Make a payment</span><span class="material-symbols-outlined">chevron_right</span></a>
             <a class="student-action-link" href="{{ route('student.hostel.index') }}"><span class="leading"><span class="material-symbols-outlined">bed</span>Hostel Application</span><span class="material-symbols-outlined">chevron_right</span></a>
+            @if($student->applicant && $student->applicant->status === 'admitted')
+                <a class="student-action-link" href="{{ route('student.admission.letter') }}"><span class="leading"><span class="material-symbols-outlined">school</span>Admission letter</span><span class="material-symbols-outlined">chevron_right</span></a>
+            @endif
             <a class="student-action-link" href="{{ route('student.password') }}"><span class="leading"><span class="material-symbols-outlined">lock</span>Change password</span><span class="material-symbols-outlined">chevron_right</span></a>
         </div></div>
     </section>

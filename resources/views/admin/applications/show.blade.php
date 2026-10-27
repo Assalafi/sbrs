@@ -20,7 +20,7 @@
                 @endif
                 <h5 class="fw-bold">{{ $application->surname }} {{ $application->first_name }} {{ $application->other_names }}</h5>
                 <p class="text-muted mb-1">{{ $application->application_number }}</p>
-                <span class="badge bg-{{ $application->status === 'approved' ? 'success' : ($application->status === 'rejected' ? 'danger' : 'primary') }} mb-3">
+                <span class="badge bg-{{ in_array($application->status, ['approved', 'admitted']) ? 'success' : ($application->status === 'rejected' ? 'danger' : 'primary') }} mb-3">
                     {{ ucfirst(str_replace('_',' ',$application->status)) }}
                 </span>
 

@@ -99,6 +99,16 @@
                             <i class="material-symbols-outlined fs-16 align-middle">description</i> View Admission Instructions
                         </a>
                     </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('applicant.admission.letter') }}" class="btn btn-primary w-100" style="background:#006633;border-color:#006633;">
+                            <i class="material-symbols-outlined fs-16 align-middle">school</i> View Admission Letter
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('applicant.admission.download') }}" class="btn btn-outline-primary w-100">
+                            <i class="material-symbols-outlined fs-16 align-middle">download</i> Download Admission PDF
+                        </a>
+                    </div>
                     @endif
 
                     <div class="col-md-6">

@@ -4,8 +4,11 @@
     <meta charset="utf-8">
     <title>Admission Letter - {{ $applicant->application_number }}</title>
     <style>
-        body { font-family: 'Times New Roman', Times, serif; font-size: 13px; color: #000; margin: 30px 40px; line-height: 1.5; }
-        .header { text-align: center; margin-bottom: 5px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        @page { margin: 24px 40px 30px; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 13px; color: #000; margin: 0; line-height: 1.5; }
+        .page { border: 1px solid #1f5d45; padding: 18px 24px 22px; min-height: 1000px; }
+        .header { text-align: center; margin-bottom: 5px; border-bottom: 2px solid #1f5d45; padding-bottom: 10px; }
+        .logo { width: 64px; height: 64px; object-fit: contain; margin-bottom: 4px; }
         .header h1 { font-size: 22px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
         .header .subtitle { font-size: 11px; margin: 0; }
         .header h2 { font-size: 15px; margin: 2px 0; text-transform: uppercase; font-weight: bold; }
@@ -39,7 +42,11 @@
         $year2 = $session ? substr($session->name, 2, 2) : substr(date('Y'), 2, 2);
     @endphp
 
+    <div class="page">
     <div class="header">
+        @if(!empty($logoDataUri))
+            <img class="logo" src="{{ $logoDataUri }}" alt="University crest">
+        @endif
         <h1>University of Maiduguri</h1>
         <p class="subtitle">(OFFICE OF THE VICE-CHANCELLOR)</p>
         <h2>School of Basic and Remedial Studies</h2>
@@ -98,6 +105,8 @@
         <br><br>
         <p><strong>{{ setting('director_name', 'Professor Abdulkarim Ishaq') }}</strong></p>
         <p><em>Director</em></p>
+    </div>
+    <div style="border-top:1px solid #aaa;margin-top:18px;padding-top:5px;text-align:center;font-size:9px;color:#666;">This letter was issued through the University of Maiduguri SBRS portal. Keep it for registration and verification.</div>
     </div>
 </body>
 </html>
