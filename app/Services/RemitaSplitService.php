@@ -58,13 +58,29 @@ class RemitaSplitService
             return $payment->paymentType;
         }
 
-        $query = PaymentType::query()->where('code', (string) $payment->payment_type);
+        $legacyType = strtolower((string) $payment->payment_type);
         $payer = $payment->payable;
-        if ($payer && $payer->programme_type) {
-            $query->orderByRaw('programme_type = ? DESC', [$payer->programme_type]);
-        }
+        $programmeType = strtolower((string) ($payer?->programme_type ?? ''));
+        $sessionId = (string) ($payment->academic_session_id ?? '');
 
-        return $query->orderByRaw('academic_session_id IS NULL ASC')->first();
+        // Legacy controllers save categories such as "admission" while the
+        // configurable service is commonly named "admission_fee". Match by
+        // the payment type's legacy mapping, then prefer the payer's programme
+        // and session so the correct configured surcharge is selected.
+        return PaymentType::query()->get()->filter(function (PaymentType $candidate) use ($legacyType): bool {
+            return strtolower($candidate->legacyType()) === $legacyType;
+        })->sortByDesc(function (PaymentType $candidate) use ($programmeType, $sessionId): int {
+            $score = $candidate->is_active ? 1 : 0;
+            if ($programmeType !== '' && strtolower((string) $candidate->programme_type) === $programmeType) {
+                $score += 4;
+            }
+            if ($sessionId !== '' && (string) $candidate->academic_session_id === $sessionId) {
+                $score += 2;
+            } elseif ($candidate->academic_session_id === null) {
+                $score += 1;
+            }
+            return $score;
+        })->first();
     }
     public static function apply(Payment $payment,array $p): void {$payment->update(['base_amount'=>$p['base_amount'],'surcharge_amount'=>$p['surcharge_amount'],'total_amount'=>$p['total_amount'],'split_enabled'=>(bool)$p['split_enabled'],'split_details'=>$p['line_item_summary']?json_encode($p['line_item_summary']):null]);$payment->splitItems()->delete();foreach($p['line_items'] as $i){$a=preg_replace('/\D+/','',(string)$i['beneficiaryAccount']);$payment->splitItems()->create(['line_item_id'=>$i['lineItemsId'],'beneficiary_name'=>$i['beneficiaryName'],'beneficiary_account'=>$a?str_repeat('*',max(0,strlen($a)-4)).substr($a,-4):null,'bank_code'=>$i['bankCode'],'beneficiary_amount'=>$i['beneficiaryAmount'],'is_primary'=>$i['lineItemsId']==='beneficiary1']);}}
     private static function lineItems(float $base,float $charge,array $rows): array {$shares=[];$sum=0;foreach($rows as $r){$sum+=(float)$r['percentage'];if(!$r['account_number']||!$r['bank_code'])throw new \InvalidArgumentException('All split beneficiary accounts are required.');$shares[]=(int)floor(round($charge*100)*((float)$r['percentage']/100));}if(abs($sum-100)>.001)throw new \InvalidArgumentException('Split percentages must total 100%.');$shares[0]+=round($charge*100)-array_sum($shares);$out=[];foreach($rows as $i=>$r){$amount=$shares[$i]+($i===0?round($base*100):0);if($amount<=0)continue;$out[]=['lineItemsId'=>'beneficiary'.($i+1),'beneficiaryName'=>$r['label'],'beneficiaryAccount'=>preg_replace('/\D+/','',$r['account_number']),'bankCode'=>preg_replace('/\D+/','',$r['bank_code']),'beneficiaryAmount'=>number_format($amount/100,2,'.',''),'deductFeeFrom'=>$i===0?'1':'0'];}return $out;}
