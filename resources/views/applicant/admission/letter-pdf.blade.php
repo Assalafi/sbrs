@@ -6,7 +6,9 @@
     <style>
         @page { margin: 24px 40px 30px; }
         body { font-family: 'Times New Roman', Times, serif; font-size: 13px; color: #000; margin: 0; line-height: 1.5; }
-        .page { border: 1px solid #1f5d45; padding: 18px 24px 22px; min-height: 1000px; }
+        .page { position: relative; border: 1px solid #1f5d45; padding: 18px 24px 22px; min-height: 1000px; }
+        .watermark { position: absolute; top: 36%; left: 24%; width: 52%; height: auto; opacity: .075; z-index: 0; }
+        .page > .header, .page > .ref-block, .page > .title, .page > .body-text, .page > .signature, .page > div:last-child { position: relative; z-index: 1; }
         .header { text-align: center; margin-bottom: 5px; border-bottom: 2px solid #1f5d45; padding-bottom: 10px; }
         .logo { width: 64px; height: 64px; object-fit: contain; margin-bottom: 4px; }
         .header h1 { font-size: 22px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
@@ -43,6 +45,9 @@
     @endphp
 
     <div class="page">
+    @if(!empty($logoDataUri))
+        <img class="watermark" src="{{ $logoDataUri }}" alt="">
+    @endif
     <div class="header">
         @if(!empty($logoDataUri))
             <img class="logo" src="{{ $logoDataUri }}" alt="University crest">
