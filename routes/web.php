@@ -216,6 +216,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::middleware('permission:applications.view')->group(function () {
     Route::get('applications', [ApplicationController::class, 'index'])->name('admin.applications.index');
     Route::get('applications/export', [ApplicationController::class, 'export'])->name('admin.applications.export');
+    Route::get('applications/{application}/admission/download', [ApplicationController::class, 'downloadAdmission'])->name('admin.applications.admission-download');
     Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('admin.applications.show');
     Route::get('applications/{application}/edit', [ApplicationController::class, 'edit'])->middleware('permission:applications.edit')->name('admin.applications.edit');
     Route::put('applications/{application}', [ApplicationController::class, 'update'])->middleware('permission:applications.edit')->name('admin.applications.update');

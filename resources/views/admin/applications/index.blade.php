@@ -108,6 +108,9 @@
                         <td class="fs-13 text-muted">{{ $applicant->created_at->format('M d, Y') }}</td>
                         <td>
                             <a href="{{ route('admin.applications.show', $applicant) }}" class="btn btn-sm btn-outline-primary"><i class="material-symbols-outlined fs-16">visibility</i></a>
+                            @if($applicant->status === 'admitted')
+                                <a href="{{ route('admin.applications.admission-download', $applicant) }}" class="btn btn-sm btn-outline-success" title="Download admission PDF"><i class="material-symbols-outlined fs-16">download</i></a>
+                            @endif
                         </td>
                     </tr>
                     @empty

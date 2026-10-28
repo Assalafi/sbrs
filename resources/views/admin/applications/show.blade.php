@@ -4,7 +4,12 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="fw-semibold mb-0">Application: {{ $application->application_number }}</h3>
-    <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Back</a>
+    <div class="d-flex gap-2">
+        @if($application->status === 'admitted')
+            <a href="{{ route('admin.applications.admission-download', $application) }}" class="btn btn-success btn-sm" style="color:#fff !important;"><i class="material-symbols-outlined fs-16 align-middle">download</i> Download admission PDF</a>
+        @endif
+        <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Back</a>
+    </div>
 </div>
 
 <div class="row">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Applicant\AdmissionController as ApplicantAdmissionController;
 use App\Http\Controllers\Controller;
 use App\Models\Applicant;
 use App\Models\AcademicSession;
@@ -52,6 +53,22 @@ class ApplicationController extends Controller
         }
 
         return view('admin.applications.show', compact('application'));
+    }
+
+    /**
+     * Download the same official admission letter available to the applicant
+     * and student portals, without duplicating the PDF template or branding.
+     */
+    public function downloadAdmission(Applicant $application)
+    {
+        if ($application->status !== 'admitted') {
+            return back()->with('error', 'This applicant has not been admitted, so an admission letter is not available.');
+        }
+
+        $application->load(['programme', 'subjectCombination', 'academicSession', 'student']);
+        $filename = 'admission_letter_' . str_replace('/', '_', $application->application_number) . '.pdf';
+
+        return ApplicantAdmissionController::downloadForApplicant($application, $filename);
     }
 
     /**
