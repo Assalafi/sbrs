@@ -84,7 +84,12 @@
                         </td>
                         <td><span class="badge bg-info bg-opacity-10 text-info">{{ ucfirst($payment->payment_type) }}</span></td>
                         <td>{{ $payment->sponsor ?? '—' }}<br><small class="text-muted">{{ $payment->payment_method ?? 'Online' }}</small></td>
-                        <td class="fw-medium">&#8358;{{ number_format($payment->amount, 2) }}</td>
+                        <td class="fw-medium">
+                            &#8358;{{ number_format($payment->gross_amount, 2) }}
+                            @if($payment->surchargeAmountValue() > 0)
+                                <small class="d-block text-muted">Base &#8358;{{ number_format($payment->baseAmountValue(), 2) }} + charge &#8358;{{ number_format($payment->surchargeAmountValue(), 2) }}</small>
+                            @endif
+                        </td>
                         <td><span class="badge bg-{{ $payment->status === 'successful' ? 'success' : ($payment->status === 'failed' ? 'danger' : ($payment->status === 'cancelled' ? 'secondary' : 'warning')) }}">{{ ucfirst($payment->status) }}</span></td>
                         <td>
                             <a href="{{ route('admin.payments.show', $payment) }}" class="btn btn-sm btn-outline-primary me-1"><i class="material-symbols-outlined fs-16">visibility</i></a>

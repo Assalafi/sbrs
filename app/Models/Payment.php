@@ -85,6 +85,33 @@ class Payment extends Model
         return $this->hasMany(PaymentSplitItem::class);
     }
 
+    /**
+     * The amount the student is charged by Remita.
+     *
+     * `amount` remains the base fee used by fee-progress calculations.  When
+     * Remita split is enabled, the gateway total is stored separately so the
+     * service charge does not make a fee look overpaid.  Keep that accounting
+     * distinction in one place for tables, exports and admin views.
+     */
+    public function getGrossAmountAttribute(): float
+    {
+        if ($this->total_amount !== null) {
+            return round((float) $this->total_amount, 2);
+        }
+
+        return round($this->baseAmountValue() + $this->surchargeAmountValue(), 2);
+    }
+
+    public function baseAmountValue(): float
+    {
+        return round((float) ($this->base_amount ?? $this->amount ?? 0), 2);
+    }
+
+    public function surchargeAmountValue(): float
+    {
+        return round((float) ($this->surcharge_amount ?? 0), 2);
+    }
+
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');

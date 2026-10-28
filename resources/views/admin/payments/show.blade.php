@@ -19,7 +19,11 @@
                     <tr><td class="text-muted">Type:</td><td><span class="badge bg-info bg-opacity-10 text-info">{{ $payment->paymentType->name ?? ucfirst($payment->payment_type) }}</span></td></tr>
                     <tr><td class="text-muted">Sponsor:</td><td>{{ $payment->sponsor ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Method:</td><td>{{ $payment->payment_method ?? 'Online' }}</td></tr>
-                    <tr><td class="text-muted">Amount:</td><td class="fw-bold fs-5">&#8358;{{ number_format($payment->amount, 2) }}</td></tr>
+                    <tr><td class="text-muted">Amount charged:</td><td class="fw-bold fs-5">&#8358;{{ number_format($payment->gross_amount, 2) }}</td></tr>
+                    @if($payment->surchargeAmountValue() > 0)
+                        <tr><td class="text-muted">Base fee:</td><td>&#8358;{{ number_format($payment->baseAmountValue(), 2) }}</td></tr>
+                        <tr><td class="text-muted">Service charge:</td><td>&#8358;{{ number_format($payment->surchargeAmountValue(), 2) }}</td></tr>
+                    @endif
                     <tr><td class="text-muted">Status:</td><td><span class="badge bg-{{ $payment->status === 'successful' ? 'success' : ($payment->status === 'failed' ? 'danger' : 'warning') }} px-3 py-2">{{ ucfirst($payment->status) }}</span></td></tr>
                     <tr><td class="text-muted">Session:</td><td>{{ $payment->academicSession->name ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Description:</td><td>{{ $payment->description ?? 'N/A' }}</td></tr>

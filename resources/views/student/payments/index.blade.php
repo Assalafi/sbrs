@@ -40,7 +40,10 @@
                             <div>
                                 <h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3>
                                 <p>
-                                    &#8358;{{ number_format($payment->amount, 2) }}
+                                    &#8358;{{ number_format($payment->gross_amount, 2) }}
+                                    @if($payment->surchargeAmountValue() > 0)
+                                        <small class="d-block text-muted">Includes &#8358;{{ number_format($payment->surchargeAmountValue(), 2) }} service charge</small>
+                                    @endif
                                     @if($payment->installment_label)
                                         <span aria-hidden="true"> &middot; </span>{{ $payment->installment_label }}
                                     @endif
@@ -170,7 +173,10 @@
                             @endif
                         </div>
                         <div class="payment-clean-history-amount">
-                            <strong>&#8358;{{ number_format($h->amount, 2) }}</strong>
+                            <strong>&#8358;{{ number_format($h->gross_amount, 2) }}</strong>
+                            @if($h->surchargeAmountValue() > 0)
+                                <small class="d-block text-muted">Includes charge</small>
+                            @endif
                             <span class="payment-clean-status status-{{ $h->status }}">{{ ucfirst($h->status) }}</span>
                         </div>
                         <div class="payment-clean-history-action">
@@ -229,7 +235,7 @@
                             <div>
                                 <h6 class="mb-1 fw-semibold">{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h6>
                                 <div class="text-muted small mb-1">
-                                    Amount: <strong class="text-dark">&#8358;{{ number_format($payment->amount, 2) }}</strong>
+                                    Amount: <strong class="text-dark">&#8358;{{ number_format($payment->gross_amount, 2) }}</strong>
                                     @if($payment->installment_label)
                                         <span class="badge bg-light text-dark border ms-1">{{ $payment->installment_label }}</span>
                                     @endif
