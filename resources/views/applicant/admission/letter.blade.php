@@ -32,15 +32,8 @@
 @endif
 
 <div class="card border-0 rounded-3">
-    <div class="card-body p-5" style="font-family: 'Times New Roman', Times, serif; color: #000;">
-        <div class="text-center mb-2 pb-3" style="border-bottom: 2px solid #000;">
-            <h4 class="fw-bold mb-0" style="letter-spacing:1px;">UNIVERSITY OF MAIDUGURI</h4>
-            <small>(OFFICE OF THE VICE-CHANCELLOR)</small>
-            <h5 class="fw-bold mt-1 mb-0">SCHOOL OF BASIC AND REMEDIAL STUDIES</h5>
-            <p class="mb-0">P.M.B. 1069</p>
-            <small><strong>{{ setting('director_name', 'PROFESSOR ABDULKARIM ISHAQ') }}</strong>, {{ setting('director_title', 'B.A Ed, M.Ed (Curriculum & Instruction), Ph.D') }}</small><br>
-            <small>&#9993; {{ setting('director_email', 'sbrs@unimaid.edu.ng') }} &nbsp; &#9742; {{ setting('director_phone', '+2348035837228') }}</small>
-        </div>
+    <img src="{{ asset('assets/images/admission/sbrs-letterhead-header.png') }}" alt="University of Maiduguri, Office of the Vice-Chancellor, School of Basic and Remedial Studies" style="display:block;width:100%;height:auto;">
+    <div class="card-body p-3 p-md-5 pt-md-3" style="font-family: 'Times New Roman', Times, serif; color: #000;">
 
         <div class="mt-3 mb-3">
             <p class="float-end mb-0"><strong>{{ now()->format('jS M. Y') }}</strong></p>
@@ -84,7 +77,7 @@
 
         <div class="mt-5">
             <p class="mb-0">Yours Sincerely,</p>
-            <br>
+            <img src="{{ asset('assets/images/admission/admission-signature.png') }}" alt="Signature" style="display:block;width:150px;max-width:100%;height:auto;margin:8px 0 4px;">
             <p class="mb-0"><strong>{{ setting('director_name', 'Professor Abdulkarim Ishaq') }}</strong></p>
             <p class="mb-0"><em>Director</em></p>
         </div>

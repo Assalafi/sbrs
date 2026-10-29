@@ -48,7 +48,12 @@ class AdmissionController extends Controller
             ?: self::localImageDataUri(setting_image('logo'))
             ?: self::localImageDataUri(asset('assets/images/unimaid-logo.png'));
 
-        $pdf = Pdf::loadView('applicant.admission.letter-pdf', compact('applicant', 'logoDataUri'))
+        // Embed the supplied letterhead locally: downloads must not depend on HTTP access.
+        $letterheadDataUri = self::localImageDataUri('/assets/images/admission/sbrs-letterhead-header.png');
+        $letterheadFooterDataUri = self::localImageDataUri('/assets/images/admission/sbrs-letterhead-footer.png');
+        $signatureDataUri = self::localImageDataUri('/assets/images/admission/admission-signature.png');
+
+        $pdf = Pdf::loadView('applicant.admission.letter-pdf', compact('applicant', 'logoDataUri', 'letterheadDataUri', 'letterheadFooterDataUri', 'signatureDataUri'))
             ->setPaper('a4', 'portrait');
 
         return $pdf->download($filename);

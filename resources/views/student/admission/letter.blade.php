@@ -27,13 +27,8 @@
 </div>
 
 <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-body p-4 p-lg-5">
-        <div class="text-center border-bottom pb-3 mb-4">
-            <div class="small text-uppercase text-muted">Office of the Vice-Chancellor</div>
-            <h2 class="h4 fw-bold mb-1">UNIVERSITY OF MAIDUGURI</h2>
-            <div class="fw-semibold text-success">SCHOOL OF BASIC AND REMEDIAL STUDIES</div>
-            <div class="small text-muted">P.M.B. 1069, Maiduguri, Borno State, Nigeria</div>
-        </div>
+    <img src="{{ asset('assets/images/admission/sbrs-letterhead-header.png') }}" alt="University of Maiduguri, Office of the Vice-Chancellor, School of Basic and Remedial Studies" style="display:block;width:100%;height:auto;">
+    <div class="card-body p-3 p-lg-5 pt-lg-3">
 
         <div class="row g-2 small mb-4">
             <div class="col-sm-6"><strong>Applicant:</strong> {{ $fullName }}</div>
@@ -54,7 +49,7 @@
         <h4 class="h6 fw-bold text-decoration-underline mt-4">Registration</h4>
         <p class="small">Report with this admission letter, evidence of payment, original certificates and a JAMB result slip where applicable.</p>
         <p class="small">Congratulations on your admission. We look forward to welcoming you.</p>
-        <div class="mt-5 small"><div>Yours sincerely,</div><div style="height:35px"></div><strong>{{ setting('director_name', 'Professor Abdulkarim Ishaq') }}</strong><br><em>{{ setting('director_title', 'Director, School of Basic and Remedial Studies') }}</em></div>
+        <div class="mt-5 small"><div>Yours sincerely,</div><img src="{{ asset('assets/images/admission/admission-signature.png') }}" alt="Signature" style="display:block;width:150px;max-width:100%;height:auto;margin:8px 0 4px;"><strong>{{ setting('director_name', 'Professor Abdulkarim Ishaq') }}</strong><br><em>{{ setting('director_title', 'Director, School of Basic and Remedial Studies') }}</em></div>
     </div>
 </div>
 @endsection
