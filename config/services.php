@@ -41,5 +41,9 @@ return [
         'api_key' => env('REMITA_API_KEY'),
         'service_type_id' => env('REMITA_SERVICE_TYPE_ID'),
     ],
+    'remita_split_report' => [
+        'api_key' => env('REMITA_SPLIT_REPORT_API_KEY', ''),
+        'source' => env('REMITA_SPLIT_REPORT_SOURCE', 'sbrs'),
+    ],
 
 ];
