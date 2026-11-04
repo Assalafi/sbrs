@@ -50,10 +50,24 @@
 .admin-portal .card-header { border-bottom: 1px solid var(--ap-border) !important; background: #fff !important; color: var(--ap-ink); }
 .admin-portal .card-body { padding: 1.15rem; }
 .admin-portal .btn { border-radius: 10px; font-weight: 700; }
-.admin-portal .btn-primary, .admin-portal .btn-success { background: var(--ap-primary); border-color: var(--ap-primary); }
+.admin-portal .btn-primary, .admin-portal .btn-success { background: var(--ap-primary); border-color: var(--ap-primary); color: #fff !important; }
 .admin-portal .btn-primary:hover, .admin-portal .btn-success:hover { background: var(--ap-primary-dark); border-color: var(--ap-primary-dark); }
-.admin-portal .btn-outline-primary, .admin-portal .btn-outline-success { color: var(--ap-primary); border-color: #94c9a9; }
+.admin-portal .btn-warning { color: #3e2a05 !important; background: #f2c14e; border-color: #d8a52c; }
+.admin-portal .btn-danger { color: #fff !important; }
+.admin-portal .btn-info { color: #123445 !important; }
+.admin-portal .btn-light { color: var(--ap-ink) !important; background: #fff; border-color: var(--ap-border); }
+.admin-portal .btn-dark { color: #fff !important; }
+.admin-portal .btn-outline-primary, .admin-portal .btn-outline-success { color: var(--ap-primary) !important; border-color: #94c9a9; background: #fff; }
 .admin-portal .btn-outline-primary:hover, .admin-portal .btn-outline-success:hover { color: #fff; background: var(--ap-primary); border-color: var(--ap-primary); }
+.admin-portal .btn-outline-danger { color: #b42318 !important; border-color: #e2a6a0; background: #fff; }
+.admin-portal .btn-outline-danger:hover { color: #fff !important; background: #b42318; border-color: #b42318; }
+.admin-portal .btn-outline-warning { color: #7a5100 !important; border-color: #dfbb68; background: #fff; }
+.admin-portal .btn-outline-warning:hover { color: #3e2a05 !important; background: #f2c14e; border-color: #d8a52c; }
+.admin-portal .btn-outline-info { color: #12627c !important; border-color: #8bc6d8; background: #fff; }
+.admin-portal .btn-outline-info:hover { color: #fff !important; background: #12627c; border-color: #12627c; }
+.admin-portal .btn-outline-secondary { color: #43534d !important; border-color: #b8c8c0; background: #fff; }
+.admin-portal .btn-outline-secondary:hover { color: var(--ap-ink) !important; background: #edf3ef; border-color: #8fa69a; }
+.admin-portal .btn:disabled, .admin-portal .btn.disabled { color: #6f7d77 !important; background: #e8eeeb !important; border-color: #d3dfd8 !important; opacity: 1; }
 .admin-portal .form-control, .admin-portal .form-select { min-height: 43px; border-color: var(--ap-border); border-radius: 9px; font-size: .82rem; }
 .admin-portal .form-control:focus, .admin-portal .form-select:focus { border-color: #72b68d; box-shadow: 0 0 0 .2rem rgba(8,116,67,.12); }
 .admin-portal .table-responsive { border: 1px solid var(--ap-border); border-radius: 13px; }

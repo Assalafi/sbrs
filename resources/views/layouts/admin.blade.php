@@ -16,7 +16,7 @@
     @endif
     @include('partials.meta')
     @include('partials.styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/admin-portal.css') }}?v=20261012">
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-portal.css') }}?v=20261104-1">
     @stack('styles')
 </head>
 

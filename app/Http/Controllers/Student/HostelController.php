@@ -272,7 +272,7 @@ class HostelController extends Controller
                 ->with('error', 'Your hostel permit is available after the hostel payment has been confirmed.');
         }
 
-        $pdf = Pdf::loadView('student.hostel.permit', [
+        $pdf = Pdf::loadView('student.hostel.permit-ug-style', [
             'student' => $student,
             'reservation' => $reservationData,
         ])->setPaper('a4', 'portrait');

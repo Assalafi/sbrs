@@ -84,10 +84,28 @@
 .student-panel-header p { margin: .25rem 0 0; color: var(--sp-muted); font-size: .77rem; }
 .student-panel-body { padding: 1.1rem 1.15rem; }
 .student-portal .btn-primary, .student-portal .btn-success { background: var(--sp-primary); border-color: var(--sp-primary); }
+.student-portal .btn-primary, .student-portal .btn-success { color: #fff !important; }
 .student-portal .btn-primary:hover, .student-portal .btn-success:hover { background: var(--sp-primary-dark); border-color: var(--sp-primary-dark); }
-.student-portal .btn-outline-primary { color: var(--sp-primary); border-color: #8bc3a4; }
+.student-portal .btn-warning { color: #3e2a05 !important; background: #f2c14e; border-color: #d8a52c; }
+.student-portal .btn-warning:hover { color: #2b1d03 !important; background: #e2ad32; border-color: #bd8c1d; }
+.student-portal .btn-danger { color: #fff !important; }
+.student-portal .btn-info { color: #123445 !important; }
+.student-portal .btn-light { color: var(--sp-ink) !important; background: #fff; border-color: var(--sp-border); }
+.student-portal .btn-dark { color: #fff !important; }
+.student-portal .btn-outline-primary { color: var(--sp-primary) !important; border-color: #8bc3a4; background: #fff; }
 .student-portal .btn-outline-primary:hover { color: #fff; background: var(--sp-primary); border-color: var(--sp-primary); }
+.student-portal .btn-outline-success { color: var(--sp-primary) !important; border-color: #8bc3a4; background: #fff; }
+.student-portal .btn-outline-success:hover { color: #fff !important; background: var(--sp-primary); border-color: var(--sp-primary); }
+.student-portal .btn-outline-danger { color: var(--sp-danger) !important; border-color: #e2a6a0; background: #fff; }
+.student-portal .btn-outline-danger:hover { color: #fff !important; background: var(--sp-danger); border-color: var(--sp-danger); }
+.student-portal .btn-outline-warning { color: #7a5100 !important; border-color: #dfbb68; background: #fff; }
+.student-portal .btn-outline-warning:hover { color: #3e2a05 !important; background: #f2c14e; border-color: #d8a52c; }
+.student-portal .btn-outline-info { color: #12627c !important; border-color: #8bc6d8; background: #fff; }
+.student-portal .btn-outline-info:hover { color: #fff !important; background: #12627c; border-color: #12627c; }
+.student-portal .btn-outline-secondary { color: #43534d !important; border-color: #b8c8c0; background: #fff; }
+.student-portal .btn-outline-secondary:hover { color: #172b26 !important; background: #edf3ef; border-color: #8fa69a; }
 .student-portal .btn { border-radius: 10px; font-weight: 700; }
+.student-portal .btn:disabled, .student-portal .btn.disabled { color: #6f7d77 !important; background: #e8eeeb !important; border-color: #d3dfd8 !important; opacity: 1; }
 .student-portal .card { border: 1px solid var(--sp-border); border-radius: 17px; box-shadow: var(--sp-shadow); overflow: hidden; }
 .student-portal .card-header { padding: 1rem 1.15rem; border-bottom: 1px solid var(--sp-border); background: #fff; color: var(--sp-ink); font-weight: 800; }
 .student-portal .card-body { padding: 1.15rem; }
