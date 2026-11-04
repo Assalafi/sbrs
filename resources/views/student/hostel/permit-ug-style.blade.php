@@ -6,8 +6,8 @@
     <style>
         @page { margin: 0; }
         * { box-sizing: border-box; }
-        body { margin: 0; padding: 10mm; background: #f5f6f7; color: #232f3b; font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; line-height: 1.35; }
-        .page { min-height: 277mm; padding: 8mm; position: relative; background: #fff; border: .35mm solid #cdd2d6; }
+        body { margin: 0; padding: 0; background: #f5f6f7; color: #232f3b; font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; line-height: 1.35; }
+        .page { width: 210mm; height: 280mm; min-height: 280mm; margin: 0 auto; padding: 8mm; position: relative; overflow: hidden; background: #fff; border: .35mm solid #cdd2d6; }
         .gold-bar { height: 2mm; margin: -8mm -8mm 7mm; background: #bc913d; }
         .header { width: 100%; border-collapse: collapse; }
         .header td { vertical-align: top; }
