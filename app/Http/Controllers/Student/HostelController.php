@@ -272,13 +272,13 @@ class HostelController extends Controller
                 ->with('error', 'Your hostel permit is available after the hostel payment has been confirmed.');
         }
 
-        $pdf = Pdf::loadView('student.hostel.permit-ug-style', [
+        return view('student.hostel.permit-photo', [
             'student' => $student,
             'reservation' => $reservationData,
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         $filename = 'hostel_permit_' . str_replace(['/', '\\'], '_', $student->registration_number) . '.pdf';
-        return $pdf->download($filename);
+        return response()->noContent();
     }
 
     /**
