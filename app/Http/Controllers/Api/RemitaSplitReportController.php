@@ -14,6 +14,7 @@ class RemitaSplitReportController
         $to = $this->date($request->query('date_to'));
         if ($from && $to && $from->gt($to)) [$from, $to] = [$to, $from];
         $status = strtolower(trim((string) $request->query('status', '')));
+        $session = trim((string) $request->query('session', ''));
         $scope = strtolower(trim((string) $request->query('scope', 'split')));
         $splitOnly = $scope === 'split';
         $baseOnly = $scope === 'base';
@@ -22,6 +23,10 @@ class RemitaSplitReportController
         if ($from) $query->where('payments.created_at', '>=', $from->startOfDay());
         if ($to) $query->where('payments.created_at', '<', $to->copy()->addDay()->startOfDay());
         if ($status !== '') $query->whereIn('payments.status', $this->statuses($status));
+        if ($session !== '' && strtolower($session) !== 'all') {
+            $query->join('academic_sessions', 'academic_sessions.id', '=', 'payments.academic_session_id')
+                ->where('academic_sessions.name', $session);
+        }
         if (($rrr = trim((string) $request->query('rrr', ''))) !== '') $query->where(function ($nested) use ($rrr) { $nested->where('payments.rrr', 'like', '%' . $rrr . '%')->orWhere('payments.reference', 'like', '%' . $rrr . '%')->orWhere('payments.order_id', 'like', '%' . $rrr . '%'); });
 
         $surcharge = 'COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0)';
@@ -34,6 +39,10 @@ class RemitaSplitReportController
         if ($from) $allocationQuery->where('payments.created_at', '>=', $from->startOfDay());
         if ($to) $allocationQuery->where('payments.created_at', '<', $to->copy()->addDay()->startOfDay());
         if ($status !== '') $allocationQuery->whereIn('payments.status', $this->statuses($status));
+        if ($session !== '' && strtolower($session) !== 'all') {
+            $allocationQuery->join('academic_sessions', 'academic_sessions.id', '=', 'payments.academic_session_id')
+                ->where('academic_sessions.name', $session);
+        }
         if ($rrr !== '') $allocationQuery->where(function ($nested) use ($rrr) {
             $nested->where('payments.rrr', 'like', '%' . $rrr . '%')
                 ->orWhere('payments.order_id', 'like', '%' . $rrr . '%');
