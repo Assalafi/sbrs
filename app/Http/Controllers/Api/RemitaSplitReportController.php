@@ -14,17 +14,17 @@ class RemitaSplitReportController
         $to = $this->date($request->query('date_to'));
         if ($from && $to && $from->gt($to)) [$from, $to] = [$to, $from];
         $status = strtolower(trim((string) $request->query('status', '')));
-        $query = DB::table('payments')->where('payments.split_enabled', 1);
+        $splitOnly = strtolower(trim((string) $request->query('scope', 'split'))) !== 'all';
+        $query = DB::table('payments');
+        if ($splitOnly) $query->where('payments.split_enabled', 1);
         if ($from) $query->where('payments.created_at', '>=', $from->startOfDay());
         if ($to) $query->where('payments.created_at', '<', $to->copy()->addDay()->startOfDay());
         if ($status !== '') $query->whereIn('payments.status', $this->statuses($status));
         if (($rrr = trim((string) $request->query('rrr', ''))) !== '') $query->where(function ($nested) use ($rrr) { $nested->where('payments.rrr', 'like', '%' . $rrr . '%')->orWhere('payments.reference', 'like', '%' . $rrr . '%')->orWhere('payments.order_id', 'like', '%' . $rrr . '%'); });
 
-        // This endpoint feeds the surcharge-only finance report. Do not use
-        // the base fee or gateway total for any report amount.
-        $base = '0';
         $surcharge = 'COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0)';
-        $gross = $surcharge;
+        $base = $splitOnly ? '0' : 'COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), CAST(payments.amount AS DECIMAL(15,2)), 0)';
+        $gross = $splitOnly ? $surcharge : '(' . $base . ' + ' . $surcharge . ')';
         $summary = (clone $query)->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $base . '), 0) AS base_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->first();
         $statusSummary = (clone $query)->select('payments.status')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount')->groupBy('payments.status')->orderByDesc('gross_amount')->get();
         $serviceSummary = (clone $query)->select('payments.payment_type')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->groupBy('payments.payment_type')->orderByDesc('gross_amount')->limit(100)->get();
@@ -36,9 +36,10 @@ class RemitaSplitReportController
             $nested->where('payments.rrr', 'like', '%' . $rrr . '%')
                 ->orWhere('payments.order_id', 'like', '%' . $rrr . '%');
         });
-        $allocationRows = $allocationQuery->select(['payment_split_items.payment_id', 'payment_split_items.beneficiary_name', 'payment_split_items.beneficiary_amount', 'payment_split_items.is_primary', 'payments.surcharge_amount'])->get();
-        $allocationSummary = $this->surchargeAllocationSummary($allocationRows);
-        $trend = (clone $query)->selectRaw("DATE_FORMAT(payments.created_at, '%Y-%m') AS bucket")->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->groupBy('bucket')->orderBy('bucket')->get();
+        $allocationRows = $splitOnly ? $allocationQuery->select(['payment_split_items.payment_id', 'payment_split_items.beneficiary_name', 'payment_split_items.beneficiary_amount', 'payment_split_items.is_primary', 'payments.surcharge_amount'])->get() : collect();
+        $allocationSummary = $splitOnly ? $this->surchargeAllocationSummary($allocationRows) : collect();
+        $trendFormat = $splitOnly ? '%Y-%m' : '%Y-%m-%d %H:00';
+        $trend = (clone $query)->selectRaw("DATE_FORMAT(payments.created_at, '" . $trendFormat . "') AS bucket")->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->groupBy('bucket')->orderBy('bucket')->get();
         $limit = min(250, max(1, (int) $request->query('limit', 100)));
         $rows = (clone $query)->select(['payments.id', 'payments.rrr', 'payments.reference', 'payments.order_id', 'payments.payment_type', 'payments.description', 'payments.status', 'payments.created_at', 'payments.payable_id'])->selectRaw($gross . ' AS gross_amount')->selectRaw($base . ' AS base_amount_normalized')->selectRaw($surcharge . ' AS surcharge_amount_normalized')->orderByDesc('payments.created_at')->orderByDesc('payments.id')->limit($limit)->get()->map(fn ($row) => ['id' => (string) $row->id, 'reference' => (string) ($row->rrr ?: $row->reference ?: $row->order_id ?: ''), 'order_reference' => (string) ($row->order_id ?: ''), 'student_id' => (string) ($row->payable_id ?: ''), 'description' => (string) ($row->description ?: $row->payment_type ?: 'Payment'), 'status' => (string) ($row->status ?: 'unknown'), 'gross_amount' => (float) $row->gross_amount, 'base_amount' => (float) $row->base_amount_normalized, 'surcharge_amount' => (float) $row->surcharge_amount_normalized, 'created_at' => $row->created_at ? Carbon::parse($row->created_at)->toIso8601String() : null])->values();
 
