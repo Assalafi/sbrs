@@ -23,7 +23,7 @@ class RemitaSplitReportController
         // `amount` is the base fee in SBRS. Use the charged total when it is
         // present, and safely reconstruct older rows from base + surcharge.
         $base = 'COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), CAST(payments.amount AS DECIMAL(15,2)), 0)';
-        $surcharge = 'GREATEST(COALESCE(NULLIF(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0), GREATEST(COALESCE(CAST(payments.total_amount AS DECIMAL(15,2)), 0) - (' . $base . '), 0), 0), 0)';
+        $surcharge = 'COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0)';
         $gross = 'COALESCE(NULLIF(CAST(payments.total_amount AS DECIMAL(15,2)), 0), (' . $base . ' + ' . $surcharge . '), 0)';
         $summary = (clone $query)->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $base . '), 0) AS base_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->first();
         $statusSummary = (clone $query)->select('payments.status')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount')->groupBy('payments.status')->orderByDesc('gross_amount')->get();
