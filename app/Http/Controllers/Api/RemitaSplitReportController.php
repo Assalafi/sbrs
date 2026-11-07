@@ -20,9 +20,11 @@ class RemitaSplitReportController
         if ($status !== '') $query->whereIn('payments.status', $this->statuses($status));
         if (($rrr = trim((string) $request->query('rrr', ''))) !== '') $query->where(function ($nested) use ($rrr) { $nested->where('payments.rrr', 'like', '%' . $rrr . '%')->orWhere('payments.reference', 'like', '%' . $rrr . '%')->orWhere('payments.order_id', 'like', '%' . $rrr . '%'); });
 
-        $gross = 'COALESCE(CAST(payments.total_amount AS DECIMAL(15,2)), COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), CAST(payments.amount AS DECIMAL(15,2))) + COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0), 0)';
-        $base = 'COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), GREATEST(CAST(payments.amount AS DECIMAL(15,2)) - COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0), 0))';
-        $surcharge = 'COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0)';
+        // `amount` is the base fee in SBRS. Use the charged total when it is
+        // present, and safely reconstruct older rows from base + surcharge.
+        $base = 'COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), CAST(payments.amount AS DECIMAL(15,2)), 0)';
+        $surcharge = 'GREATEST(COALESCE(NULLIF(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0), GREATEST(COALESCE(CAST(payments.total_amount AS DECIMAL(15,2)), 0) - (' . $base . '), 0), 0), 0)';
+        $gross = 'COALESCE(NULLIF(CAST(payments.total_amount AS DECIMAL(15,2)), 0), (' . $base . ' + ' . $surcharge . '), 0)';
         $summary = (clone $query)->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $base . '), 0) AS base_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->first();
         $statusSummary = (clone $query)->select('payments.status')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount')->groupBy('payments.status')->orderByDesc('gross_amount')->get();
         $serviceSummary = (clone $query)->select('payments.payment_type')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->groupBy('payments.payment_type')->orderByDesc('gross_amount')->limit(100)->get();
