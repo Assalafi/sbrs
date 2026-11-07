@@ -59,7 +59,7 @@ class RemitaSplitReportController
                 $groups[$name]['_payments'][(string) $row->payment_id] = true;
             }
         }
-        return collect($groups)->map(function ($item) { $item['invoice_count'] = count($item['_payments']); unset($item['_payments']); return $item; })->sortByDesc('allocated_amount')->values();
+        return collect($groups)->map(function ($item) { $item['invoice_count'] = count($item['_payments']); unset($item['_payments']); return (object) $item; })->sortByDesc('allocated_amount')->values();
     }
 
     private function date($value): ?Carbon { try { return $value ? Carbon::parse($value)->startOfDay() : null; } catch (\Throwable) { return null; } }
