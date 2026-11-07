@@ -14,7 +14,9 @@ class RemitaSplitReportController
         $to = $this->date($request->query('date_to'));
         if ($from && $to && $from->gt($to)) [$from, $to] = [$to, $from];
         $status = strtolower(trim((string) $request->query('status', '')));
-        $splitOnly = strtolower(trim((string) $request->query('scope', 'split'))) !== 'all';
+        $scope = strtolower(trim((string) $request->query('scope', 'split')));
+        $splitOnly = $scope === 'split';
+        $baseOnly = $scope === 'base';
         $query = DB::table('payments');
         if ($splitOnly) $query->where('payments.split_enabled', 1);
         if ($from) $query->where('payments.created_at', '>=', $from->startOfDay());
@@ -24,7 +26,7 @@ class RemitaSplitReportController
 
         $surcharge = 'COALESCE(CAST(payments.surcharge_amount AS DECIMAL(15,2)), 0)';
         $base = $splitOnly ? '0' : 'COALESCE(CAST(payments.base_amount AS DECIMAL(15,2)), CAST(payments.amount AS DECIMAL(15,2)), 0)';
-        $gross = $splitOnly ? $surcharge : '(' . $base . ' + ' . $surcharge . ')';
+        $gross = $splitOnly ? $surcharge : ($baseOnly ? $base : '(' . $base . ' + ' . $surcharge . ')');
         $summary = (clone $query)->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $base . '), 0) AS base_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->first();
         $statusSummary = (clone $query)->select('payments.status')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount')->groupBy('payments.status')->orderByDesc('gross_amount')->get();
         $serviceSummary = (clone $query)->select('payments.payment_type')->selectRaw('COUNT(*) AS invoice_count, COALESCE(SUM(' . $gross . '), 0) AS gross_amount, COALESCE(SUM(' . $surcharge . '), 0) AS surcharge_amount')->groupBy('payments.payment_type')->orderByDesc('gross_amount')->limit(100)->get();
