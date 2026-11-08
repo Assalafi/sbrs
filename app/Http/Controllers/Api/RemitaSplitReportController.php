@@ -18,7 +18,8 @@ class RemitaSplitReportController
         $scope = strtolower(trim((string) $request->query('scope', 'split')));
         $splitOnly = $scope === 'split';
         $baseOnly = $scope === 'base';
-        $query = DB::table('payments');
+        $query = DB::table('payments')
+            ->whereRaw("UPPER(COALESCE(payments.description, payments.payment_type, '')) NOT LIKE ?", ['%REFUND%']);
         if ($splitOnly) $query->where('payments.split_enabled', 1);
         if ($from) $query->where('payments.created_at', '>=', $from->startOfDay());
         if ($to) $query->where('payments.created_at', '<', $to->copy()->addDay()->startOfDay());
