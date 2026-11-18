@@ -57,7 +57,7 @@
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-medium">Remita Service Type ID</label>
+                    <label class="form-label fw-medium">Remita Service Type</label>
                     <select class="form-select" name="remita_service_type_id" id="remita_select">
                         <option value="">-- Select from configured service types --</option>
                         @foreach($remitaOptions as $val => $label)
@@ -66,7 +66,7 @@
                     </select>
                     <div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" name="remita_split_enabled" value="1" id="remita_split_enabled" {{ old('remita_split_enabled', $paymentType->remita_split_enabled) ? 'checked' : '' }}><label class="form-check-label" for="remita_split_enabled">Use Remita split for this service</label></div>
                     <div class="mt-2"><label class="form-label">Additional Remita charge</label><input type="number" min="0" step="0.01" class="form-control" name="remita_surcharge" value="{{ old('remita_surcharge', $paymentType->remita_surcharge ?? 0) }}"><small class="text-muted">This charge is added only when global split payments are enabled.</small></div>
-                    <small class="text-muted">Only unique service type IDs from settings are shown.</small>
+                    <small class="text-muted">Each option shows the Remita ID and its configured service name so you can select the correct service.</small>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-medium">Description</label>

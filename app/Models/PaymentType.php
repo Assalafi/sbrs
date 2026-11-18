@@ -40,22 +40,41 @@ class PaymentType extends Model
     ];
 
     /**
-     * Unique Remita service type IDs pulled from the settings table.
+     * Remita service type IDs pulled from the settings table.
+     *
+     * The value sent back to Remita remains the numeric service type ID, while
+     * the label includes the configured description so administrators can tell
+     * identical IDs used for different services apart in the dropdown.
      * Returns [value => label] for dropdowns.
      */
     public static function remitaServiceTypeOptions(): array
     {
-        $values = \App\Models\Setting::where('key', 'like', 'remita%service_type_id%')
-            ->pluck('value')
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+        $settings = \App\Models\Setting::query()
+            ->where('key', 'like', 'remita%service_type_id%')
+            ->whereNotNull('value')
+            ->where('value', '!=', '')
+            ->get(['value', 'description']);
 
         $options = [];
-        foreach ($values as $value) {
-            $options[$value] = $value;
+        foreach ($settings->groupBy(fn ($setting) => trim((string) $setting->value)) as $value => $rows) {
+            $descriptions = $rows->pluck('description')
+                ->map(function ($description) {
+                    $description = trim((string) $description);
+                    // Settings store technical metadata such as "Service Type
+                    // ID for IJMB Application Fee". Keep the useful service
+                    // name in the dropdown while removing that boilerplate.
+                    $description = preg_replace('/^service\s+type\s+id\s+for\s+/i', '', $description);
+                    return trim((string) $description);
+                })
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $options[$value] = $value . ($descriptions ? ' — ' . implode(' / ', $descriptions) : '');
         }
+
+        ksort($options, SORT_NATURAL);
         return $options;
     }
 
