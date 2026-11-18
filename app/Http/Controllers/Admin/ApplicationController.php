@@ -23,6 +23,9 @@ class ApplicationController extends Controller
         if ($request->filled('programme_type')) {
             $query->where('programme_type', $request->programme_type);
         }
+        if ($request->filled('programme_id')) {
+            $query->where('programme_id', $request->programme_id);
+        }
         if ($request->filled('academic_session_id')) {
             $query->where('academic_session_id', $request->academic_session_id);
         }
@@ -38,8 +41,12 @@ class ApplicationController extends Controller
 
         $applicants = $query->orderBy('created_at', 'desc')->paginate(25);
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        $remedialProgrammes = Programme::where('type', 'Remedial')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.applications.index', compact('applicants', 'sessions'));
+        return view('admin.applications.index', compact('applicants', 'sessions', 'remedialProgrammes'));
     }
 
     public function show(Applicant $application)
@@ -181,6 +188,12 @@ class ApplicationController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+        if ($request->filled('programme_type')) {
+            $query->where('programme_type', $request->programme_type);
+        }
+        if ($request->filled('programme_id')) {
+            $query->where('programme_id', $request->programme_id);
         }
         if ($request->filled('academic_session_id')) {
             $query->where('academic_session_id', $request->academic_session_id);

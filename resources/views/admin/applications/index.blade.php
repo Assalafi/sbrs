@@ -29,6 +29,14 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Programme type</label>
+                        <select class="form-select" name="programme_type">
+                            <option value="">All programme types</option>
+                            <option value="IJMB" {{ request('programme_type') == 'IJMB' ? 'selected' : '' }}>IJMB</option>
+                            <option value="Remedial" {{ request('programme_type') == 'Remedial' ? 'selected' : '' }}>Remedial</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Application Status</label>
                         <select class="form-select" name="status">
                             <option value="">All Status</option>
@@ -36,6 +44,16 @@
                                 <option value="{{ $s }}" {{ request('status') == $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remedial stream</label>
+                        <select class="form-select" name="programme_id">
+                            <option value="">All remedial streams</option>
+                            @foreach($remedialProgrammes as $programme)
+                                <option value="{{ $programme->id }}" {{ request('programme_id') == $programme->id ? 'selected' : '' }}>{{ $programme->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Use this to separate Remedial Science, Remedial Arts, or another remedial programme.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -62,11 +80,20 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Programme</label>
+                <label class="form-label small">Programme type</label>
                 <select class="form-select form-select-sm" name="programme_type">
                     <option value="">All</option>
                     <option value="IJMB" {{ request('programme_type') == 'IJMB' ? 'selected' : '' }}>IJMB</option>
                     <option value="Remedial" {{ request('programme_type') == 'Remedial' ? 'selected' : '' }}>Remedial</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Remedial stream</label>
+                <select class="form-select form-select-sm" name="programme_id">
+                    <option value="">All streams</option>
+                    @foreach($remedialProgrammes as $programme)
+                        <option value="{{ $programme->id }}" {{ request('programme_id') == $programme->id ? 'selected' : '' }}>{{ $programme->name }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-md-2">
@@ -95,14 +122,18 @@
         <div class="table-responsive">
             <table class="table align-middle">
                 <thead>
-                    <tr><th>App. Number</th><th>Name</th><th>Type</th><th>Session</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                    <tr><th>App. Number</th><th>Name</th><th>Type / Stream</th><th>Session</th><th>Status</th><th>Date</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     @forelse($applicants as $applicant)
                     <tr>
                         <td class="fw-medium">{{ $applicant->application_number }}</td>
                         <td>{{ $applicant->surname }} {{ $applicant->first_name }}</td>
-                        <td><span class="badge {{ $applicant->programme_type === 'IJMB' ? 'bg-success' : 'bg-danger' }} bg-opacity-10 {{ $applicant->programme_type === 'IJMB' ? 'text-success' : 'text-danger' }}">{{ $applicant->programme_type }}</span></td>
+                        <td>
+                            <span class="badge {{ $applicant->programme_type === 'IJMB' ? 'bg-success' : 'bg-danger' }} bg-opacity-10 {{ $applicant->programme_type === 'IJMB' ? 'text-success' : 'text-danger' }}">
+                                {{ $applicant->programme_type === 'Remedial' ? ($applicant->programme->name ?? 'Remedial') : 'IJMB' }}
+                            </span>
+                        </td>
                         <td class="fs-13">{{ $applicant->academicSession->name ?? 'N/A' }}</td>
                         <td><span class="badge bg-{{ in_array($applicant->status, ['approved','admitted']) ? 'success' : ($applicant->status === 'rejected' ? 'danger' : ($applicant->status === 'submitted' ? 'primary' : 'warning')) }}">{{ ucfirst(str_replace('_',' ',$applicant->status)) }}</span></td>
                         <td class="fs-13 text-muted">{{ $applicant->created_at->format('M d, Y') }}</td>
