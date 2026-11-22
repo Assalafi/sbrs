@@ -23,7 +23,10 @@
 @endphp
 @push('scripts')
 @once
-<script src="{{ $remitaJsUrl }}"></script>
+<script>
+    window.__sbrsRemitaScriptError = false;
+</script>
+<script src="{{ $remitaJsUrl }}" onerror="window.__sbrsRemitaScriptError = true;"></script>
 @endonce
 <script>
     window.__sbrsRemitaFallbacks = window.__sbrsRemitaFallbacks || {};
@@ -32,6 +35,11 @@
         var startedAt = Date.now();
         var fallbackUrl = @json($remitaFallbackUrl);
         var openWidget = function () {
+            if (window.__sbrsRemitaScriptError) {
+                window.alert('Remita online checkout is temporarily unavailable. We will open the secure payment page using your RRR instead.');
+                window.location.href = fallbackUrl;
+                return;
+            }
             if (!window.RmPaymentEngine || typeof window.RmPaymentEngine.init !== 'function') {
                 if (Date.now() - startedAt < 15000) {
                     window.setTimeout(openWidget, 250);
