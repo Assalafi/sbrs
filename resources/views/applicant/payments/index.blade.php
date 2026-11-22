@@ -366,9 +366,7 @@
         } catch (error) {
             button.disabled = false;
             button.innerHTML = original;
-            window.alert('The payment service could not be opened. We will take you to Remita using your RRR instead.');
-            var fallback = (window.__sbrsRemitaFallbacks || {})[openerName];
-            if (fallback) window.location.href = fallback;
+            window.alert('Online payment is temporarily unavailable. Please try again later. Your payment has not been changed.');
             return;
         }
         window.setTimeout(function () {

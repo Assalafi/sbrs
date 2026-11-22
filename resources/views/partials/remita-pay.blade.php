@@ -18,8 +18,6 @@
     $remitaPublicKey = setting('remita_public_key', config('services.remita.public_key', ''));
     $fnName = 'makePayment' . $widgetKey;
     $verifyFormId = 'verify-form' . $widgetKey;
-    $remitaFallbackUrl = ($remitaIsLive ? 'https://login.remita.net' : 'https://demo.remita.net')
-        . '/remita/ecomm/finalize.reg?rrr=' . urlencode((string) ($payment->rrr ?? ''));
 @endphp
 @push('scripts')
 @once
@@ -29,15 +27,11 @@
 <script src="{{ $remitaJsUrl }}" onerror="window.__sbrsRemitaScriptError = true;"></script>
 @endonce
 <script>
-    window.__sbrsRemitaFallbacks = window.__sbrsRemitaFallbacks || {};
-    window.__sbrsRemitaFallbacks[@json($fnName)] = @json($remitaFallbackUrl);
     window[@json($fnName)] = function () {
         var startedAt = Date.now();
-        var fallbackUrl = @json($remitaFallbackUrl);
         var openWidget = function () {
             if (window.__sbrsRemitaScriptError) {
-                window.alert('Remita online checkout is temporarily unavailable. We will open the secure payment page using your RRR instead.');
-                window.location.href = fallbackUrl;
+                window.alert('Online payment is temporarily unavailable. Please try again later. Your payment has not been changed.');
                 return;
             }
             if (!window.RmPaymentEngine || typeof window.RmPaymentEngine.init !== 'function') {
@@ -45,9 +39,7 @@
                     window.setTimeout(openWidget, 250);
                     return;
                 }
-                if (window.confirm('The secure Remita window is taking too long to load. Open the payment page using your RRR instead?')) {
-                    window.location.href = fallbackUrl;
-                }
+                window.alert('Online payment is taking longer than expected to load. Please try again later. Your payment has not been changed.');
                 return;
             }
 
@@ -77,8 +69,7 @@
                 }
                 paymentEngine.showPaymentWidget();
             } catch (error) {
-                window.alert('The secure Remita payment window could not be opened. We will open the Remita payment page using your RRR instead.');
-                window.location.href = fallbackUrl;
+                window.alert('Online payment is temporarily unavailable. Please try again later. Your payment has not been changed.');
             }
         };
 
