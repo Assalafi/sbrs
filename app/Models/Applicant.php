@@ -173,6 +173,9 @@ class Applicant extends Authenticatable
             ->where(function ($q) use ($paymentType) {
                 $q->where('payment_type', $paymentType->code)
                     ->orWhere('payment_type_id', $paymentType->id);
+                if (in_array($paymentType->legacyType(), ['application', 'admission', 'registration', 'examination'], true)) {
+                    $q->orWhere('payment_type', $paymentType->legacyType());
+                }
             })
             ->where('status', 'successful')
             ->get();
