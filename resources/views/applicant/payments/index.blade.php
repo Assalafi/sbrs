@@ -114,7 +114,9 @@
                     <span class="payment-clean-pending-icon"><i class="material-symbols-outlined">schedule</i></span>
                     <div>
                         <h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3>
-                        <p>&#8358;{{ number_format($payment->gross_amount, 2) }} &middot; Started {{ optional($payment->created_at)->format('M d, Y H:i') }}</p>
+                        {{-- Show the fee the applicant is paying. Any Remita surcharge is
+                             kept silent here and remains an internal payment detail. --}}
+                        <p>&#8358;{{ number_format($payment->baseAmountValue(), 2) }} &middot; Started {{ optional($payment->created_at)->format('M d, Y H:i') }}</p>
                         <div class="payment-clean-rrr">
                             <span>RRR</span>
                             <code id="applicant-rrr-{{ $payment->id }}">{{ $payment->rrr ?: 'Not generated yet' }}</code>
