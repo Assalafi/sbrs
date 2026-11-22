@@ -272,17 +272,35 @@ class PaymentController extends Controller
     public function index()
     {
         $applicant = $this->applicant();
-        $applicant->load(['programme', 'academicSession', 'payments']);
+        $applicant->load(['programme', 'academicSession', 'payments', 'student']);
 
         $dueTypes = $applicant->duePaymentTypes();
         $items = $dueTypes->map(function ($type) use ($applicant) {
-            return ['type' => $type, 'progress' => $applicant->paymentTypeProgress($type)];
+            $pending = $applicant->payments()
+                ->where('payment_type_id', $type->id)
+                ->where('status', Payment::STATUS_PENDING)
+                ->latest()
+                ->first();
+
+            return [
+                'type' => $type,
+                'progress' => $applicant->paymentTypeProgress($type),
+                'pending' => $pending,
+            ];
         });
 
-        $history = $applicant->payments()->with('paymentType')->orderBy('created_at', 'desc')->take(50)->get();
+        // Keep pending payments visible at the top so the applicant can finish
+        // a payment already started instead of accidentally creating another.
+        $pendingPayments = $applicant->payments()
+            ->with('paymentType')
+            ->where('status', Payment::STATUS_PENDING)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $history = $applicant->payments()->with('paymentType')->orderBy('created_at', 'desc')->take(100)->get();
         $hasRequiredDue = $dueTypes->contains(fn ($t) => $t->is_required);
 
-        return view('applicant.payments.index', compact('applicant', 'items', 'history', 'hasRequiredDue'));
+        return view('applicant.payments.index', compact('applicant', 'items', 'history', 'hasRequiredDue', 'pendingPayments'));
     }
 
     /**
@@ -398,19 +416,29 @@ class PaymentController extends Controller
         $applicant = $this->applicant();
 
         $request->validate([
-            'payment_type_id' => 'required|exists:payment_types,id',
+            'payment_type_id' => 'nullable|exists:payment_types,id',
+            'payment_id' => 'nullable|uuid',
         ]);
 
-        $type = PaymentType::findOrFail($request->payment_type_id);
+        if (!$request->filled('payment_type_id') && !$request->filled('payment_id')) {
+            return back()->with('error', 'Select the pending payment you want to verify.');
+        }
 
-        $payment = $applicant->payments()
-            ->where('payment_type_id', $type->id)
-            ->where('status', Payment::STATUS_PENDING)
-            ->latest()
-            ->first();
+        $paymentQuery = $applicant->payments()->where('status', Payment::STATUS_PENDING);
+        if ($request->filled('payment_id')) {
+            $paymentQuery->whereKey($request->payment_id);
+        } else {
+            $paymentQuery->where('payment_type_id', $request->payment_type_id);
+        }
+        $payment = $paymentQuery->latest()->first();
 
         if (!$payment || !$payment->hasRrr()) {
             return back()->with('error', 'No pending payment found for this fee.');
+        }
+
+        $type = $payment->paymentType ?: PaymentType::where('code', $payment->payment_type)->first();
+        if (!$type) {
+            return back()->with('error', 'This payment is using an old fee setup. Please contact the SBRS finance office.');
         }
 
         $result = $this->remitaService->verifyPayment($payment);
@@ -438,12 +466,14 @@ class PaymentController extends Controller
                 }
 
                 if ($progress['fully_paid'] && !$applicant->student()->exists()) {
-                    DB::transaction(function () use ($applicant) {
+                    $student = DB::transaction(function () use ($applicant) {
                         $lockedApplicant = Applicant::query()->whereKey($applicant->id)->lockForUpdate()->firstOrFail();
-                        if (!$lockedApplicant->student()->exists()) {
-                            Student::createFromApplicant($lockedApplicant, $lockedApplicant->password);
-                        }
+                        return $lockedApplicant->student()->first()
+                            ?: Student::createFromApplicant($lockedApplicant, $lockedApplicant->password);
                     });
+
+                    return redirect()->route('applicant.payments.index')
+                        ->with('success', 'Registration payment verified. Your student registration number is ' . $student->registration_number . '.');
                 }
             }
 
@@ -452,5 +482,43 @@ class PaymentController extends Controller
         }
 
         return back()->with('info', $result['message'] ?? 'Payment not yet confirmed.');
+    }
+
+    /**
+     * Abandon a pending RRR so the applicant can start a fresh payment.
+     * Successful payments are never cancellable from this route.
+     */
+    public function cancel(Request $request)
+    {
+        $applicant = $this->applicant();
+
+        $request->validate([
+            'payment_type_id' => 'nullable|exists:payment_types,id',
+            'payment_id' => 'nullable|uuid',
+        ]);
+
+        if (!$request->filled('payment_type_id') && !$request->filled('payment_id')) {
+            return back()->with('error', 'Select the pending payment you want to cancel.');
+        }
+
+        $paymentQuery = $applicant->payments()->where('status', Payment::STATUS_PENDING);
+        if ($request->filled('payment_id')) {
+            $paymentQuery->whereKey($request->payment_id);
+        } else {
+            $paymentQuery->where('payment_type_id', $request->payment_type_id);
+        }
+        $payment = $paymentQuery->latest()->first();
+
+        if (!$payment) {
+            return back()->with('error', 'There is no pending payment to cancel for this fee.');
+        }
+
+        $payment->update([
+            'status' => Payment::STATUS_CANCELLED,
+            'rrr' => null,
+            'order_id' => null,
+        ]);
+
+        return back()->with('success', 'Pending payment cancelled. You can start a new payment when you are ready.');
     }
 }

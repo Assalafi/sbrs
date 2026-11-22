@@ -36,11 +36,47 @@
     .payment-history-card thead th{background:#f3f8f5;color:#5c7169;border:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
     .payment-history-card tbody td{border-color:#edf2ef;color:#304a41;font-size:.86rem}
     .payment-history-card .table-responsive{margin:-.25rem -.25rem}
+    .payment-clean-pending{border:1px solid #f0dfae;border-radius:1rem;background:#fffdf6;box-shadow:0 8px 24px rgba(116,87,20,.06);margin-bottom:1.25rem;overflow:hidden}
+    .payment-clean-pending-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.05rem 1.2rem;border-bottom:1px solid #f3e8c8;background:#fff9e9}
+    .payment-clean-pending-head h2{margin:0;color:#5b4309;font-size:1.05rem;font-weight:800}
+    .payment-clean-pending-head p{margin:.25rem 0 0;color:#806c37;font-size:.86rem}
+    .payment-clean-pending-list{padding:.8rem 1rem}
+    .payment-clean-pending-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid #f3ead2}
+    .payment-clean-pending-item:last-child{border-bottom:0}
+    .payment-clean-pending-main{display:flex;align-items:flex-start;gap:.75rem;min-width:0}
+    .payment-clean-pending-icon{width:2.5rem;height:2.5rem;border-radius:.8rem;display:grid;place-items:center;background:#fff0c5;color:#9b700d;flex:0 0 auto}
+    .payment-clean-pending-main h3{font-size:.97rem;color:#43350f;margin:0 0 .2rem;font-weight:800}
+    .payment-clean-pending-main p{margin:0;color:#77683e;font-size:.8rem}
+    .payment-clean-rrr{display:flex;align-items:center;gap:.45rem;margin-top:.45rem;font-size:.76rem;color:#786d4e}
+    .payment-clean-rrr code{font-size:.8rem;color:#3e351e;background:#fff4d5;border:1px solid #ead8a4;border-radius:.35rem;padding:.2rem .4rem}
+    .payment-clean-rrr button{border:0;background:transparent;color:#755e20;padding:0;line-height:1}
+    .payment-clean-pending-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.45rem;flex:0 0 auto}
+    .payment-clean-pending-actions form{margin:0}
+    .payment-clean-pending-actions .btn{display:inline-flex;align-items:center;gap:.25rem;font-size:.78rem;font-weight:700;border-radius:.55rem}
+    .payment-step-note{display:flex;align-items:flex-start;gap:.45rem;margin-bottom:.75rem;padding:.65rem .75rem;border-radius:.65rem;background:#eff8ff;color:#315d7d;font-size:.79rem}
+    .payment-inline-pending{display:flex;align-items:flex-start;gap:.5rem;padding:.7rem .75rem;margin-bottom:.8rem;border:1px solid #f0dfae;border-radius:.65rem;background:#fff9e9;color:#6e571b;font-size:.8rem}
+    .payment-inline-pending code{color:#493b16;background:#fff0bd;padding:.15rem .35rem;border-radius:.3rem}
+    .payment-action-row{display:flex;flex-wrap:wrap;gap:.5rem}
+    .payment-action-row form{flex:1 1 180px;margin:0}
+    .payment-action-row .btn{width:100%;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:.25rem}
+    .payment-empty{border:1px dashed #cfe2d8;background:#fbfefc;border-radius:1rem;padding:2rem;text-align:center;color:#60766b}
+    .payment-empty .material-symbols-outlined{font-size:2.5rem;color:#16845e}
+.payment-registration-success{display:flex;align-items:center;gap:.75rem;margin:0 0 1.1rem;padding:1rem 1.1rem;border:1px solid #bde4cf;border-radius:.9rem;background:#effbf4;color:#145c3d}
+.payment-registration-success .material-symbols-outlined{font-size:2rem;color:#16845e}
+.payment-registration-success strong{display:block;color:#124d37}
+.payment-registration-success code{color:#0b5e3e;background:#dcf5e7;border:1px solid #b9e5cc;padding:.18rem .4rem;border-radius:.3rem}
+    .payment-toast{position:fixed;right:1rem;bottom:1rem;z-index:1080;max-width:min(420px,calc(100vw - 2rem));box-shadow:0 12px 30px rgba(20,45,35,.15)}
     @media (max-width:600px){.applicant-payments-page{padding:0 .1rem 1.25rem}.payments-page-head{align-items:flex-start}.payments-page-head .btn{white-space:nowrap}.payments-hero .card-body{padding:1.15rem}.payment-profile-card .card-body{padding:1rem}.payment-profile-meta{font-size:.76rem}.payment-due-card .card-body{padding:.9rem}.payment-metric{padding:.55rem .15rem}.payment-metric .amount{font-size:.78rem}.payment-history-card .card-body{padding:.85rem}}
+    @media (max-width:700px){.payment-clean-pending-head{padding:.95rem}.payment-clean-pending-list{padding:.65rem .85rem}.payment-clean-pending-item{align-items:stretch;flex-direction:column}.payment-clean-pending-actions{width:100%;justify-content:stretch}.payment-clean-pending-actions form,.payment-clean-pending-actions .btn{flex:1 1 0}.payment-clean-pending-actions .btn{width:100%;justify-content:center}.payment-action-row{display:grid;grid-template-columns:1fr}.payment-action-row form{flex:auto}}
 </style>
 @endpush
 
 @section('content')
+@php
+    $pendingPayments = $pendingPayments ?? collect();
+    $items = $items ?? collect();
+    $history = $history ?? collect();
+@endphp
 <div class="applicant-payments-page">
 <div class="payments-page-head">
     <div><h1>Payments</h1><p>Review your fees, complete a payment and keep your receipts.</p></div>
@@ -52,6 +88,65 @@
     <i class="material-symbols-outlined align-middle me-1">warning</i>
     <strong>Action Required:</strong> You have outstanding required payment(s). Please complete them to proceed.
 </div>
+@endif
+
+@if($applicant->student)
+<div class="payment-registration-success" role="status">
+    <i class="material-symbols-outlined">verified</i>
+    <div><strong>Registration complete</strong>Your student account is ready. Student ID: <code>{{ $applicant->student->registration_number }}</code></div>
+</div>
+@endif
+
+@if($pendingPayments->isNotEmpty())
+<section class="payment-clean-pending" aria-labelledby="pending-payments-heading">
+    <div class="payment-clean-pending-head">
+        <div>
+            <h2 id="pending-payments-heading"><i class="material-symbols-outlined align-middle me-1">pending_actions</i>Payment waiting for action</h2>
+            <p>Continue the payment, verify it after paying, or cancel it to start again. You can only have one pending payment for the same fee.</p>
+        </div>
+        <span class="badge rounded-pill bg-warning text-dark">{{ $pendingPayments->count() }}</span>
+    </div>
+    <div class="payment-clean-pending-list">
+        @foreach($pendingPayments as $payment)
+            @php $widgetKey = 'ApplicantPay' . str_replace('-', '', $payment->id); @endphp
+            <article class="payment-clean-pending-item">
+                <div class="payment-clean-pending-main">
+                    <span class="payment-clean-pending-icon"><i class="material-symbols-outlined">schedule</i></span>
+                    <div>
+                        <h3>{{ $payment->paymentType->name ?? ucwords(str_replace('_', ' ', $payment->payment_type)) }}</h3>
+                        <p>&#8358;{{ number_format($payment->gross_amount, 2) }} &middot; Started {{ optional($payment->created_at)->format('M d, Y H:i') }}</p>
+                        <div class="payment-clean-rrr">
+                            <span>RRR</span>
+                            <code id="applicant-rrr-{{ $payment->id }}">{{ $payment->rrr ?: 'Not generated yet' }}</code>
+                            @if($payment->rrr)
+                                <button type="button" onclick="copyApplicantRrr('{{ $payment->id }}')" aria-label="Copy RRR"><i class="material-symbols-outlined fs-16">content_copy</i></button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-clean-pending-actions">
+                    @if($payment->hasRrr())
+                        <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, makePayment{{ $widgetKey }})"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
+                        <form id="verify-form{{ $widgetKey }}" action="{{ route('applicant.payments.verify') }}" method="GET" onsubmit="return paymentAction(this, 'Checking payment status…');">
+                            <input type="hidden" name="payment_type_id" value="{{ $payment->payment_type_id }}">
+                            <input type="hidden" name="payment_id" value="{{ $payment->id }}">
+                            <button type="submit" class="btn btn-success"><i class="material-symbols-outlined fs-16">verified</i>Verify payment</button>
+                        </form>
+                    @else
+                        <span class="btn btn-outline-secondary disabled"><i class="material-symbols-outlined fs-16">hourglass_empty</i>RRR being prepared</span>
+                    @endif
+                    <form action="{{ route('applicant.payments.cancel') }}" method="POST" onsubmit="return confirmApplicantCancel(this);">
+                        @csrf
+                        <input type="hidden" name="payment_type_id" value="{{ $payment->payment_type_id }}">
+                        <input type="hidden" name="payment_id" value="{{ $payment->id }}">
+                        <button type="submit" class="btn btn-outline-danger"><i class="material-symbols-outlined fs-16">cancel</i>Cancel</button>
+                    </form>
+                </div>
+            </article>
+            @include('partials.remita-pay', ['payment' => $payment, 'widgetKey' => $widgetKey])
+        @endforeach
+    </div>
+</section>
 @endif
 
 {{-- Applicant summary card --}}
@@ -94,6 +189,7 @@
             @php
                 $type = $item['type'];
                 $p = $item['progress'];
+                $pending = $item['pending'] ?? null;
             @endphp
             <div class="col-md-6 mb-4">
                 <div class="card payment-due-card">
@@ -138,6 +234,27 @@
                             <div class="alert alert-success mb-0 text-center">
                                 <i class="material-symbols-outlined align-middle me-1">check_circle</i> Fully Paid
                             </div>
+                        @elseif($pending && $pending->hasRrr())
+                            @php $cardWidgetKey = 'ApplicantCard' . str_replace('-', '', $pending->id); @endphp
+                            <div class="payment-inline-pending">
+                                <i class="material-symbols-outlined">schedule</i>
+                                <span>You already started this payment. Finish it with RRR <code>{{ $pending->rrr }}</code>, then verify it below.</span>
+                            </div>
+                            <div class="payment-action-row">
+                                <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, makePayment{{ $cardWidgetKey }})"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
+                                <form id="verify-form{{ $cardWidgetKey }}" action="{{ route('applicant.payments.verify') }}" method="GET" onsubmit="return paymentAction(this, 'Checking payment status…');">
+                                    <input type="hidden" name="payment_type_id" value="{{ $pending->payment_type_id }}">
+                                    <input type="hidden" name="payment_id" value="{{ $pending->id }}">
+                                    <button type="submit" class="btn btn-success"><i class="material-symbols-outlined fs-16">verified</i>Verify</button>
+                                </form>
+                                <form action="{{ route('applicant.payments.cancel') }}" method="POST" onsubmit="return confirmApplicantCancel(this);">
+                                    @csrf
+                                    <input type="hidden" name="payment_type_id" value="{{ $pending->payment_type_id }}">
+                                    <input type="hidden" name="payment_id" value="{{ $pending->id }}">
+                                    <button type="submit" class="btn btn-outline-danger"><i class="material-symbols-outlined fs-16">cancel</i>Cancel</button>
+                                </form>
+                            </div>
+                            @include('partials.remita-pay', ['payment' => $pending, 'widgetKey' => $cardWidgetKey])
                         @else
                             @if($p['installment'] !== null && $type->split_enabled)
                                 <div class="alert alert-info small mb-3">
@@ -146,7 +263,8 @@
                                 </div>
                             @endif
 
-                            <form action="{{ route('applicant.payments.initiate') }}" method="POST" class="mb-2">
+                            <div class="payment-step-note"><i class="material-symbols-outlined">info</i><span>Click pay to create an RRR. After it appears, pay online, then return here and choose <strong>Verify</strong>.</span></div>
+                            <form action="{{ route('applicant.payments.initiate') }}" method="POST" class="mb-2" onsubmit="return paymentAction(this, 'Generating your payment reference…');">
                                 @csrf
                                 <input type="hidden" name="payment_type_id" value="{{ $type->id }}">
                                 <input type="hidden" name="mode" value="full">
@@ -157,7 +275,7 @@
                             </form>
 
                             @if($p['installment'] !== null && $type->split_enabled)
-                                <form action="{{ route('applicant.payments.initiate') }}" method="POST">
+                                <form action="{{ route('applicant.payments.initiate') }}" method="POST" onsubmit="return paymentAction(this, 'Generating your payment reference…');">
                                     @csrf
                                     <input type="hidden" name="payment_type_id" value="{{ $type->id }}">
                                     <input type="hidden" name="mode" value="installment">
@@ -202,6 +320,8 @@
                                     <span class="badge bg-success">Paid</span>
                                 @elseif($h->status === 'failed')
                                     <span class="badge bg-danger">Failed</span>
+                                @elseif($h->status === 'cancelled')
+                                    <span class="badge bg-secondary">Cancelled</span>
                                 @else
                                     <span class="badge bg-warning">Pending</span>
                                 @endif
@@ -218,3 +338,71 @@
 </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function launchApplicantPayment(button, opener) {
+        if (!button || button.disabled) return;
+        var original = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Opening secure payment…';
+        try {
+            opener();
+        } catch (error) {
+            button.disabled = false;
+            button.innerHTML = original;
+            window.alert('The payment window could not be opened. Please try again.');
+            return;
+        }
+        window.setTimeout(function () {
+            button.disabled = false;
+            button.innerHTML = original;
+        }, 1200);
+    }
+
+    function paymentAction(form, message) {
+        var button = form.querySelector('button[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.dataset.originalText = button.innerHTML;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' + message;
+        }
+        return true;
+    }
+
+    function confirmApplicantCancel(form) {
+        if (!window.confirm('Cancel this pending payment? You can start a new payment afterwards.')) return false;
+        return paymentAction(form, 'Cancelling…');
+    }
+
+    function copyApplicantRrr(id) {
+        var node = document.getElementById('applicant-rrr-' + id);
+        if (!node) return;
+        var value = node.textContent.trim();
+        var done = function () { window.alert('RRR copied: ' + value); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(done).catch(function () { fallbackCopy(value, done); });
+        } else {
+            fallbackCopy(value, done);
+        }
+    }
+
+    function fallbackCopy(value, done) {
+        var input = document.createElement('textarea');
+        input.value = value;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        input.remove();
+        done();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('form[action*="payments/initiate"]').forEach(function (form) {
+            form.addEventListener('submit', function () { paymentAction(form, 'Generating…'); });
+        });
+    });
+</script>
+@endpush

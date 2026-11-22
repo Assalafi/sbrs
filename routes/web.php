@@ -316,6 +316,7 @@ Route::prefix('applicant')->middleware(['applicant.auth'])->group(function () {
     Route::get('/payments', [ApplicantPaymentController::class, 'index'])->name('applicant.payments.index');
     Route::post('/payments/initiate', [ApplicantPaymentController::class, 'initiate'])->name('applicant.payments.initiate');
     Route::get('/payments/verify', [ApplicantPaymentController::class, 'verify'])->name('applicant.payments.verify');
+    Route::post('/payments/cancel', [ApplicantPaymentController::class, 'cancel'])->name('applicant.payments.cancel');
 
     // Application Form
     Route::get('/application', [ApplicationFormController::class, 'edit'])->name('applicant.application.edit');
