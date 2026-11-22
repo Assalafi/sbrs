@@ -139,7 +139,7 @@
                 </div>
                 <div class="payment-clean-pending-actions">
                     @if($payment->hasRrr())
-                        <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, makePayment{{ $widgetKey }})"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
+                        <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, 'makePayment{{ $widgetKey }}')"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
                         <form id="verify-form{{ $widgetKey }}" action="{{ route('applicant.payments.verify') }}" method="GET" onsubmit="return paymentAction(this, 'Checking payment status…');">
                             <input type="hidden" name="payment_type_id" value="{{ $payment->payment_type_id }}">
                             <input type="hidden" name="payment_id" value="{{ $payment->id }}">
@@ -254,7 +254,7 @@
                                 <span>You already started this payment. Finish it with RRR <code>{{ $pending->rrr }}</code>, then verify it below.</span>
                             </div>
                             <div class="payment-action-row">
-                                <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, makePayment{{ $cardWidgetKey }})"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
+                                <button type="button" class="btn btn-warning" onclick="launchApplicantPayment(this, 'makePayment{{ $cardWidgetKey }}')"><i class="material-symbols-outlined fs-16">credit_card</i>Pay online</button>
                                 <form id="verify-form{{ $cardWidgetKey }}" action="{{ route('applicant.payments.verify') }}" method="GET" onsubmit="return paymentAction(this, 'Checking payment status…');">
                                     <input type="hidden" name="payment_type_id" value="{{ $pending->payment_type_id }}">
                                     <input type="hidden" name="payment_id" value="{{ $pending->id }}">
@@ -354,17 +354,21 @@
 
 @push('scripts')
 <script>
-    function launchApplicantPayment(button, opener) {
+    function launchApplicantPayment(button, openerName) {
         if (!button || button.disabled) return;
         var original = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Opening secure payment…';
         try {
+            var opener = typeof openerName === 'string' ? window[openerName] : openerName;
+            if (typeof opener !== 'function') throw new Error('The payment service is still loading.');
             opener();
         } catch (error) {
             button.disabled = false;
             button.innerHTML = original;
-            window.alert('The payment window could not be opened. Please try again.');
+            window.alert('The payment service could not be opened. We will take you to Remita using your RRR instead.');
+            var fallback = (window.__sbrsRemitaFallbacks || {})[openerName];
+            if (fallback) window.location.href = fallback;
             return;
         }
         window.setTimeout(function () {

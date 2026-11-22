@@ -40,6 +40,7 @@ return [
         'merchant_id' => env('REMITA_MERCHANT_ID'),
         'api_key' => env('REMITA_API_KEY'),
         'service_type_id' => env('REMITA_SERVICE_TYPE_ID'),
+        'public_key' => env('REMITA_PUBLIC_KEY'),
     ],
     'remita_split_report' => [
         'api_key' => env('REMITA_SPLIT_REPORT_API_KEY', ''),

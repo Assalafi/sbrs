@@ -12,6 +12,10 @@
     $remitaJsUrl = $remitaIsLive
         ? 'https://login.remita.net/payment/v1/remita-pay-inline.bundle.js'
         : 'https://demo.remita.net/payment/v1/remita-pay-inline.bundle.js';
+    // Keep the admin setting as the source of truth, but fall back to the
+    // environment-backed config used by the other payment pages when an older
+    // installation has not copied the public key into the settings table yet.
+    $remitaPublicKey = setting('remita_public_key', config('services.remita.public_key', ''));
     $fnName = 'makePayment' . $widgetKey;
     $verifyFormId = 'verify-form' . $widgetKey;
     $remitaFallbackUrl = ($remitaIsLive ? 'https://login.remita.net' : 'https://demo.remita.net')
@@ -22,7 +26,9 @@
 <script src="{{ $remitaJsUrl }}"></script>
 @endonce
 <script>
-    function {{ $fnName }}() {
+    window.__sbrsRemitaFallbacks = window.__sbrsRemitaFallbacks || {};
+    window.__sbrsRemitaFallbacks[@json($fnName)] = @json($remitaFallbackUrl);
+    window[@json($fnName)] = function () {
         var startedAt = Date.now();
         var fallbackUrl = @json($remitaFallbackUrl);
         var openWidget = function () {
@@ -39,7 +45,7 @@
 
             try {
                 var paymentEngine = window.RmPaymentEngine.init({
-                    key: @json(setting('remita_public_key', '')),
+                    key: @json($remitaPublicKey),
                     processRrr: true,
                     // Keep every supported channel available, but open Remita on Card
                     // first so the most-used option is immediately visible.
@@ -63,7 +69,8 @@
                 }
                 paymentEngine.showPaymentWidget();
             } catch (error) {
-                window.alert('The secure Remita payment window could not be opened. Please try again or use your RRR at a bank.');
+                window.alert('The secure Remita payment window could not be opened. We will open the Remita payment page using your RRR instead.');
+                window.location.href = fallbackUrl;
             }
         };
 
