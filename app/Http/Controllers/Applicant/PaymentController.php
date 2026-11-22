@@ -481,6 +481,10 @@ class PaymentController extends Controller
                 ->with('success', 'Payment verified successfully!');
         }
 
+        if (($result['status'] ?? null) === 'unavailable') {
+            return back()->with('error', $result['message'] ?? 'The payment verification service is temporarily unavailable. Please try again later.');
+        }
+
         return back()->with('info', $result['message'] ?? 'Payment not yet confirmed.');
     }
 

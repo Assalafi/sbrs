@@ -152,12 +152,27 @@ class RemitaService
                     $result = json_decode($matches[0], true);
                 }
             }
+            $result = is_array($result) ? $result : [];
 
             Log::info('Remita Payment Verification', [
                 'payment_id' => $payment->id,
                 'rrr' => $payment->rrr,
                 'response' => $result,
             ]);
+
+            // Remita may return an HTTP 5xx response with responseCode/
+            // responseMsg instead of the normal status field. Treat this as a
+            // temporary gateway outage; never mark the payment as failed for
+            // a response that did not actually report a payment outcome.
+            $gatewayCode = (string) ($result['responseCode'] ?? $result['statusCode'] ?? $response->status());
+            if ($response->serverError() || in_array($gatewayCode, ['500', '502', '503', '504'], true)) {
+                return [
+                    'success' => false,
+                    'status' => 'unavailable',
+                    'message' => 'The payment verification service is temporarily unavailable. Please try again later.',
+                    'data' => $result,
+                ];
+            }
 
             if (isset($result['status'])) {
                 $statusCode = $result['status'];
@@ -193,7 +208,12 @@ class RemitaService
                 }
             }
 
-            return ['success' => false, 'message' => 'Invalid response from payment gateway'];
+            return [
+                'success' => false,
+                'status' => 'unavailable',
+                'message' => $result['responseMsg'] ?? $result['message'] ?? 'The payment service returned an unexpected response. Please try again later.',
+                'data' => $result,
+            ];
 
         } catch (\Exception $e) {
             Log::error('Remita Payment Verification Exception', [
