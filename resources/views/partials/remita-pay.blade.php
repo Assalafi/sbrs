@@ -24,6 +24,9 @@
         var paymentEngine = RmPaymentEngine.init({
             key: "{{ setting('remita_public_key', '') }}",
             processRrr: true,
+            // Keep every supported channel available, but open Remita on Card
+            // first so the most-used option is immediately visible.
+            channels: 'card,bank,branch,ussd,qr,ibank,paywithremita,buyoncredit,wallet,phonenumber,transfer,enaira',
             transactionId: Math.floor(Math.random() * 1101233),
             extendedData: {
                 customFields: [{
