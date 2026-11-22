@@ -67,7 +67,7 @@ class PaymentController extends Controller
 
         $payments = $query->orderBy('created_at', 'desc')->paginate(25);
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
-        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $paymentTypes = PaymentType::with('programme')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $programmes = Programme::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.payments.index', compact('payments', 'sessions', 'paymentTypes', 'programmes'));
@@ -76,7 +76,7 @@ class PaymentController extends Controller
     public function offlineForm()
     {
         $sessions = AcademicSession::where('is_active', true)->orderByDesc('is_current')->orderByDesc('name')->get();
-        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $paymentTypes = PaymentType::with('programme')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $currentSession = AcademicSession::current();
 
         return view('admin.payments.offline', compact('sessions', 'paymentTypes', 'currentSession'));
@@ -408,7 +408,7 @@ class PaymentController extends Controller
         $this->ensureOffline($payment);
         $payment->load(['payable', 'academicSession', 'paymentType']);
         $sessions = AcademicSession::where('is_active', true)->orderByDesc('is_current')->orderByDesc('name')->get();
-        $paymentTypes = PaymentType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $paymentTypes = PaymentType::with('programme')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
 
         return view('admin.payments.offline-edit', compact('payment', 'sessions', 'paymentTypes'));
     }
