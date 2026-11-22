@@ -278,10 +278,10 @@ class Student extends Authenticatable
             ->get();
 
         $types = $types->groupBy(function ($type) {
+            $name = strtolower(trim(preg_replace('/\s+/', ' ', (string) $type->name)));
+            if ($name !== '') return 'name:' . $name;
             $core = ['application', 'admission', 'registration', 'examination'];
-            return in_array($type->legacyType(), $core, true)
-                ? 'core:' . $type->legacyType()
-                : 'type:' . $type->id;
+            return in_array($type->legacyType(), $core, true) ? 'core:' . $type->legacyType() : 'type:' . $type->id;
         })->map(fn ($group) => $group->sortByDesc(fn ($type) => $type->programme_id ? 1 : 0)->first())->values();
 
         return $types->filter(function ($type) {
