@@ -34,7 +34,7 @@ class PaymentController extends Controller
                 ->with('info', 'You have already paid the application fee.');
         }
 
-        $fee = Fee::getActiveFee('application', $applicant->programme_type, $applicant->academic_session_id);
+        $fee = Fee::getActiveFee('application', $applicant->programme_type, $applicant->academic_session_id, $applicant->programme_id);
         $payment = $applicant->getPendingPayment('application');
 
         return view('applicant.payment.application-fee', compact('applicant', 'fee', 'payment'));
@@ -48,7 +48,7 @@ class PaymentController extends Controller
             return back()->with('error', 'Already paid.');
         }
 
-        $fee = Fee::getActiveFee('application', $applicant->programme_type, $applicant->academic_session_id);
+        $fee = Fee::getActiveFee('application', $applicant->programme_type, $applicant->academic_session_id, $applicant->programme_id);
         if (!$fee) {
             return back()->with('error', 'No application fee configured. Please contact admin.');
         }
@@ -69,7 +69,7 @@ class PaymentController extends Controller
                 'fee_id' => $fee->id,
                 'amount' => $fee->amount,
                 'currency' => 'NGN',
-                'description' => 'Application Fee - ' . $applicant->programme_type . ' Programme',
+                'description' => 'Application Fee - ' . ($applicant->programme?->name ?: $applicant->programme_type) . ' Programme',
                 'status' => Payment::STATUS_PENDING,
             ]);
             $payment->save();
@@ -130,7 +130,7 @@ class PaymentController extends Controller
                 ->with('info', 'You have already paid the admission fee.');
         }
 
-        $fee = Fee::getActiveFee('admission', $applicant->programme_type, $applicant->academic_session_id);
+        $fee = Fee::getActiveFee('admission', $applicant->programme_type, $applicant->academic_session_id, $applicant->programme_id);
         $payment = $applicant->getPendingPayment('admission');
 
         return view('applicant.payment.admission-fee', compact('applicant', 'fee', 'payment'));
@@ -148,7 +148,7 @@ class PaymentController extends Controller
             return back()->with('error', 'Already paid.');
         }
 
-        $fee = Fee::getActiveFee('admission', $applicant->programme_type, $applicant->academic_session_id);
+        $fee = Fee::getActiveFee('admission', $applicant->programme_type, $applicant->academic_session_id, $applicant->programme_id);
         if (!$fee) {
             return back()->with('error', 'No admission fee configured. Contact admin.');
         }
@@ -169,7 +169,7 @@ class PaymentController extends Controller
                 'fee_id' => $fee->id,
                 'amount' => $fee->amount,
                 'currency' => 'NGN',
-                'description' => 'Admission Fee - ' . $applicant->programme_type . ' Programme',
+                'description' => 'Admission Fee - ' . ($applicant->programme?->name ?: $applicant->programme_type) . ' Programme',
                 'status' => Payment::STATUS_PENDING,
             ]);
             $payment->save();
@@ -299,6 +299,10 @@ class PaymentController extends Controller
 
         $type = PaymentType::findOrFail($request->payment_type_id);
 
+        if ($type->programme_id && (string) $type->programme_id !== (string) $applicant->programme_id) {
+            return back()->with('error', 'This payment is configured for a different programme.');
+        }
+
         if (!$applicant->duePaymentTypes()->contains(fn ($due) => (string) $due->id === (string) $type->id)) {
             return back()->with('error', 'This payment is not currently available for your application.');
         }
@@ -359,7 +363,7 @@ class PaymentController extends Controller
                 'academic_session_id' => $applicant->academic_session_id,
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'description' => $type->name . ' - ' . $applicant->programme_type,
+                'description' => $type->name . ' - ' . ($type->programme?->name ?: $applicant->programme_type),
                 'status' => Payment::STATUS_PENDING,
             ]);
             $payment->save();

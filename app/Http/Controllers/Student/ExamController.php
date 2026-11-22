@@ -31,7 +31,7 @@ class ExamController extends Controller
                 ->with('error', 'You must complete registration first.');
         }
 
-        $fee = Fee::getActiveFee('examination', $student->programme_type, $student->academic_session_id);
+        $fee = Fee::getActiveFee('examination', $student->programme_type, $student->academic_session_id, $student->programme_id);
         $payment = $student->payments()
             ->where('payment_type', 'examination')
             ->where('status', 'pending')
@@ -50,7 +50,7 @@ class ExamController extends Controller
             return back()->with('info', 'Exam fee already paid.');
         }
 
-        $fee = Fee::getActiveFee('examination', $student->programme_type, $student->academic_session_id);
+        $fee = Fee::getActiveFee('examination', $student->programme_type, $student->academic_session_id, $student->programme_id);
         if (!$fee) {
             return back()->with('error', 'No exam fee configured.');
         }
@@ -64,7 +64,7 @@ class ExamController extends Controller
                 'academic_session_id' => $student->academic_session_id,
                 'fee_id' => $fee->id,
                 'amount' => $fee->amount,
-                'description' => 'Examination Fee - ' . $student->programme_type,
+                'description' => 'Examination Fee - ' . ($student->programme?->name ?: $student->programme_type),
                 'status' => Payment::STATUS_PENDING,
             ]);
 

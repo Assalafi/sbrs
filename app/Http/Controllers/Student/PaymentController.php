@@ -115,6 +115,9 @@ class PaymentController extends Controller
         if (!$type->is_active) {
             return back()->with('error', 'This payment type is not active.');
         }
+        if ($type->programme_id && (string) $type->programme_id !== (string) $student->programme_id) {
+            return back()->with('error', 'This payment is configured for a different programme.');
+        }
 
         // Recompute progress (fresh) to avoid double-paying
         $progress = $student->paymentTypeProgress($type);
@@ -172,7 +175,7 @@ class PaymentController extends Controller
                 'academic_session_id' => $student->academic_session_id,
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'description' => $type->name . ' - ' . $student->programme_type,
+                'description' => $type->name . ' - ' . ($type->programme?->name ?: $student->programme_type),
                 'status' => Payment::STATUS_PENDING,
             ]);
             $payment->save();

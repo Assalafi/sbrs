@@ -761,6 +761,10 @@ class PaymentController extends Controller
         if ($allowedType !== 'both' && $payerType !== $allowedType) {
             throw new \RuntimeException('This payment type can only be recorded for an ' . $allowedType . '.');
         }
+
+        if ($paymentType?->programme_id && (string) $paymentType->programme_id !== (string) $payer->programme_id) {
+            throw new \RuntimeException('This payment type is configured for a different programme or stream.');
+        }
     }
 
     private function referenceExists(Model $payer, string $reference, ?string $exceptId = null): bool

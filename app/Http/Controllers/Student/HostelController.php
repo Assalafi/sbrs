@@ -324,7 +324,7 @@ class HostelController extends Controller
                 'academic_session_id' => $student->academic_session_id,
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'description' => 'Hostel Fee - ' . $student->programme_type,
+                'description' => 'Hostel Fee - ' . ($student->programme?->name ?: $student->programme_type),
                 'status' => Payment::STATUS_PENDING,
             ]);
             $payment->save();

@@ -269,9 +269,20 @@ class Student extends Authenticatable
                 $q->where('programme_type', $this->programme_type)
                     ->orWhere('programme_type', 'all');
             })
+            ->where(function ($q) {
+                $q->whereNull('programme_id')
+                    ->orWhere('programme_id', $this->programme_id);
+            })
             ->whereIn('payer_type', ['student', 'both'])
             ->orderBy('sort_order')
             ->get();
+
+        $types = $types->groupBy(function ($type) {
+            $core = ['application', 'admission', 'registration', 'examination'];
+            return in_array($type->legacyType(), $core, true)
+                ? 'core:' . $type->legacyType()
+                : 'type:' . $type->id;
+        })->map(fn ($group) => $group->sortByDesc(fn ($type) => $type->programme_id ? 1 : 0)->first())->values();
 
         return $types->filter(function ($type) {
             return !$this->paymentTypeProgress($type)['fully_paid'];

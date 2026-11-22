@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Fee;
 use App\Models\AcademicSession;
+use App\Models\Programme;
 use Illuminate\Http\Request;
 
 class FeeController extends Controller
 {
     public function index()
     {
-        $fees = Fee::with('academicSession')->orderBy('created_at', 'desc')->get();
+        $fees = Fee::with(['academicSession', 'programme'])->orderBy('created_at', 'desc')->get();
         $sessions = AcademicSession::where('is_active', true)->orderBy('name', 'desc')->get();
         return view('admin.fees.index', compact('fees', 'sessions'));
     }
@@ -19,7 +20,8 @@ class FeeController extends Controller
     public function create()
     {
         $sessions = AcademicSession::where('is_active', true)->orderBy('name', 'desc')->get();
-        return view('admin.fees.create', compact('sessions'));
+        $programmes = Programme::where('is_active', true)->orderBy('type')->orderBy('name')->get();
+        return view('admin.fees.create', compact('sessions', 'programmes'));
     }
 
     public function store(Request $request)
@@ -28,13 +30,22 @@ class FeeController extends Controller
             'academic_session_id' => 'required|exists:academic_sessions,id',
             'fee_type' => 'required|in:application,admission,registration,examination',
             'programme_type' => 'required|in:IJMB,Remedial,all',
+            'programme_id' => 'nullable|exists:programmes,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string|max:255',
         ]);
 
+        if (!empty($validated['programme_id'])) {
+            $programme = Programme::find($validated['programme_id']);
+            if ($validated['programme_type'] !== 'all' && $programme && $programme->type !== $validated['programme_type']) {
+                return back()->withInput()->with('error', 'The selected programme belongs to the ' . $programme->type . ' programme type.');
+            }
+        }
+
         $exists = Fee::where('academic_session_id', $validated['academic_session_id'])
             ->where('fee_type', $validated['fee_type'])
             ->where('programme_type', $validated['programme_type'])
+            ->where('programme_id', $validated['programme_id'] ?? null)
             ->exists();
 
         if ($exists) {
@@ -50,7 +61,8 @@ class FeeController extends Controller
     public function edit(Fee $fee)
     {
         $sessions = AcademicSession::where('is_active', true)->orderBy('name', 'desc')->get();
-        return view('admin.fees.edit', compact('fee', 'sessions'));
+        $programmes = Programme::where('is_active', true)->orderBy('type')->orderBy('name')->get();
+        return view('admin.fees.edit', compact('fee', 'sessions', 'programmes'));
     }
 
     public function update(Request $request, Fee $fee)
@@ -59,10 +71,18 @@ class FeeController extends Controller
             'academic_session_id' => 'required|exists:academic_sessions,id',
             'fee_type' => 'required|in:application,admission,registration,examination',
             'programme_type' => 'required|in:IJMB,Remedial,all',
+            'programme_id' => 'nullable|exists:programmes,id',
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
+
+        if (!empty($validated['programme_id'])) {
+            $programme = Programme::find($validated['programme_id']);
+            if ($validated['programme_type'] !== 'all' && $programme && $programme->type !== $validated['programme_type']) {
+                return back()->withInput()->with('error', 'The selected programme belongs to the ' . $programme->type . ' programme type.');
+            }
+        }
 
         $fee->update($validated);
 

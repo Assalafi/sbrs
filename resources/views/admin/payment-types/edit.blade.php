@@ -30,6 +30,16 @@
                         <option value="Remedial" {{ old('programme_type', $paymentType->programme_type) == 'Remedial' ? 'selected' : '' }}>Remedial</option>
                     </select>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-medium">Programme / Stream</label>
+                    <select class="form-select" name="programme_id">
+                        <option value="">All programmes (general fallback)</option>
+                        @foreach($programmes as $programme)
+                            <option value="{{ $programme->id }}" {{ old('programme_id', $paymentType->programme_id) == $programme->id ? 'selected' : '' }}>{{ $programme->name }} ({{ $programme->type }})</option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">A stream-specific rule overrides the general rule for that stream.</small>
+                </div>
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">

@@ -35,6 +35,16 @@
                         <option value="Remedial" {{ $fee->programme_type == 'Remedial' ? 'selected' : '' }}>Remedial</option>
                     </select>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-medium">Programme / Stream</label>
+                    <select class="form-select" name="programme_id">
+                        <option value="">All programmes (general fallback)</option>
+                        @foreach($programmes as $programme)
+                            <option value="{{ $programme->id }}" {{ old('programme_id', $fee->programme_id) == $programme->id ? 'selected' : '' }}>{{ $programme->name }} ({{ $programme->type }})</option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">A stream-specific amount takes priority over the general programme amount.</small>
+                </div>
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">

@@ -21,7 +21,7 @@
                     <tr>
                         <td>{{ $fee->academicSession->name ?? 'N/A' }}</td>
                         <td><span class="badge bg-info bg-opacity-10 text-info">{{ ucfirst($fee->fee_type) }}</span></td>
-                        <td>{{ $fee->programme_type === 'all' ? 'All Programmes' : $fee->programme_type }}</td>
+                        <td>{{ $fee->programme?->name ?: ($fee->programme_type === 'all' ? 'All Programmes' : $fee->programme_type) }}</td>
                         <td class="fw-medium">&#8358;{{ number_format($fee->amount, 2) }}</td>
                         <td><span class="badge {{ $fee->is_active ? 'bg-success' : 'bg-secondary' }}">{{ $fee->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td>

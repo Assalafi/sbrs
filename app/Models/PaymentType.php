@@ -15,6 +15,7 @@ class PaymentType extends Model
         'name',
         'description',
         'programme_type',
+        'programme_id',
         'academic_session_id',
         'payer_type',
         'amount',
@@ -81,6 +82,11 @@ class PaymentType extends Model
     public function academicSession()
     {
         return $this->belongsTo(AcademicSession::class);
+    }
+
+    public function programme()
+    {
+        return $this->belongsTo(Programme::class);
     }
 
     public function payments()

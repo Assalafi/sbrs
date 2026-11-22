@@ -31,7 +31,7 @@ class RegistrationController extends Controller
                 ->with('error', 'You must be screened before registration.');
         }
 
-        $fee = Fee::getActiveFee('registration', $student->programme_type, $student->academic_session_id);
+        $fee = Fee::getActiveFee('registration', $student->programme_type, $student->academic_session_id, $student->programme_id);
         $payment = $student->payments()
             ->where('payment_type', 'registration')
             ->where('status', 'pending')
@@ -48,7 +48,7 @@ class RegistrationController extends Controller
             return back()->with('info', 'Registration fee already paid.');
         }
 
-        $fee = Fee::getActiveFee('registration', $student->programme_type, $student->academic_session_id);
+        $fee = Fee::getActiveFee('registration', $student->programme_type, $student->academic_session_id, $student->programme_id);
         if (!$fee) {
             return back()->with('error', 'No registration fee configured.');
         }
@@ -62,7 +62,7 @@ class RegistrationController extends Controller
                 'academic_session_id' => $student->academic_session_id,
                 'fee_id' => $fee->id,
                 'amount' => $fee->amount,
-                'description' => 'Registration Fee - ' . $student->programme_type,
+                'description' => 'Registration Fee - ' . ($student->programme?->name ?: $student->programme_type),
                 'status' => Payment::STATUS_PENDING,
             ]);
 

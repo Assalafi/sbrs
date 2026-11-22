@@ -136,6 +136,10 @@ class Applicant extends Authenticatable
                 $q->where('programme_type', $this->programme_type)
                     ->orWhere('programme_type', 'all');
             })
+            ->where(function ($q) {
+                $q->whereNull('programme_id')
+                    ->orWhere('programme_id', $this->programme_id);
+            })
             ->where(function ($q) use ($registrationBeforeStudent) {
                 $q->whereIn('payer_type', ['applicant', 'both']);
                 if ($registrationBeforeStudent) {
@@ -144,6 +148,16 @@ class Applicant extends Authenticatable
             })
             ->orderBy('sort_order')
             ->get();
+
+        $types = $types->groupBy(function ($type) {
+            // Core services have one logical obligation. If both a general
+            // and a stream-specific rule exist, the stream-specific rule is
+            // the one the applicant should see.
+            $core = ['application', 'admission', 'registration', 'examination'];
+            return in_array($type->legacyType(), $core, true)
+                ? 'core:' . $type->legacyType()
+                : 'type:' . $type->id;
+        })->map(fn ($group) => $group->sortByDesc(fn ($type) => $type->programme_id ? 1 : 0)->first())->values();
 
         return $types->filter(function ($type) {
             return !$this->paymentTypeProgress($type)['fully_paid'];

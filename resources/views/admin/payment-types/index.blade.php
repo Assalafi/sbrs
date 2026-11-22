@@ -46,7 +46,7 @@
                                 <span class="badge bg-secondary">Both</span>
                             @endif
                         </td>
-                        <td>{{ $pt->programme_type === 'all' ? 'All Programmes' : $pt->programme_type }}</td>
+                        <td>{{ $pt->programme?->name ?: ($pt->programme_type === 'all' ? 'All Programmes' : $pt->programme_type) }}</td>
                         <td>{{ $pt->academicSession->name ?? 'All Sessions' }}</td>
                         <td class="fw-medium">&#8358;{{ number_format($pt->amount, 2) }}</td>
                         <td>

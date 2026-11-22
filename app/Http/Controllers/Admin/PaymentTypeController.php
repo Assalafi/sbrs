@@ -5,21 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentType;
 use App\Models\AcademicSession;
+use App\Models\Programme;
 use Illuminate\Http\Request;
 
 class PaymentTypeController extends Controller
 {
     public function index()
     {
-        $paymentTypes = PaymentType::with('academicSession')->orderBy('sort_order')->orderBy('name')->get();
+        $paymentTypes = PaymentType::with(['academicSession', 'programme'])->orderBy('sort_order')->orderBy('name')->get();
         return view('admin.payment-types.index', compact('paymentTypes'));
     }
 
     public function create()
     {
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        $programmes = Programme::where('is_active', true)->orderBy('type')->orderBy('name')->get();
         $remitaOptions = PaymentType::remitaServiceTypeOptions();
-        return view('admin.payment-types.create', compact('sessions', 'remitaOptions'));
+        return view('admin.payment-types.create', compact('sessions', 'programmes', 'remitaOptions'));
     }
 
     public function store(Request $request)
@@ -29,6 +31,7 @@ class PaymentTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'programme_type' => 'required|in:IJMB,Remedial,all',
+            'programme_id' => 'nullable|exists:programmes,id',
             'academic_session_id' => 'nullable|exists:academic_sessions,id',
             'payer_type' => 'required|in:both,applicant,student',
             'amount' => 'required|numeric|min:0',
@@ -42,6 +45,13 @@ class PaymentTypeController extends Controller
             'remita_split_enabled' => 'boolean',
             'remita_surcharge' => 'nullable|numeric|min:0',
         ]);
+
+        if (!empty($validated['programme_id'])) {
+            $programme = Programme::find($validated['programme_id']);
+            if ($validated['programme_type'] !== 'all' && $programme && $programme->type !== $validated['programme_type']) {
+                return back()->withInput()->with('error', 'The selected programme belongs to the ' . $programme->type . ' programme type.');
+            }
+        }
 
         PaymentType::create($validated);
 
@@ -52,8 +62,9 @@ class PaymentTypeController extends Controller
     public function edit(PaymentType $paymentType)
     {
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
+        $programmes = Programme::where('is_active', true)->orderBy('type')->orderBy('name')->get();
         $remitaOptions = PaymentType::remitaServiceTypeOptions();
-        return view('admin.payment-types.edit', compact('paymentType', 'sessions', 'remitaOptions'));
+        return view('admin.payment-types.edit', compact('paymentType', 'sessions', 'programmes', 'remitaOptions'));
     }
 
     public function update(Request $request, PaymentType $paymentType)
@@ -63,6 +74,7 @@ class PaymentTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'programme_type' => 'required|in:IJMB,Remedial,all',
+            'programme_id' => 'nullable|exists:programmes,id',
             'academic_session_id' => 'nullable|exists:academic_sessions,id',
             'payer_type' => 'required|in:both,applicant,student',
             'amount' => 'required|numeric|min:0',
@@ -76,6 +88,13 @@ class PaymentTypeController extends Controller
             'remita_split_enabled' => 'boolean',
             'remita_surcharge' => 'nullable|numeric|min:0',
         ]);
+
+        if (!empty($validated['programme_id'])) {
+            $programme = Programme::find($validated['programme_id']);
+            if ($validated['programme_type'] !== 'all' && $programme && $programme->type !== $validated['programme_type']) {
+                return back()->withInput()->with('error', 'The selected programme belongs to the ' . $programme->type . ' programme type.');
+            }
+        }
 
         $paymentType->update($validated);
 
