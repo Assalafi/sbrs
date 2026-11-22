@@ -3,10 +3,12 @@
 
 @push('styles')
 <style>
-    .applicant-payments-page{max-width:1180px;margin:0 auto;padding-bottom:2rem}
-    .payments-page-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}
-    .payments-page-head h1{font-size:clamp(1.35rem,2.4vw,2rem);font-weight:750;letter-spacing:-.02em;color:#123b31;margin:0}
-    .payments-page-head p{margin:.25rem 0 0;color:#6b7e78;font-size:.93rem}
+    .applicant-payments-page{width:min(1180px,100%);margin:0 auto;padding:clamp(.85rem,2vw,1.5rem) clamp(.1rem,1.3vw,1rem) 2.5rem}
+    .payments-page-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.35rem;padding:.2rem 0}
+    .payments-page-head h1{font-size:clamp(1.45rem,2.8vw,2.15rem);font-weight:800;letter-spacing:-.035em;color:#123b31;margin:.18rem 0 0}
+    .payments-page-head p{margin:.3rem 0 0;color:#6b7e78;font-size:.92rem;max-width:52rem}
+    .payments-page-eyebrow{display:block;color:#087f5b;font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+    .payments-page-head .btn{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;border-radius:.7rem;padding:.62rem .85rem}
     .payments-hero{border:0;border-radius:1.15rem;background:linear-gradient(120deg,#0b4f3a,#087f5b);color:#fff;box-shadow:0 14px 32px rgba(5,76,55,.16);overflow:hidden;position:relative}
     .payments-hero:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-100px;background:rgba(255,255,255,.1)}
     .payments-hero .card-body{position:relative;z-index:1;padding:1.35rem 1.5rem}
@@ -14,7 +16,7 @@
     .payments-hero h2{font-size:clamp(1.35rem,3vw,2rem);margin:.35rem 0 .25rem;color:#fff;font-weight:750}
     .payments-hero p{margin:0;color:#e2f5ed;max-width:650px}
     .payment-profile-card,.payment-due-card,.payment-history-card{border:1px solid #e4eee9!important;border-radius:1rem!important;box-shadow:0 8px 24px rgba(21,56,45,.06)!important;background:#fff}
-    .payment-profile-card{margin-top:1rem}
+    .payment-profile-card{margin:0 0 1.25rem}
     .payment-profile-card .card-body{padding:1.1rem 1.25rem}
     .payment-avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;border:3px solid #e5f4ee;background:#edf8f3;display:grid;place-items:center;color:#087f5b}
     .payment-profile-name{color:#153d32;font-weight:750}
@@ -36,6 +38,14 @@
     .payment-history-card thead th{background:#f3f8f5;color:#5c7169;border:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
     .payment-history-card tbody td{border-color:#edf2ef;color:#304a41;font-size:.86rem}
     .payment-history-card .table-responsive{margin:-.25rem -.25rem}
+    .payment-due-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0}
+    .payment-due-grid>[class*="col-"]{width:auto;max-width:none;padding:0;margin:0!important}
+    .payment-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;margin:0 0 1rem!important}
+    .payment-metrics>[class*="col-"]{width:auto;padding:0}
+    .payment-due-card .card-header{min-height:4.15rem}
+    .payment-due-card .card-header h5{display:flex;align-items:center;min-width:0;line-height:1.25}
+    .payment-due-card .card-header h5 i{flex:0 0 auto}
+    .payment-due-card .card-header h5{overflow-wrap:anywhere}
     .payment-clean-pending{border:1px solid #f0dfae;border-radius:1rem;background:#fffdf6;box-shadow:0 8px 24px rgba(116,87,20,.06);margin-bottom:1.25rem;overflow:hidden}
     .payment-clean-pending-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.05rem 1.2rem;border-bottom:1px solid #f3e8c8;background:#fff9e9}
     .payment-clean-pending-head h2{margin:0;color:#5b4309;font-size:1.05rem;font-weight:800}
@@ -66,8 +76,9 @@
 .payment-registration-success strong{display:block;color:#124d37}
 .payment-registration-success code{color:#0b5e3e;background:#dcf5e7;border:1px solid #b9e5cc;padding:.18rem .4rem;border-radius:.3rem}
     .payment-toast{position:fixed;right:1rem;bottom:1rem;z-index:1080;max-width:min(420px,calc(100vw - 2rem));box-shadow:0 12px 30px rgba(20,45,35,.15)}
-    @media (max-width:600px){.applicant-payments-page{padding:0 .1rem 1.25rem}.payments-page-head{align-items:flex-start}.payments-page-head .btn{white-space:nowrap}.payments-hero .card-body{padding:1.15rem}.payment-profile-card .card-body{padding:1rem}.payment-profile-meta{font-size:.76rem}.payment-due-card .card-body{padding:.9rem}.payment-metric{padding:.55rem .15rem}.payment-metric .amount{font-size:.78rem}.payment-history-card .card-body{padding:.85rem}}
-    @media (max-width:700px){.payment-clean-pending-head{padding:.95rem}.payment-clean-pending-list{padding:.65rem .85rem}.payment-clean-pending-item{align-items:stretch;flex-direction:column}.payment-clean-pending-actions{width:100%;justify-content:stretch}.payment-clean-pending-actions form,.payment-clean-pending-actions .btn{flex:1 1 0}.payment-clean-pending-actions .btn{width:100%;justify-content:center}.payment-action-row{display:grid;grid-template-columns:1fr}.payment-action-row form{flex:auto}}
+    @media (max-width:760px){.applicant-payments-page{padding:0 .25rem 1.5rem}.payments-page-head{align-items:flex-start}.payments-page-head .btn{padding:.55rem .65rem}.payments-page-head .btn .material-symbols-outlined{font-size:1.05rem}.payment-due-grid{grid-template-columns:1fr}.payment-profile-card .card-body{padding:1rem}.payment-profile-meta{font-size:.76rem}.payment-due-card .card-body{padding:1rem}.payment-metric{padding:.65rem .2rem}.payment-metric .amount{font-size:.82rem}.payment-history-card .card-body{padding:.8rem}}
+    @media (max-width:700px){.payment-clean-pending-head{padding:.95rem}.payment-clean-pending-list{padding:.55rem .85rem}.payment-clean-pending-item{align-items:stretch;flex-direction:column}.payment-clean-pending-actions{width:100%;justify-content:stretch}.payment-clean-pending-actions form,.payment-clean-pending-actions .btn{flex:1 1 0}.payment-clean-pending-actions .btn{width:100%;justify-content:center}.payment-action-row{display:grid;grid-template-columns:1fr}.payment-action-row form{flex:auto}.payment-registration-success{align-items:flex-start;padding:.85rem}.payment-registration-success code{display:inline-block;margin-top:.25rem}}
+    @media (max-width:560px){.payments-page-head{gap:.65rem;margin-bottom:1rem}.payments-page-head h1{font-size:1.45rem}.payments-page-head p{font-size:.82rem}.payments-page-head .btn{font-size:.76rem}.payment-profile-card .row{margin:0}.payment-profile-card .col-md-8,.payment-profile-card .col-md-4{padding:0}.payment-profile-card .col-md-4{text-align:left!important;margin-top:.75rem}.payment-status{display:inline-flex}.payment-clean-pending-head{display:block}.payment-clean-pending-head .badge{display:inline-block;margin-top:.65rem}.payment-clean-pending-main h3{font-size:.9rem}.payment-clean-pending-main p{font-size:.76rem}.payment-clean-pending-actions{display:grid;grid-template-columns:1fr;gap:.5rem}.payment-clean-pending-actions form,.payment-clean-pending-actions .btn{width:100%}.payment-history-card .table-responsive{overflow:visible}.payment-history-card table,.payment-history-card tbody,.payment-history-card tr,.payment-history-card td{display:block;width:100%}.payment-history-card thead{display:none}.payment-history-card tr{padding:.7rem 0;border-bottom:1px solid #e8efeb}.payment-history-card tr:last-child{border-bottom:0}.payment-history-card td{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:.3rem .1rem;border:0!important;text-align:right}.payment-history-card td::before{content:attr(data-label);flex:0 0 auto;color:#71817b;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left}.payment-history-card td:nth-child(2){display:block;text-align:left}.payment-history-card td:nth-child(2)::before{display:block;margin-bottom:.1rem}.payment-history-card td:nth-child(5){justify-content:space-between}}
 </style>
 @endpush
 
@@ -79,7 +90,7 @@
 @endphp
 <div class="applicant-payments-page">
 <div class="payments-page-head">
-    <div><h1>Payments</h1><p>Review your fees, complete a payment and keep your receipts.</p></div>
+    <div><span class="payments-page-eyebrow">Applicant finance</span><h1>Payments</h1><p>Review your fees, complete a payment and keep your receipts.</p></div>
     <a href="{{ route('applicant.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="material-symbols-outlined fs-16 align-middle">arrow_back</i> Dashboard</a>
 </div>
 
@@ -211,7 +222,7 @@
                             <p class="description small mb-3">{{ $type->description }}</p>
                         @endif
 
-                        <div class="row text-center mb-3 g-2">
+                        <div class="row text-center mb-3 g-2 payment-metrics">
                             <div class="col-4">
                                 <div class="payment-metric">
                                     <div class="amount text-success">&#8358;{{ number_format($p['full_amount'], 2) }}</div>
@@ -308,16 +319,16 @@
                     <tbody>
                         @foreach($history as $h)
                         <tr>
-                            <td class="fs-13 text-muted">{{ $h->created_at->format('M d, Y H:i') }}</td>
-                            <td>
+                            <td class="fs-13 text-muted" data-label="Date">{{ $h->created_at->format('M d, Y H:i') }}</td>
+                            <td data-label="Fee">
                                 {{ $h->paymentType->name ?? ucwords(str_replace('_', ' ', $h->payment_type)) }}
                                 @if($h->installment_label)
                                     <br><small class="text-muted">{{ $h->installment_label }}</small>
                                 @endif
                             </td>
-                            <td class="fw-medium">&#8358;{{ number_format($h->amount, 2) }}</td>
-                            <td>{{ $h->rrr ?? 'N/A' }}</td>
-                            <td>
+                            <td class="fw-medium" data-label="Amount">&#8358;{{ number_format($h->amount, 2) }}</td>
+                            <td data-label="RRR">{{ $h->rrr ?? 'N/A' }}</td>
+                            <td data-label="Status">
                                 @if($h->status === 'successful')
                                     <span class="badge bg-success">Paid</span>
                                 @elseif($h->status === 'failed')
