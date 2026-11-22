@@ -300,7 +300,7 @@ class PaymentController extends Controller
         $history = $applicant->payments()->with('paymentType')->orderBy('created_at', 'desc')->take(100)->get();
         $hasRequiredDue = $dueTypes->contains(fn ($t) => $t->is_required);
 
-        return view('applicant.payments.index', compact('applicant', 'items', 'history', 'hasRequiredDue', 'pendingPayments'));
+        return view('applicant.payments.modern', compact('applicant', 'items', 'history', 'hasRequiredDue', 'pendingPayments'));
     }
 
     /**
